@@ -83,8 +83,9 @@ def run(config_file, experiment_id=None, nb_retrain=3000):
             valid_adversarials = valid + valid_adversarials
 
 
+    # all the new elements should be rejected, i.e prediction = 1
     X_train = np.append(X_train, [valid_adversarials], axis=0)
-    y_train = np.append(y_train, [np.zeros(max_states)], axis=0)
+    y_train = np.append(y_train, [np.ones(max_states)], axis=0)
 
     model.fit(X_train, y_train)
 
