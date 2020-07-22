@@ -21,7 +21,7 @@ from attacks.venus_encoder import VenusEncoder
 logging.getLogger().setLevel(logging.INFO)
 
 config = in_out.get_parameters()
-config["random_seed"] = sys.argv[2]
+config["random_seed"] = int(sys.argv[2])
 
 def run(
     MODEL_PATH=config["paths"]["model"],
