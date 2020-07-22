@@ -20,7 +20,7 @@ from attacks.venus_encoder import VenusEncoder
 logging.getLogger().setLevel(logging.INFO)
 
 config = in_out.get_parameters()
-
+config["random_seed"] = sys.argv[2]
 
 def run(
     MODEL_PATH=config["paths"]["model"],
@@ -89,7 +89,7 @@ def run(
         efficient_results = [EfficientResult(result) for result in results]
 
         Pickler.save_to_file(
-            efficient_results, "{}/results_{}.pickle".format(ATTACK_RESULTS_DIR, i)
+            efficient_results, "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, RANDOM_SEED, i)
         )
 
 
