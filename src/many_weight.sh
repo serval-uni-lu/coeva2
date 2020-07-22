@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
-for i in {0..1}
+for i in {0..0}
 do
-    sbatch launch_weight.sh 06_weights_search.py ../config/weight_random_search.py $i
+    sbatch launch_weight.sh 06_weights_search.py ../config/weight_random_search.json $i
     echo Launch $i
 done
