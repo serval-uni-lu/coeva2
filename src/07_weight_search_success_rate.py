@@ -23,7 +23,7 @@ out_columns = [
 
 
 def process(i, results, encoder, threshold, model):
-    
+
     print("Processing at index {}".format(i))
     success_rates = calculate_success_rates(results, encoder, threshold, model)
     return np.concatenate(
@@ -47,6 +47,7 @@ def run(
     THRESHOLD=config["threshold"],
     MODEL_PATH=config["paths"]["model"],
 ):
+    print("Hello world!")
     model = load(MODEL_PATH)
     model.set_params(verbose=0, n_jobs=1)
     encoder = VenusEncoder()
