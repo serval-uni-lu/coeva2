@@ -20,10 +20,12 @@ def pickle_from_dir(input_dir, handler=None):
 
     for file_i, file in enumerate(files):
         with open(file, "rb") as f:
+            print("Loading object")
             obj = pickle.load(f)
             if handler is None:
                 obj_list.append(obj)
             else:
+                print("Using handler")
                 obj_list.append(handler(file_i, obj))
             obj = 0
     return obj_list
