@@ -55,7 +55,7 @@ def run(
     success_rates = np.array(
         pickle_from_dir(
             ATTACK_RESULTS_DIR,
-            handler=lambda i, x: process(i, x, encoder, THRESHOLD, model),
+            handler=(lambda i, x: process(i, x, encoder, THRESHOLD, model)),
         )
     )
 
