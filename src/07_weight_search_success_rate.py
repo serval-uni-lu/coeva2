@@ -22,7 +22,9 @@ out_columns = [
 ]
 
 
-def process(results, encoder, threshold, model):
+def process(i, results, encoder, threshold, model):
+    
+    print("Processing at index {}".format(i))
     success_rates = calculate_success_rates(results, encoder, threshold, model)
     return np.concatenate(
         [
@@ -52,7 +54,7 @@ def run(
     success_rates = np.array(
         pickle_from_dir(
             ATTACK_RESULTS_DIR,
-            handler=lambda i, x: process(x, encoder, THRESHOLD, model),
+            handler=lambda i, x: process(i, x, encoder, THRESHOLD, model),
         )
     )
 
