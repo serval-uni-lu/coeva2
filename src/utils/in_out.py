@@ -25,6 +25,7 @@ def pickle_from_dir(input_dir, handler=None):
                 obj_list.append(obj)
             else:
                 obj_list.append(handler(file_i, obj))
+            obj = 0
     return obj_list
 
 
