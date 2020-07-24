@@ -24,7 +24,7 @@ class VenusProblem(Problem):
 
         x_ml = self.encoder.from_genetic_to_ml(self.original, x).astype("float64")
 
-        f1 = np.random.uniform(0, 1, len(x))
+        f1 = 0
 
         constraints = venus_constraints.evaluate(x_ml)
 
