@@ -5,6 +5,7 @@ from attacks.venus_encoder import VenusEncoder
 from utils import Pickler, in_out
 import numpy as np
 from sklearn.base import clone
+from sklearn.metrics import matthews_corrcoef, roc_auc_score
 
 config = in_out.get_parameters()
 
@@ -35,6 +36,24 @@ def run(
     resistant_model.set_params(verbose=0, n_jobs=1)
 
     dump(resistant_model, RESISTANT_MODEL_PATH)
+
+    X_test = np.load("{}/X_test.npy".format(TRAIN_TEST_DATA_DIR))
+    y_test = np.load("{}/y_test.npy".format(TRAIN_TEST_DATA_DIR))
+
+    y_pred_proba = model.predict_proba(X_test)
+    y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
+    print(
+        "Original AUROC: {}, MCC: {}".format(
+            roc_auc_score(y_test, y_pred_proba[:, 1]), matthews_corrcoef(y_test, y_pred)
+        )
+    )
+    y_pred_proba = resistant_model.predict_proba(X_test)
+    y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
+    print(
+        "Resistant AUROC: {}, MCC: {}".format(
+            roc_auc_score(y_test, y_pred_proba[:, 1]), matthews_corrcoef(y_test, y_pred)
+        )
+    )
 
 
 if __name__ == "__main__":
