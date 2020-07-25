@@ -3,12 +3,15 @@ import matplotlib.pyplot as plt
 from cycler import cycler
 from utils import in_out
 
-monochrome = (cycler('color', ['k']) * cycler('marker', ['o', 'v', 's', '*' ]) * cycler('markersize', [22]))
-plt.rc('axes', prop_cycle=monochrome)
-font = {'family' : 'normal',
-        'size'   : 22}
+monochrome = (
+    cycler("color", ["k"])
+    * cycler("marker", ["o", "v", "s", "*"])
+    * cycler("markersize", [22])
+)
+plt.rc("axes", prop_cycle=monochrome)
+font = {"family": "normal", "size": 22}
 
-plt.rc('font', **font)
+plt.rc("font", **font)
 
 config = in_out.get_parameters()
 

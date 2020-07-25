@@ -23,6 +23,7 @@ logging.getLogger().setLevel(logging.INFO)
 config = in_out.get_parameters()
 config["random_seed"] = int(sys.argv[2])
 
+
 def run(
     MODEL_PATH=config["paths"]["model"],
     SCALER_PATH=config["paths"]["scaler"],
@@ -90,7 +91,8 @@ def run(
         efficient_results = [EfficientResult(result) for result in results]
 
         Pickler.save_to_file(
-            efficient_results, "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, RANDOM_SEED, i)
+            efficient_results,
+            "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, RANDOM_SEED, i),
         )
 
 

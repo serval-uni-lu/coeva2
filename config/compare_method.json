@@ -1,15 +1,11 @@
 {
   "methods": [
     {
-      "name":"Original Coeva2",
-      "path":"../out/attacks/original_coeva2/objectives.csv",
-      "style": "r+"
+      "name":"Offspring optimised CoEvA2",
+      "path":"../out/attacks/coeva2_best_gen/objectives.csv",
+      "style": "*"
     },{
-      "name":"NSGA 2 optimised gen",
-      "path":"../out/attacks/nsga2/objectives.csv",
-      "style": "b+"
-    },{
-      "name":"Coeva2 random search",
+      "name":"Coeva2 weights random search",
       "path":"../out/attacks/weight_search/objectives.csv"
     }
   ]

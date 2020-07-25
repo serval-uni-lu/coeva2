@@ -92,7 +92,10 @@ def run(
         efficient_results = [EfficientResult(result) for result in results]
 
         Pickler.save_to_file(
-            efficient_results, "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, n_gen, INITIAL_STATE_OFFSET)
+            efficient_results,
+            "{}/results_{}_{}.pickle".format(
+                ATTACK_RESULTS_DIR, n_gen, INITIAL_STATE_OFFSET
+            ),
         )
 
 
