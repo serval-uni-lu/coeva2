@@ -1,0 +1,19 @@
+{
+  "paths": {
+    "scaler": "../out/data_scaler_defence.pickle",
+    "model": "../out/static_defence/model.joblib",
+    "x_candidates": "../out/static_defence/x_attack_candidate.npy",
+    "attack_results": "../out/attacks/nsga2_defence/results.pickle",
+    "objectives": "../out/attacks/nsga2_defence/objectives.csv"
+  },
+  "algorithm": "nsga2",
+  "weights": 0,
+  "n_gen": 625,
+  "pop_size": 640,
+  "n_offsprings": 320,
+  "random_seed": 0,
+  "n_initial_state": 10,
+  "n_repetition": 1,
+  "threshold": 0.24,
+  "initial_state_offset": 0
+}
