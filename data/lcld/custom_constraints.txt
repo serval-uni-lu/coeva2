@@ -1,0 +1,16 @@
+calculated_installment = (
+    np.ceil(
+        100
+        * (x_ml[:, 0] * (x_ml[:, 2] / 1200) * (1 + x_ml[:, 2] / 1200) ** x_ml[:, 1])
+        / ((1 + x_ml[:, 2] / 1200) ** x_ml[:, 1] - 1)
+    )
+    / 100
+)
+g1 = np.absolute(x_ml[:, 3] - calculated_installment)
+
+# open_acc <= total_acc
+g2 = x_ml[:, 10] - x_ml[:, 14]
+
+# pub_rec_bankruptcies <= pub_rec
+g3 = x_ml[:, 16] - x_ml[:, 11]
+constraints = [g1, g2, g3]

@@ -1,8 +1,10 @@
-# Replication package for "Search-Based Adversarial Testing and Improvement of Constrained Credit Scoring Systems", accepted at FSE 2020
+# Replication package for "Search-Based Adversarial Testing and Improvement of Constrained Credit Scoring Systems", accepted at ESEC/FSE 2020
 
 This `README` file explains the structure of the package and gives basic guidelines on how to re-execute the experiments. For more detailed instructions on how to install and execute the scripts, please, refer to `INSTALL.md`.
 
 For more information, contact the first author by e-mail: Salah Ghamizi \<salah.ghamizi@uni.lu\>
+
+The pdf of the paper is still under our industrial partner embargo until the conference day. Please do not share. 
 
 ---
 ## About
@@ -15,8 +17,8 @@ See `INSTALL.md` for installation instructions.
 * ./configurations: the configuration files (*json*) to customize the experiments without coding.
 * ./src/coeva2: the actual implementation of our approach.
 ## Setup the dataset
-Our experiments involve the Lending Club Loan Dataset. You can download the processed version [here](). You can have mon information on the dataset [here](https://www.kaggle.com/wendykan/lending-club-loan-data)
-For the FSE review, the dataset is already provided in the folder *./data*
+Our experiments involve the Lending Club Loan Dataset. You can have mon information on the dataset [here](https://www.kaggle.com/wendykan/lending-club-loan-data)
+For the FSE review, the dataset is already provided in the folder *./data*. You will need to uncompress the *lcld_venus.zip* in order to run the examples/experiments.
 ## Setup the model
 For the FSE review, we provide a trained Random Forest model in the folder *./out/target_model* You can use the train python script to train your own model.
 ```shell
