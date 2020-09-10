@@ -63,6 +63,7 @@ def run(config_file, experiment_id=None, nb_retrain=3000):
 
     print("initial attack")
     valid_adversarials = []
+    all_objectives = []
     for i,state in enumerate(initial_X):
         
         if (max_states>0 and i > max_states) or len(valid_adversarials) > nb_retrain:
@@ -81,11 +82,13 @@ def run(config_file, experiment_id=None, nb_retrain=3000):
 
         if valid is not None and len(valid)>0:
             valid_adversarials = valid + valid_adversarials
+            all_objectives.append(objectives)
 
-
+    df_before = pd.DataFrame(data=all_objectives, columns=["respectsConstraints", "isMisclassified", "o3", "o4"])
+    print(df_before)
     # all the new elements should be rejected, i.e prediction = 1
-    X_train = np.append(X_train, [valid_adversarials], axis=0)
-    y_train = np.append(y_train, [np.ones(max_states)], axis=0)
+    X_train = np.append(X_train, np.array(valid_adversarials), axis=0)
+    y_train = np.append(y_train, np.ones(len(valid_adversarials)), axis=0)
 
     model.fit(X_train, y_train)
 
@@ -98,9 +101,9 @@ def run(config_file, experiment_id=None, nb_retrain=3000):
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     all_objectives = []
-    for i,state in enumerate(initial_X[max_states:]):
+    for j,state in enumerate(initial_X[max_states:]):
         
-        if (max_states>0 and i > max_states) or len(valid_adversarials) > nb_retrain:
+        if (max_states>0 and j > max_states):
             break
 
         initial_state = copy.copy(state)
@@ -118,8 +121,9 @@ def run(config_file, experiment_id=None, nb_retrain=3000):
         save_to_file(objectives,"{}/s{}.npy".format(output_dir,i))
 
 
-    df = pd.DataFrame(data=all_objectives, columns=["respectsConstraints", "isMisclassified", "o3", "o4"])
-    print(df)
+    df_after = pd.DataFrame(data=all_objectives, columns=["respectsConstraints", "isMisclassified", "o3", "o4"])
+    print(df_before.mean(axis = 0)  )
+    print(df_after.mean(axis = 0)  )
     print("Accuracy before adversarial training:{} after: {}".format(accuracy_before, accuracy_after))
     
 
