@@ -10,9 +10,9 @@ config = in_out.get_parameters()
 n_objectives = 3
 objectives_col = ["o{}".format(i + 2) for i in range(n_objectives)]
 
-monochrome = cycler("color", ["k"]) * cycler("markersize", [16])
+monochrome = cycler("color", ["k"]) * cycler("markersize", [11])
 plt.rc("axes", prop_cycle=monochrome)
-font = {"family": "normal", "size": 22}
+font = {"size": 16}
 
 plt.rc("font", **font)
 
@@ -39,6 +39,9 @@ def run(METHODS=config["methods"]):
 
     ax.legend(["Original weights"])
     plt.ylabel("Success rate")
+    plt.xlabel("Objectives")
+    fig.set_size_inches(11, 8)
+    plt.subplots_adjust(top=0.95, bottom=0.12, left=0.13, right=0.92, wspace = 0.3, hspace=0.3)
 
     # major_ticks = np.arange(0.3, 0.6, 0.05)
     # minor_ticks = np.arange(0.3, 0.6, 0.01)
@@ -47,7 +50,7 @@ def run(METHODS=config["methods"]):
     # ax.set_yticks(minor_ticks, minor=True)
     # ax.grid(which='minor', color='black', alpha=0.2)
     # ax.grid(which='major', color='black', alpha=0.4)
-    plt.show()
+    plt.savefig("plot.pdf")
 
 
 if __name__ == "__main__":
