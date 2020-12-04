@@ -6,10 +6,10 @@ from utils import in_out
 monochrome = (
     cycler("color", ["k"])
     * cycler("marker", ["o", "v", "s", "*"])
-    * cycler("markersize", [22])
+    * cycler("markersize", [11])
 )
 plt.rc("axes", prop_cycle=monochrome)
-font = {"family": "normal", "size": 22}
+font = {"size": 18}
 
 plt.rc("font", **font)
 
@@ -27,7 +27,9 @@ def run(OBJECTIVES_PATH=config["paths"]["objectives"]):
         df.plot(ax=ax, x="n_offsprings", y="o{}".format(i + 1))
 
     plt.ylabel("Success rate")
-    plt.show()
+    fig.set_size_inches(11, 8)
+    plt.subplots_adjust(top=0.95, bottom=0.12, left=0.13, right=0.92, wspace = 0.3, hspace=0.3)
+    plt.savefig("plot.pdf")
 
 
 if __name__ == "__main__":
