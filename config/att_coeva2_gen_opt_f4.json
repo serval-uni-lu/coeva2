@@ -6,13 +6,8 @@
     "attack_results": "../out/attacks/f4/results.pickle",
     "objectives": "../out/attacks/f4/objectives.csv"
   },
-  "algorithm": "coeva2",
-  "weights": {
-    "alpha": 0,
-    "beta": 0,
-    "gamma": 0,
-    "delta": 1000
-  },
+  "algorithm": "random",
+  "weights": {},
   "n_gen": 625,
   "pop_size": 640,
   "n_offsprings": 320,
