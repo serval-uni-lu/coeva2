@@ -3,22 +3,22 @@
     "scaler": "../out/data_scaler.pickle",
     "model": "../out/static/model.joblib",
     "x_candidates": "../out/static/x_attack_candidate.npy",
-    "attack_results": "../out/attacks/f1f2f4/results.pickle",
-    "objectives": "../out/attacks/f1f2f4/objectives.csv"
+    "objectives": "../out/attacks/00_gen_offsprings/objectives.csv"
+  },
+  "dirs": {
+    "attack_results": "../out/attacks/00_gen_offsprings"
   },
   "algorithm": "coeva2",
   "weights": {
     "alpha": 2,
     "beta": 1,
-    "gamma": 0,
+    "gamma": 100,
     "delta": 1000
   },
-  "n_gen": 625,
-  "pop_size": 640,
-  "n_offsprings": 320,
   "random_seed": 0,
-  "n_initial_state": 96,
+  "n_initial_state": 5,
   "n_repetition": 1,
   "threshold": 0.24,
-  "initial_state_offset": 0
+  "budget": 200000,
+  "list_n_offsprings": [10, 20, 40, 80, 160, 320, 640]
 }

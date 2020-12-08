@@ -3,16 +3,16 @@
     "scaler": "../out/data_scaler.pickle",
     "model": "../out/static/model.joblib",
     "x_candidates": "../out/static/x_attack_candidate.npy",
-    "attack_results": "../out/attacks/random/results.pickle",
-    "objectives": "../out/attacks/random/objectives.csv"
+    "attack_results": "../out/attacks/04_coeva2_f4/results.pickle",
+    "objectives": "../out/attacks/04_coeva2_f4/objectives.csv"
   },
   "algorithm": "random",
-  "weights": 0,
-  "n_gen": 2500,
-  "pop_size": 160,
-  "n_offsprings": 80,
+  "weights": {},
+  "n_gen": 625,
+  "pop_size": 640,
+  "n_offsprings": 320,
   "random_seed": 0,
-  "n_initial_state": 4000,
+  "n_initial_state": 96,
   "n_repetition": 1,
   "threshold": 0.24,
   "initial_state_offset": 0

@@ -1,0 +1,11 @@
+{
+  "threshold": 0.24,
+  "paths": {
+    "attack_results": "../out/attacks/11_nsga2/results.pickle",
+    "model": "../out/static/model.joblib",
+    "resistant_model": "../out/static/nsga2_resistant_model.joblib"
+  },
+  "dirs": {
+    "train_test_data": "../out/static"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "paths": {
+    "scaler": "../out/data_scaler.pickle",
+    "model": "../out/static/coeva2_resistant_model.joblib",
+    "x_candidates": "../out/static/x_attack_candidate.npy",
+    "attack_results": "../out/attacks/15_nsga2_reattack/results.pickle",
+    "objectives": "../out/attacks/15_nsga2_reattack/objectives.csv"
+  },
+  "algorithm": "nsga2",
+  "weights": 0,
+  "n_gen": 625,
+  "pop_size": 640,
+  "n_offsprings": 320,
+  "random_seed": 0,
+  "n_initial_state": 4000,
+  "n_repetition": 1,
+  "threshold": 0.24,
+  "initial_state_offset": 4000
+}
