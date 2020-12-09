@@ -15,6 +15,7 @@ def attack(
     X_initial_states,
     weight=None,
     attack_type="coeva2",
+    save_history=False
 ):
     results = None
     if attack_type == "coeva2":
@@ -30,6 +31,7 @@ def attack(
                 pop_size,
                 n_offspring,
                 weight,
+                save_history=save_history
             )
             for index, initial_state in enumerate(X_initial_states)
         )

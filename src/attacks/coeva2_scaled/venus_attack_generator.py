@@ -10,10 +10,10 @@ from .venus_coeva2_all_problem import VenusProblem
 
 
 def create_attack(
-    initial_state, weight, model, scaler, encoder, n_gen, pop_size, n_offsprings,
+    initial_state, weight, model, scaler, encoder, n_gen, pop_size, n_offsprings, save_history=False
 ):
 
-    problem = VenusProblem(initial_state, weight, model, encoder, scaler)
+    problem = VenusProblem(initial_state, weight, model, encoder, scaler, save_history=save_history)
 
     type_mask = [
         "real",

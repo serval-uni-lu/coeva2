@@ -8,7 +8,7 @@ from joblib import load
 from utils import Pickler, in_out
 from attacks import venus_constraints, attack_multiple_input
 from attacks.venus_encoder import VenusEncoder
-from attacks.result_process import EfficientResult
+from attacks.result_process import EfficientResult, HistoryResult
 
 config = in_out.get_parameters()
 
@@ -30,6 +30,10 @@ def run(
 ):
 
     Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
+
+    save_history=False
+    if "save_history" in config:
+        save_history=config["save_history"]
 
     # ----- Load and create necessary objects
 
@@ -65,9 +69,13 @@ def run(
         X_initial_states,
         weight=WEIGHT,
         attack_type=ALGORITHM,
+        save_history=save_history
     )
 
-    efficient_results = [EfficientResult(result) for result in results]
+    if save_history:
+        efficient_results = [HistoryResult(result) for result in results]
+    else:
+        efficient_results = [EfficientResult(result) for result in results]
 
     Pickler.save_to_file(efficient_results, ATTACK_RESULTS_PATH)
 

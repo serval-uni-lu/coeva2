@@ -5,7 +5,7 @@ import copy
 
 
 def attack(
-    index, initial_state, model, scaler, encoder, n_gen, pop_size, n_offsprings, weight,
+    index, initial_state, model, scaler, encoder, n_gen, pop_size, n_offsprings, weight, save_history=False
 ):
 
     print("Attack #{}.".format(index))
@@ -20,7 +20,7 @@ def attack(
     # Create attack
 
     problem, algorithm, termination = create_attack(
-        initial_state, weight, model, scaler, encoder, n_gen, pop_size, n_offsprings,
+        initial_state, weight, model, scaler, encoder, n_gen, pop_size, n_offsprings, save_history=save_history
     )
 
     # Execute attack

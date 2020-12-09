@@ -8,7 +8,7 @@ from .. import venus_constraints
 
 class VenusProblem(Problem):
     def __init__(
-        self, initial_state, weight, model, encoder, scaler, scale_objectives=True
+        self, initial_state, weight, model, encoder, scaler, scale_objectives=True, save_history=False
     ):
         min_max = encoder.get_min_max_genetic()
         self.weight = weight
@@ -18,6 +18,13 @@ class VenusProblem(Problem):
         self.original = initial_state
         self.original_mm = self.scaler.transform([initial_state])[0]
         self.scale_objectives = scale_objectives
+        self.save_history = save_history
+        self.history = {
+            "f1": [],
+            "f2": [],
+            "f3": [],
+            "g1": [],
+        }
         super().__init__(n_var=15, n_obj=1, n_constr=10, xl=min_max[0], xu=min_max[1])
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -57,3 +64,9 @@ class VenusProblem(Problem):
 
         out["F"] = alpha * f1 + beta * f2 + gamma * f3
         out["G"] = constraints * delta
+
+        if self.save_history:
+            self.history["f1"].append(f1)
+            self.history["f2"].append(f2)
+            self.history["f3"].append(f3)
+            self.history["g1"].append(constraints)
