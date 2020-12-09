@@ -22,9 +22,9 @@ config = in_out.get_parameters()
 
 def run(
     DATASET_PATH=config["paths"]["dataset"],
-    MODEL_PATH=config["paths"]["static_model"],
+    MODEL_PATH=config["paths"]["model"],
     SCALER_PATH=config["paths"]["scaler"],
-    X_ATTACK_CANDIDATES_PATH=config["paths"]["static_x_candidates"],
+    X_ATTACK_CANDIDATES_PATH=config["paths"]["x_candidates"],
     TARGET=config["target"],
     MODEL_PARAMETERS=config["model_parameters"],
     THRESHOLD=config["threshold"],
