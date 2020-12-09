@@ -7,13 +7,13 @@
     "objectives": "../out/attacks/04_coeva2_f4/objectives.csv"
   },
   "algorithm": "random",
-  "weights": {},
+  "weights": 0,
   "n_gen": 625,
   "pop_size": 640,
   "n_offsprings": 320,
   "random_seed": 0,
   "n_initial_state": 96,
-  "n_repetition": 1,
+  "n_repetition": 4000,
   "threshold": 0.24,
   "initial_state_offset": 0
 }

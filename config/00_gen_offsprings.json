@@ -16,7 +16,7 @@
     "delta": 1000
   },
   "random_seed": 0,
-  "n_initial_state": 5,
+  "n_initial_state": 1000,
   "n_repetition": 1,
   "threshold": 0.24,
   "budget": 200000,

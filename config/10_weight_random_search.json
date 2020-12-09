@@ -11,7 +11,7 @@
   "algorithm": "coeva2",
   "weights": 0,
   "random_seed": 0,
-  "n_initial_state": 100,
+  "n_initial_state": 1000,
   "n_repetition": 1,
   "threshold": 0.24,
   "n_weights": 2,
