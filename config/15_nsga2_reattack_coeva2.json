@@ -3,8 +3,8 @@
     "scaler": "../out/data_scaler.pickle",
     "model": "../out/static/coeva2_resistant_model.joblib",
     "x_candidates": "../out/static/x_attack_candidate.npy",
-    "attack_results": "../out/attacks/15_nsga2_reattack/results.pickle",
-    "objectives": "../out/attacks/15_nsga2_reattack/objectives.csv"
+    "attack_results": "../out/attacks/15_nsga2_reattack_coeva2/results.pickle",
+    "objectives": "../out/attacks/15_nsga2_reattack_coeva2/objectives.csv"
   },
   "algorithm": "nsga2",
   "weights": 0,
