@@ -3,8 +3,8 @@
     "scaler": "../out/data_scaler.pickle",
     "model": "../out/static/model.joblib",
     "x_candidates": "../out/static/x_attack_candidate.npy",
-    "attack_results": "../out/attacks/09_coeva2_f1f3f4/results.pickle",
-    "objectives": "../out/attacks/09_coeva2_f1f3f4/objectives.csv"
+    "attack_results": "../out/attacks/08_coeva2_f1f3f4/results.pickle",
+    "objectives": "../out/attacks/08_coeva2_f1f3f4/objectives.csv"
   },
   "algorithm": "coeva2",
   "weights": {
