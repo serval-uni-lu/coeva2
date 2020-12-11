@@ -1,8 +1,5 @@
 import numpy as np
-from art.attacks.evasion import ProjectedGradientDescent
-from art.classifiers import KerasClassifier
 from sklearn.model_selection import train_test_split
-
 from attacks import venus_constraints
 from utils import Pickler, Datafilter
 from keras.models import Sequential
@@ -67,23 +64,20 @@ def run(
     # model.add(Dropout(0.2))
     model.add(Dense(28, activation='relu'))
     model.add(Dropout(0.2))
-    model.add(Dense(1, activation='sigmoid'))
+    model.add(Dense(2, activation='sigmoid'))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(0.001),
                   loss='binary_crossentropy',
-                  metrics=["accuracy", tf.metrics.AUC()])
+                  metrics=["accuracy", ])
 
     # ----- Model Training
 
-    # r = model.fit(
-    #     X_train, y_train,
-    #     validation_data=(X_val, y_val),
-    #     epochs=2,
-    #     batch_size=16,
-    # )
-
-    classifier = KerasClassifier(model=model)
-    classifier.fit(X_train, y_train, batch_size=2, nb_epochs=3)
+    r = model.fit(
+        X_train, y_train,
+        validation_data=(X_val, y_val),
+        epochs=2,
+        batch_size=16,
+    )
 
     # ----- Print Test
 
@@ -118,10 +112,6 @@ def run(
     X_test = X_test[(1 - constraints_violated).astype(bool)]
     print("{} candidates.".format(X_test.shape[0]))
     np.save(X_SURROGATE_CANDIDATES_PATH, X_test)
-
-    attack = ProjectedGradientDescent(estimator=classifier, eps=0.2)
-    x_test_adv = attack.generate(x=X_test)
-    print(x_test_adv.shape)
 
 
 if __name__ == "__main__":

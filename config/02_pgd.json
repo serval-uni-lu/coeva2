@@ -1,0 +1,15 @@
+{
+  "paths": {
+    "model": "../out/static/surrogate.model",
+    "x_candidates": "../out/static/x_surrogate_candidate.npy",
+    "objectives": "../out/attacks/02_pgd/objectives.csv",
+    "attack_results": "../out/attacks/02_pgd/results.npy",
+    "scaler": "../out/data_scaler.pickle"
+  },
+  "algorithm": "pgd",
+  "random_seed": 0,
+  "n_initial_state": 30,
+  "n_repetition": 1,
+  "initial_state_offset": 0,
+  "threshold": 0.24
+}

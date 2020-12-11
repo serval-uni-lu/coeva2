@@ -1,10 +1,11 @@
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
-from art.classifiers import KerasClassifier as kc
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
-from utils import in_out
-from art.attacks.evasion import ProjectedGradientDescent as PGD
+
+from attacks import venus_constraints
+from utils import in_out, Pickler
+import pandas as pd
 
 config = in_out.get_parameters()
 
@@ -27,7 +28,10 @@ def run(
     ATTACK_RESULTS_PATH=config["paths"]["attack_results"],
     N_INITIAL_STATE=config["n_initial_state"],
     INITIAL_STATE_OFFSET=config["initial_state_offset"],
-    THRESHOLD=config["threshold"]
+    THRESHOLD=config["threshold"],
+    SCALER_PATH=config["paths"]["scaler"],
+    OBJECTIVES_PATH=config["paths"]["objectives"],
+
 ):
     tf.compat.v1.disable_eager_execution()
     Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
@@ -38,6 +42,7 @@ def run(
     X_initial_states = X_initial_states[
                        INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
                        ]
+    scaler = Pickler.load_from_file(SCALER_PATH)
 
     # ----- Load Model
 
@@ -45,13 +50,27 @@ def run(
 
     # ----- Attack
 
-    kc_classifier = kc(model)
-    pgd = PGD(kc_classifier)
-    attacks = pgd.generate(x=X_initial_states)
-    y_pred_proba = kc_classifier.predict(attacks)
+    X_attacks = np.load(ATTACK_RESULTS_PATH)
+    y_pred_proba = model.predict(X_attacks)
     y_attack = (y_pred_proba >= THRESHOLD).astype(bool)[:, 0]
-    np.save(ATTACK_RESULTS_PATH, attacks)
-    print("Success rate {}.".format((y_attack != np.ones(len(attacks))).sum()/len(attacks)))
+    index_success = (y_attack != np.ones(len(X_attacks)))
+    gross_success_rate = (index_success.sum() / len(X_attacks))
+
+
+    X_attacks_success = X_attacks[index_success]
+    constraints = venus_constraints.evaluate(scaler.inverse_transform(X_attacks_success))
+    constraints_violated = constraints > 0
+    constraints_violated = constraints_violated.sum(axis=1).astype(bool)
+    X_attacks_net_success = X_attacks_success[(1 - constraints_violated).astype(bool)]
+
+    net_success_rate = (len(X_attacks_net_success) / len(X_attacks))
+    objectives = {
+        "gross_success_rate": np.array([gross_success_rate]),
+        "real_success_rate": np.array([net_success_rate])
+    }
+    history_df = pd.DataFrame.from_dict(objectives)
+    history_df.to_csv(OBJECTIVES_PATH)
+    print(objectives)
 
 
 if __name__ == "__main__":
