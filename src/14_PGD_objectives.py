@@ -56,7 +56,6 @@ def run(
     index_success = (y_attack != np.ones(len(X_attacks)))
     gross_success_rate = (index_success.sum() / len(X_attacks))
 
-
     X_attacks_success = X_attacks[index_success]
     constraints = venus_constraints.evaluate(scaler.inverse_transform(X_attacks_success))
     constraints_violated = constraints > 0
@@ -64,9 +63,14 @@ def run(
     X_attacks_net_success = X_attacks_success[(1 - constraints_violated).astype(bool)]
 
     net_success_rate = (len(X_attacks_net_success) / len(X_attacks))
+
+    distances = np.array([np.linalg.norm(X_attacks[i]-X_initial_states[i]) for i in range(X_attacks.shape[0])])
+    distance_mean = distances.mean()
+
     objectives = {
         "gross_success_rate": np.array([gross_success_rate]),
-        "real_success_rate": np.array([net_success_rate])
+        "real_success_rate": np.array([net_success_rate]),
+        "L2_distance": distance_mean
     }
     history_df = pd.DataFrame.from_dict(objectives)
     history_df.to_csv(OBJECTIVES_PATH)

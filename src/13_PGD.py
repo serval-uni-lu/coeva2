@@ -46,7 +46,7 @@ def run(
     # ----- Attack
 
     kc_classifier = kc(model)
-    pgd = PGD(kc_classifier)
+    pgd = PGD(kc_classifier, eps=0.1)
     attacks = pgd.generate(x=X_initial_states)
     y_pred_proba = kc_classifier.predict(attacks)
     y_attack = (y_pred_proba >= THRESHOLD).astype(bool)[:, 0]
