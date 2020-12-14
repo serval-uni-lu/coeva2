@@ -35,9 +35,12 @@ def run(
     # ----- Load and Scale
 
     X_initial_states = np.load(X_ATTACK_CANDIDATES_PATH)
-    X_initial_states = X_initial_states[
-                       INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
-                       ]
+    if INITIAL_STATE_OFFSET > - 1:
+        X_initial_states = X_initial_states[
+                           INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
+                           ]
+
+    print("Attacking with {} initial states.".format(X_initial_states.shape[0]))
 
     # ----- Load Model
 
