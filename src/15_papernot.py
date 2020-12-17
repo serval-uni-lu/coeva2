@@ -2,16 +2,25 @@ import json
 
 import pandas as pd
 import numpy as np
-from joblib import load
+from joblib import load, Parallel, delayed
 from pathlib import Path
 from datetime import datetime
 from utils.in_out import save_to_file, pickle_from_file, load_from_file
 from utils import in_out
 from attacks.papernot_attack.problem_definition import ProblemConstraints
+import copy
 
 from attacks.papernot_attack.attack import RFAttack
 
 config = in_out.get_parameters()
+
+
+def unique_attack(model, nb_estimators, nb_iterations, threshold, X, y):
+    model = copy.deepcopy(model)
+    attack = RFAttack(model, nb_estimators=nb_estimators, nb_iterations=nb_iterations, threshold=threshold)
+    adv, _, _, _ = attack.generate(np.array([X]), np.array([y]))
+    return adv
+
 
 
 def run(
@@ -30,14 +39,29 @@ def run(
     print("running Papernot with config {} experiment id {}".format(config, experiment_id))
 
     model = load(MODEL_PATH)
+    model.set_params(verbose=0, n_jobs=1)
     problem_constraints = ProblemConstraints()
 
     X_initial_states = np.load(X_ATTACK_CANDIDATES_PATH)[
                        INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
                        ]
     y = np.ones(len(X_initial_states))
-    attack = RFAttack(model, nb_estimators=NB_ESTIMATORS, nb_iterations=NB_ITERATIONS, threshold=THRESHOLD)
-    adv, rf_success_rate, l_2, l_inf = attack.generate(X_initial_states, y)
+
+    # attack = RFAttack(model, nb_estimators=NB_ESTIMATORS, nb_iterations=NB_ITERATIONS, threshold=THRESHOLD)
+    # adv, _, _, _ = attack.generate(X_initial_states, y)
+
+    adv = Parallel(n_jobs=-1)(
+        delayed(unique_attack)(
+            model,
+            NB_ESTIMATORS,
+            NB_ITERATIONS,
+            THRESHOLD,
+            initial_state,
+            y[index]
+
+        )for index, initial_state in enumerate(X_initial_states)
+    )
+    adv = np.array(adv)[:, 0, :]
 
     constraints = problem_constraints.evaluate(adv)
     constraints_violated = constraints > 0
