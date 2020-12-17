@@ -52,15 +52,15 @@ def run(
     o3 = respectsConstraints * isMisclassified
     o4 = o3 * isBigAmount
     objectives = np.array([respectsConstraints, isMisclassified, o3, o4])
-    objectives = objectives.sum(axis=1)
-    objectives = (objectives > 0).astype(np.int64)
+    print(objectives)
+    success_rates = objectives.sum(axis=1) / objectives.shape[1]
     Path(OBJECTIVES_PATH).parent.mkdir(parents=True, exist_ok=True)
 
-    objectives_df = pd.DataFrame(np.array([objectives]), columns=["o1", "o2", "o3", "o4"])
-    objectives_df.to_csv(OBJECTIVES_PATH)
+    success_rates_df = pd.DataFrame(np.array([success_rates]), columns=["o1", "o2", "o3", "o4"])
+    success_rates_df.to_csv(OBJECTIVES_PATH)
 
     # save_to_file(objectives, OBJECTIVES_PATH)
-    print(objectives_df)
+    print(success_rates_df)
     # return adv, objectives
 
 
