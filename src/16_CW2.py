@@ -49,7 +49,7 @@ def run(
     # ----- Attack
 
     kc_classifier = kc(model)
-    pgd = CW2(kc_classifier, targeted=True, verbose=True, confidence=0.90)
+    pgd = CW2(kc_classifier, targeted=True, verbose=True, confidence=0.90, batch_size=128)
     attacks = pgd.generate(x=X_initial_states, y=np.zeros(X_initial_states.shape[0]))
     diff = kc_classifier.predict(X_initial_states)[:, 1] - kc_classifier.predict(attacks)[:, 1]
     print("Prediction difference min: {}, avg: {}, max: {}".format(diff.min(), diff.mean(), diff.max()))
