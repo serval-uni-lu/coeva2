@@ -1,5 +1,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
+from tensorflow.python.keras.metrics import AUC
+
 from attacks import venus_constraints
 from utils import Pickler, Datafilter
 from keras.models import Sequential
@@ -50,8 +52,8 @@ def run(
 
     X_train = np.array(X_train).astype(np.float32)
     X_val = np.array(X_val).astype(np.float32)
-    y_train = np.array(y_train).astype(np.float32)
-    y_val = np.array(y_val).astype(np.float32)
+    y_train = tf.keras.utils.to_categorical(np.array(y_train).astype(np.float32))
+    y_val = tf.keras.utils.to_categorical(np.array(y_val).astype(np.float32))
 
     # ----- Model Definition
 
@@ -64,11 +66,11 @@ def run(
     # model.add(Dropout(0.2))
     model.add(Dense(28, activation='relu'))
     model.add(Dropout(0.2))
-    model.add(Dense(2, activation='sigmoid'))
+    model.add(Dense(2, activation='softmax'))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(0.001),
                   loss='binary_crossentropy',
-                  metrics=["accuracy", ])
+                  metrics=["accuracy", AUC()])
 
     # ----- Model Training
 
@@ -82,7 +84,7 @@ def run(
     # ----- Print Test
 
     y_pred_proba = model.predict(X_test)
-    y_pred = (y_pred_proba >= THRESHOLD).astype(bool)[:, 0]
+    y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
     print_score(y_test, y_pred)
 
     # ----- Save Model
