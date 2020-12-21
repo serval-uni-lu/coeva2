@@ -49,10 +49,12 @@ def run(
     # ----- Attack
 
     kc_classifier = kc(model)
-    pgd = PGD(kc_classifier, eps=0.1)
-    attacks = pgd.generate(x=X_initial_states)
+    pgd = PGD(kc_classifier, eps=0.1, targeted=True, verbose=False)
+    attacks = pgd.generate(x=X_initial_states, y=np.zeros(X_initial_states.shape[0]))
+    print(kc_classifier.predict(X_initial_states))
+    print(kc_classifier.predict(attacks))
     y_pred_proba = kc_classifier.predict(attacks)
-    y_attack = (y_pred_proba >= THRESHOLD).astype(bool)[:, 0]
+    y_attack = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
     np.save(ATTACK_RESULTS_PATH, attacks)
     print("Success rate {}.".format((y_attack != np.ones(len(attacks))).sum()/len(attacks)))
 

@@ -2,8 +2,8 @@
   "paths": {
     "model": "../out/static/surrogate.model",
     "x_candidates": "../out/static/x_surrogate_candidate.npy",
-    "objectives": "../out/attacks/02_pgd/objectives_all.csv",
-    "attack_results": "../out/attacks/02_pgd/results_all.npy",
+    "objectives": "../out/attacks/02_pgd/objectives.csv",
+    "attack_results": "../out/attacks/02_pgd/results.npy",
     "scaler": "../out/data_scaler.pickle"
   },
   "algorithm": "pgd",
