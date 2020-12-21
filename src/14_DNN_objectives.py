@@ -42,17 +42,18 @@ def run(
     X_initial_states = X_initial_states[
                        INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
                        ]
+    X_attacks = np.load(ATTACK_RESULTS_PATH)
     scaler = Pickler.load_from_file(SCALER_PATH)
+
 
     # ----- Load Model
 
     model = tf.keras.models.load_model(MODEL_PATH)
 
-    # ----- Attack
-
-    X_attacks = np.load(ATTACK_RESULTS_PATH)
     y_pred_proba = model.predict(X_attacks)
-    y_attack = (y_pred_proba >= THRESHOLD).astype(bool)[:, 0]
+    # Rejected
+    y_attack = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
+    # Index of non rejected
     index_success = (y_attack != np.ones(len(X_attacks)))
     gross_success_rate = (index_success.sum() / len(X_attacks))
 
@@ -66,8 +67,10 @@ def run(
 
     distances = np.array([np.linalg.norm(X_attacks[i]-X_initial_states[i]) for i in range(X_attacks.shape[0])])
     distance_mean = distances.mean()
+    print(X_attacks.shape, X_initial_states.shape)
 
     objectives = {
+        "n_sample": X_initial_states.shape[0],
         "gross_success_rate": np.array([gross_success_rate]),
         "real_success_rate": np.array([net_success_rate]),
         "L2_distance": distance_mean
