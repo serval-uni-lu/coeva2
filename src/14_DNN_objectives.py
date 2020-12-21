@@ -70,10 +70,10 @@ def run(
     print(X_attacks.shape, X_initial_states.shape)
 
     objectives = {
-        "n_sample": X_initial_states.shape[0],
+        # "n_sample": X_initial_states.shape[0],
         "gross_success_rate": np.array([gross_success_rate]),
         "real_success_rate": np.array([net_success_rate]),
-        "L2_distance": distance_mean
+        # "L2_distance": distance_mean
     }
     history_df = pd.DataFrame.from_dict(objectives)
     history_df.to_csv(OBJECTIVES_PATH)
