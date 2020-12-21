@@ -11,7 +11,7 @@ def objectives_per_input(result, encoder, threshold, model):
     isMisclassified = np.array(model.predict_proba(Xs_ml)[:, 1] < threshold).astype(
         np.int64
     )
-    isBigAmount = (Xs[:, 0] >= 12500).astype(np.int64)
+    isBigAmount = (Xs[:, 0] >= 10000).astype(np.int64)
 
     o3 = respectsConstraints * isMisclassified
     o4 = o3 * isBigAmount
