@@ -9,7 +9,7 @@
   "algorithm": "pgd",
   "random_seed": 0,
   "n_initial_state": -1,
-  "n_repetition": 1,
+  "n_repetition": 10,
   "initial_state_offset": 0,
   "threshold": 0.24
 }
