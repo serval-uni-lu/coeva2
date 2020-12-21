@@ -4,7 +4,7 @@ import tensorflow as tf
 from art.classifiers import KerasClassifier as kc
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
 from utils import in_out
-from art.attacks.evasion import ProjectedGradientDescent as PGD
+from art.attacks.evasion import CarliniL2Method as CW2
 
 config = in_out.get_parameters()
 
@@ -49,7 +49,7 @@ def run(
     # ----- Attack
 
     kc_classifier = kc(model)
-    pgd = PGD(kc_classifier, eps=0.1, targeted=True, verbose=False)
+    pgd = CW2(kc_classifier, targeted=True, verbose=True, confidence=0.90)
     attacks = pgd.generate(x=X_initial_states, y=np.zeros(X_initial_states.shape[0]))
     diff = kc_classifier.predict(X_initial_states)[:, 1] - kc_classifier.predict(attacks)[:, 1]
     print("Prediction difference min: {}, avg: {}, max: {}".format(diff.min(), diff.mean(), diff.max()))
