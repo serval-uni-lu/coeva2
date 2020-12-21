@@ -51,7 +51,7 @@ def run(
     isMisclassified = np.array(model.predict_proba(adv)[:, 1] < THRESHOLD).astype(
         np.int64
     )
-    isBigAmount = (adv[:, 0] >= 10000).astype(np.int64)
+    isBigAmount = (adv[:, 0] >= 12500).astype(np.int64)
 
     o3 = respectsConstraints * isMisclassified
     o4 = o3 * isBigAmount
