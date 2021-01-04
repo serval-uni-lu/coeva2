@@ -1,0 +1,5 @@
+[core]
+    analytics = false
+    remote = master
+['remote "master"']
+    url = ssh://EDIT 
