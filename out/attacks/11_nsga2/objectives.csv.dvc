@@ -1,0 +1,4 @@
+outs:
+- md5: 14d2f52972151abc2cd387f288f4128a
+  size: 40
+  path: objectives.csv
