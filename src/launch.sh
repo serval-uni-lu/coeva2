@@ -4,16 +4,15 @@
 #SBATCH -N 1
 #SBATCH -n 28
 #SBATCH -p batch
-#SBATCH --time=0-0:10:00
-#SBATCH --qos=qos-besteffort
-#SBATCH -J PREPARE
-#SBATCH --mail-type=end,fail
-#SBATCH --mail-user=thibault.simonetto.001@student.uni.lu
+#SBATCH --time=0-2:00:00
+#SBATCH -J COEVA2-REATTACK 
+#SBATCH --mail-type=all
+#SBATCH --mail-user=thibault.simonetto@uni.lu
 
 echo "Hello from the batch queue on node ${SLURM_NODELIST} for neural architecture generation"
 module purge
 module restore python3
-source ../adv/bin/activate
+source ../../coeva2/adv/bin/activate
 
 python "$@"
 # Your more useful application can be started below!
