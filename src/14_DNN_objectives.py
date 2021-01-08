@@ -60,7 +60,6 @@ def run(
     misclasiffication_constraints_rate = X_missclassified_constraints.shape[0] / X_attacks.shape[0]
 
     # Distance
-    distances = np.array([np.linalg.norm(X_attacks[i]-X_initial_states[i]) for i in range(X_attacks.shape[0])])
     distances = np.linalg.norm(X_attacks-X_initial_states, axis=1)
     distance_mean = distances.mean()
 
