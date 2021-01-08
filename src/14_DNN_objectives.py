@@ -6,20 +6,9 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, r
 from attacks import venus_constraints
 from utils import in_out, Pickler
 import pandas as pd
+import logging
 
 config = in_out.get_parameters()
-
-def print_score(label, prediction):
-    print("Test Result:\n================================================")
-    print(f"Accuracy Score: {accuracy_score(label, prediction) * 100:.2f}%")
-    print("_______________________________________________")
-    print("Classification Report:", end='')
-    print(f"\tPrecision Score: {precision_score(label, prediction) * 100:.2f}%")
-    print(f"\t\t\tRecall Score: {recall_score(label, prediction) * 100:.2f}%")
-    print(f"\t\t\tF1 score: {f1_score(label, prediction) * 100:.2f}%")
-    print(f"\t\t\tMCC score: {matthews_corrcoef(label, prediction) * 100:.2f}%")
-    print("_______________________________________________")
-    print(f"Confusion Matrix: \n {confusion_matrix(label, prediction)}\n")
 
 
 def run(
@@ -33,6 +22,7 @@ def run(
     OBJECTIVES_PATH=config["paths"]["objectives"],
 
 ):
+    logging.basicConfig(level=logging.INFO)
     tf.compat.v1.disable_eager_execution()
     Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
 
@@ -44,40 +34,47 @@ def run(
                        ]
     X_attacks = np.load(ATTACK_RESULTS_PATH)
     scaler = Pickler.load_from_file(SCALER_PATH)
-
-
-    # ----- Load Model
-
     model = tf.keras.models.load_model(MODEL_PATH)
 
-    y_pred_proba = model.predict(X_attacks)
-    # Rejected
-    y_attack = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
-    # Index of non rejected
-    index_success = (y_attack != np.ones(len(X_attacks)))
-    gross_success_rate = (index_success.sum() / len(X_attacks))
+    # Verification
+    if X_initial_states.shape[0] != X_attacks.shape[0]:
+          raise Exception(f"Number of initial state ({X_initial_states.shape[0]}) is different from the number of attacks ({X_attacks.shape[0]})") 
 
-    X_attacks_success = X_attacks[index_success]
-    constraints = venus_constraints.evaluate(scaler.inverse_transform(X_attacks_success))
-    constraints_violated = constraints > 0
-    constraints_violated = constraints_violated.sum(axis=1).astype(bool)
-    X_attacks_net_success = X_attacks_success[(1 - constraints_violated).astype(bool)]
+    # ----- Predict
+    y_attack_proba = model.predict(X_attacks)
+    y_pred_proba = model.predict(X_initial_states)
 
-    net_success_rate = (len(X_attacks_net_success) / len(X_attacks))
+    y_attack = (y_attack_proba[:, 1] >= THRESHOLD).astype(bool)
+    y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
 
+
+    # Misclassification (O2)
+    misclasiffication_i = (y_attack != y_pred)
+    X_misclassified = X_attacks[misclasiffication_i]
+    misclassification_rate = X_misclassified.shape[0] / X_attacks.shape[0]
+
+    # Constraints (O3)
+    constraints = venus_constraints.evaluate(scaler.inverse_transform(X_misclassified))
+    constraints_violated = constraints.sum(axis=1) > 0
+    X_missclassified_constraints = X_misclassified[(1 - constraints_violated).astype(bool)]
+    misclasiffication_constraints_rate = X_missclassified_constraints.shape[0] / X_attacks.shape[0]
+
+    # Distance
     distances = np.array([np.linalg.norm(X_attacks[i]-X_initial_states[i]) for i in range(X_attacks.shape[0])])
+    distances = np.linalg.norm(X_attacks-X_initial_states, axis=1)
     distance_mean = distances.mean()
-    print(X_attacks.shape, X_initial_states.shape)
 
+    # Shape and save metrics
     objectives = {
         "n_sample": X_initial_states.shape[0],
-        "gross_success_rate": np.array([gross_success_rate]),
-        "real_success_rate": np.array([net_success_rate]),
+        "gross_success_rate": np.array([misclassification_rate]),
+        "real_success_rate": np.array([misclasiffication_constraints_rate]),
         "L2_distance": distance_mean
     }
-    history_df = pd.DataFrame.from_dict(objectives)
-    history_df.to_csv(OBJECTIVES_PATH)
-    print(objectives)
+    objectives_df = pd.DataFrame.from_dict(objectives)
+
+    logging.info(objectives)
+    objectives_df.to_csv(OBJECTIVES_PATH)
 
 
 if __name__ == "__main__":
