@@ -2,12 +2,13 @@
   "paths": {
     "model": "../out/static/model.joblib",
     "x_candidates": "../out/static/x_attack_candidate.npy",
-    "objectives": "../out/attacks/01_papernot/objectives_all.csv",
-    "attack_results": "../out/attacks/01_papernot/results_all.npy"
+    "objectives": "../out/attacks/01_papernot/objectives.csv",
+    "attack_results": "../out/attacks/01_papernot/results.npy",
+    "scaler": "../out/data_scaler.pickle"
   },
   "threshold": 0.24,
-  "n_initial_state": 4000,
+  "n_initial_state": -1,
   "nb_estimators": 10,
-  "nb_iterations": 1000,
+  "nb_iterations": 10,
   "initial_state_offset": 0
 }
