@@ -5,20 +5,9 @@ from art.classifiers import KerasClassifier as kc
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
 from utils import in_out
 from art.attacks.evasion import ProjectedGradientDescent as PGD
+import logging
 
 config = in_out.get_parameters()
-
-def print_score(label, prediction):
-    print("Test Result:\n================================================")
-    print(f"Accuracy Score: {accuracy_score(label, prediction) * 100:.2f}%")
-    print("_______________________________________________")
-    print("Classification Report:", end='')
-    print(f"\tPrecision Score: {precision_score(label, prediction) * 100:.2f}%")
-    print(f"\t\t\tRecall Score: {recall_score(label, prediction) * 100:.2f}%")
-    print(f"\t\t\tF1 score: {f1_score(label, prediction) * 100:.2f}%")
-    print(f"\t\t\tMCC score: {matthews_corrcoef(label, prediction) * 100:.2f}%")
-    print("_______________________________________________")
-    print(f"Confusion Matrix: \n {confusion_matrix(label, prediction)}\n")
 
 
 def run(
@@ -29,6 +18,7 @@ def run(
     INITIAL_STATE_OFFSET=config["initial_state_offset"],
     THRESHOLD=config["threshold"]
 ):
+    logging.basicConfig(level=logging.INFO)
     tf.compat.v1.disable_eager_execution()
     Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
 
@@ -40,7 +30,7 @@ def run(
                            INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
                            ]
 
-    print("Attacking with {} initial states.".format(X_initial_states.shape[0]))
+    logging.info(f"Attacking with {X_initial_states.shape[0]} initial states.")
 
     # ----- Load Model
 
@@ -51,12 +41,9 @@ def run(
     kc_classifier = kc(model)
     pgd = PGD(kc_classifier, eps=0.1, targeted=True, verbose=False)
     attacks = pgd.generate(x=X_initial_states, y=np.zeros(X_initial_states.shape[0]))
-    diff = kc_classifier.predict(X_initial_states)[:, 1] - kc_classifier.predict(attacks)[:, 1]
-    print("Prediction difference min: {}, avg: {}, max: {}".format(diff.min(), diff.mean(), diff.max()))
-    y_pred_proba = kc_classifier.predict(attacks)
-    y_attack = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
+    
+    logging.info(f"{attacks.shape[0]} attacks generated")
     np.save(ATTACK_RESULTS_PATH, attacks)
-    print("Success rate {}.".format((y_attack != np.ones(len(attacks))).sum()/len(attacks)))
 
 
 if __name__ == "__main__":
