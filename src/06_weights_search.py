@@ -21,6 +21,7 @@ from attacks.venus_encoder import VenusEncoder
 logging.getLogger().setLevel(logging.INFO)
 
 config = in_out.get_parameters()
+config["shift"] = int(sys.argv[2])
 
 def run(
     MODEL_PATH=config["paths"]["model"],
@@ -60,6 +61,10 @@ def run(
 
     # ----- Copy the initial states n_repetition times
     X_initial_states = np.repeat(X_initial_states, N_REPETITION, axis=0)
+
+    # ----- Add shift
+    for i in range(config["shift"]):
+        weight = np.random.uniform(WEIGHT_MIN, WEIGHT_MAX, 4)
 
     for i in range(N_WEIGHTS):
 
