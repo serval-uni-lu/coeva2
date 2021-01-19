@@ -95,7 +95,7 @@ def run(
 
         Pickler.save_to_file(
             efficient_results,
-            "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, RANDOM_SEED, i),
+            "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, config["shift"], i),
         )
 
 
