@@ -28,7 +28,8 @@ def plot_multiple(ax, data):
     data.boxplot(ax=ax, column=objectives_col)
 
 
-def run(METHODS=config["methods"]):
+def run(METHODS=config["methods"], OUTPUT_PATH=config["output_path"]):
+
     fig, ax = plt.subplots()
     for method in METHODS:
         data = pd.read_csv(method["path"])
@@ -50,7 +51,7 @@ def run(METHODS=config["methods"]):
     # ax.set_yticks(minor_ticks, minor=True)
     # ax.grid(which='minor', color='black', alpha=0.2)
     # ax.grid(which='major', color='black', alpha=0.4)
-    plt.savefig("plot.pdf")
+    plt.savefig(OUTPUT_PATH)
 
 
 if __name__ == "__main__":
