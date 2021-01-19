@@ -17,11 +17,14 @@ font = {"size": 16}
 plt.rc("font", **font)
 
 
-def plot_single(ax, data, style):
-    for i in range(n_objectives):
-        plt.plot(
-            i + 1, data[objectives_col[i]], style, axes=ax,
-        )
+def plot_single(ax, data, method):
+    x = [i + 1 for i in range(n_objectives)]
+    y = [data[objectives_col[i]] for i in range(n_objectives)]
+
+    a,  = plt.plot(
+        x, y, method["style"], axes=ax,
+    )
+    a.set_label(method["name"])
 
 
 def plot_multiple(ax, data):
@@ -36,9 +39,10 @@ def run(METHODS=config["methods"], OUTPUT_PATH=config["output_path"]):
         if len(data) > 1:
             plot_multiple(ax, data)
         else:
-            plot_single(ax, data, method["style"])
+            plot_single(ax, data, method)
 
-    ax.legend(["Original weights"])
+    # ax.legend(["Multi-objective (NSGA-II)","Multi-objective (NSGA-II)"])
+    ax.legend()
     plt.ylabel("Success rate")
     plt.xlabel("Objectives")
     fig.set_size_inches(11, 8)

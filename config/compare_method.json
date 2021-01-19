@@ -1,13 +1,19 @@
 {
   "methods": [
     {
-      "name":"Offspring optimised CoEvA2",
+      "name":"Multi-objective (NSGA-II)",
       "path":"../out/attacks/11_nsga2/objectives.csv",
       "style": "*"
-    },{
-      "name":"Coeva2 weights random search",
-      "path":"../out/attacks/10_weight_search/objectives.csv"
+    },
+    {
+      "name":"Weighted fitness function (by preference)",
+      "path":"../out/attacks/07_coeva2_all/objectives.csv",
+      "style": "^"
+    },
+    {
+      "name":"Weighted fitness function (random search)",
+      "path":"../out/attacks/10_weight_random_search/objectives.csv"
     }
   ],
-  "output_path": "../out/attacks/10_weight_search/plot_compare.pdf"
+  "output_path": "../out/attacks/10_weight_random_search/plot_compare.pdf"
 }
