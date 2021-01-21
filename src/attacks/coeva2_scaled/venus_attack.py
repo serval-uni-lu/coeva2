@@ -8,7 +8,7 @@ def attack(
     index, initial_state, model, scaler, encoder, n_gen, pop_size, n_offsprings, weight, save_history=False
 ):
 
-    print("Attack #{}.".format(index))
+    # print("Attack #{}.".format(index))
 
     # Copying shared resources
 

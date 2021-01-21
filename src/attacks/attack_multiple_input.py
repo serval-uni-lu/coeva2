@@ -3,6 +3,7 @@ from joblib import Parallel, delayed
 from attacks.coeva2_scaled.venus_attack import attack as coeva2_attack
 from attacks.nsga2_scaled.venus_attack import attack as nsga2_attack
 from attacks.constrained_random.venus_attack import attack as random_attack
+from tqdm import tqdm
 
 
 def attack(
@@ -33,7 +34,7 @@ def attack(
                 weight,
                 save_history=save_history
             )
-            for index, initial_state in enumerate(X_initial_states)
+            for index, initial_state in tqdm(enumerate(X_initial_states),  total=len(X_initial_states))
         )
     elif attack_type == "random":
         attack = random_attack
@@ -49,7 +50,7 @@ def attack(
                 n_offspring,
                 weight,
             )
-            for index, initial_state in enumerate(X_initial_states)
+            for index, initial_state in tqdm(enumerate(X_initial_states),  total=len(X_initial_states))
         )
     elif attack_type == "nsga2":
         attack = nsga2_attack
@@ -64,7 +65,7 @@ def attack(
                 pop_size,
                 n_offspring,
             )
-            for index, initial_state in enumerate(X_initial_states)
+            for index, initial_state in tqdm(enumerate(X_initial_states),  total=len(X_initial_states))
         )
 
     return results

@@ -14,7 +14,7 @@
   "n_initial_state": 1000,
   "n_repetition": 1,
   "threshold": 0.24,
-  "n_weights": 1,
+  "n_weights": 100,
   "n_gen": 625,
   "pop_size": 640,
   "n_offsprings": 320,
