@@ -21,7 +21,7 @@ def attack(
     results = None
     if attack_type == "coeva2":
         attack = coeva2_attack
-        results = Parallel(n_jobs=-1)(
+        results = Parallel(n_jobs=20)(
             delayed(attack)(
                 index,
                 initial_state,
