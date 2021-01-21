@@ -12,6 +12,7 @@ config = in_out.get_parameters()
 
 def run(
     HISTORY_PATH=config["paths"]["history"],
+    FIGURE_PATH=config["paths"]["figure"]
 ):
 
     history_df = pd.read_csv(HISTORY_PATH, low_memory=False)
@@ -27,11 +28,23 @@ def run(
     history_df["f3_max"] = 1/history_df["f3_max"]
     history_df["f3_min"] = 1/history_df["f3_min"]
 
-    for key in ["f1", "f2", "f3", "g1"]:
-        fig, ax = plt.subplots()
-        ax.plot(history_df.index, history_df["{}_mean".format(key)], '-', color="white")
-        ax.fill_between(x=history_df.index, y1=history_df["{}_min".format(key)], y2=history_df["{}_max".format(key)])
-        plt.show()
+    font = {'size': 16}
+    plt.rc('font', **font)
+
+    objectives = ["f1", "f2", "f3", "g1"]
+    scales = ['linear', 'linear', 'linear', 'linear']
+    y_labels = ['Prediction', 'L2 Perturbation', 'Overdraft', 'Constraint violation']
+    for i, key in enumerate(objectives):
+        fig, axs = plt.subplots(1, 1, figsize=(10,4))
+        ax = axs
+        ax.plot(history_df.index, history_df["{}_mean".format(key)], color='red', linewidth=4)
+        ax.fill_between(x=history_df.index, y1=history_df["{}_min".format(key)], y2=history_df["{}_max".format(key)],)
+        ax.set_yscale(scales[i])
+        ax.set_xlabel('Generation')
+        ax.set_ylabel(y_labels[i])
+        plt.tight_layout()
+        plt.savefig(f"{FIGURE_PATH}/fig_{key}.pdf")
+    
 
 
 if __name__ == "__main__":

@@ -5,7 +5,8 @@
     "x_candidates": "../out/static/x_attack_candidate.npy",
     "attack_results": "../out/attacks/07_coeva2_all/results.pickle",
     "objectives": "../out/attacks/07_coeva2_all/objectives.csv",
-    "history": "../out/attacks/07_coeva2_all/history_all.csv"
+    "history": "../out/attacks/07_coeva2_all/history_all.csv",
+    "figure": "../out/attacks/07_coeva2_all"
   },
   "algorithm": "coeva2",
   "weights": {
