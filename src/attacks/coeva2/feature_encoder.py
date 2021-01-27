@@ -2,7 +2,6 @@ from typing import Tuple
 
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
-import math
 
 ONEHOT_ENCODE_KEY = "ohe"
 
@@ -10,13 +9,11 @@ ONEHOT_ENCODE_KEY = "ohe"
 class FeatureEncoder:
     def __init__(
         self,
-        x_initial: np.ndarray,
         mutable_mask: np.ndarray,
         type_mask: np.ndarray,
         xl: np.ndarray,
         xu: np.ndarray,
     ) -> None:
-        self._x_initial = x_initial
         self.type_mask = type_mask
         self.mutable_mask = mutable_mask
         self._xl = xl
@@ -73,9 +70,9 @@ class FeatureEncoder:
     def _ml_to_mutable(self, x: np.ndarray) -> np.ndarray:
         return x[:, self.mutable_mask]
 
-    def _mutable_to_ml(self, x: np.ndarray) -> np.ndarray:
-        x_return = np.zeros((x.shape[0], self._x_initial.shape[0]))
-        x_return[:, ~self.mutable_mask] = self._x_initial[~self.mutable_mask]
+    def _mutable_to_ml(self, x: np.ndarray, x_initial_ml) -> np.ndarray:
+        x_return = np.zeros((x.shape[0], x_initial_ml.shape[0]))
+        x_return[:, ~self.mutable_mask] = x_initial_ml[~self.mutable_mask]
         x_return[:, self.mutable_mask] = x
         return x_return
 
@@ -111,8 +108,8 @@ class FeatureEncoder:
     def ml_to_genetic(self, x: np.ndarray) -> np.ndarray:
         return self._mutable_to_cat_encode(self._ml_to_mutable(x))
 
-    def genetic_to_ml(self, x: np.ndarray) -> np.ndarray:
-        return self._mutable_to_ml(self._cat_encode_to_mutable(x))
+    def genetic_to_ml(self, x: np.ndarray, x_initial_ml) -> np.ndarray:
+        return self._mutable_to_ml(self._cat_encode_to_mutable(x), x_initial_ml)
 
     def normalise(self, x: np.ndarray) -> np.ndarray:
         return self._min_max_scaler.transform(x)

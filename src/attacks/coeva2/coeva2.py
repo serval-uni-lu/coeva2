@@ -5,6 +5,7 @@ from pymoo.operators.mixed_variable_operator import (
     MixedVariableMutation,
 )
 from pymoo.optimize import minimize
+from tqdm import tqdm
 
 from .constraints import Constraints
 from .classifier import Classifier
@@ -15,6 +16,8 @@ from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 
 from .feature_encoder import FeatureEncoder
 from .problem import Coeva2Problem
+from copy import deepcopy
+from joblib import Parallel, delayed
 
 
 class Coeva2:
@@ -28,6 +31,10 @@ class Coeva2:
         n_gen=625,
         n_pop=640,
         n_offsprings=320,
+        scale_objectives=True,
+        save_history=False,
+        n_jobs=-1,
+        verbose=1,
     ) -> None:
 
         if weights is None:
@@ -48,6 +55,10 @@ class Coeva2:
         self._n_offsprings = n_offsprings
         self._n_pop = n_pop
         self._n_gen = n_gen
+        self._scale_objectives = scale_objectives
+        self._save_history = save_history
+        self._n_jobs = -1
+        self._verbose = verbose
 
         self._classifier.set_n_jobs(1)
         self._classifier.set_verbose(0)
@@ -58,6 +69,15 @@ class Coeva2:
                 f"Mutable mask has shape (n_features,): {self._encoder.mutable_mask.shape[0]}, x has shaper (n_sample, "
                 f"n_features): {x.shape}. n_features must be equal."
             )
+
+    def _create_encoder(self):
+        xl, xu = self._constraints.get_feature_min_max()
+        self.encoder = FeatureEncoder(
+            self._constraints.get_mutable_mask(),
+            self._constraints.get_feature_type(),
+            xl,
+            xu,
+        )
 
     def _create_algorithm(self) -> GeneticAlgorithm:
 
@@ -100,7 +120,20 @@ class Coeva2:
     def _one_generate(self, x):
         termination = get_termination("n_gen", self._n_gen)
         algorithm = self._create_algorithm()
-        problem = Coeva2Problem()
+        classifier = deepcopy(self._classifier)
+        constraints = deepcopy(self._constraints)
+        encoder = deepcopy(self._encoder)
+
+        problem = Coeva2Problem(
+            x_initial_state=x,
+            classifier=classifier,
+            encoder=encoder,
+            constraints=constraints,
+            alg=self._alg,
+            weights=self._weights,
+            scale_objectives=self._scale_objectives,
+            save_history=self._save_history,
+        )
         result = minimize(
             problem,
             algorithm,
@@ -108,12 +141,21 @@ class Coeva2:
             verbose=0,
             save_history=False,
         )
+        return result
 
     def generate(self, x: np.ndarray):
         self._check_input_size(x)
 
-        # For each x
-        # Copy element
-        # Create attack
-        # Create attack
-        # execute attack
+        if len(x.shape) != 2:
+            raise ValueError(f"{x.__name__} ({x.shape}) must have 2 dimensions.")
+
+        iterable = enumerate(x)
+        if self._verbose > 0:
+            iterable = tqdm(iterable, total=len(x))
+
+        results = Parallel(n_jobs=self._n_jobs)(
+            delayed(self._one_generate)(initial_state)
+            for index, initial_state in tqdm(enumerate(x), total=len(x))
+        )
+
+        return results

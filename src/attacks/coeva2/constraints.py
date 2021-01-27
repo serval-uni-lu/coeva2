@@ -1,9 +1,10 @@
 import abc
+from typing import Tuple
+
 import numpy as np
 
 
 class Constraints(abc.ABC, metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def evaluate(self, x: np.ndarray) -> np.ndarray:
         """
@@ -35,5 +36,15 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def get_feature_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def get_feature_type(self) -> np.ndarray:
         raise NotImplementedError
+
+    def check_constraints_error(self, x: np.ndarray):
+        constraints = self.evaluate(x)
+        constraints_violated = (constraints > 0).sum()
+        if constraints_violated > 0:
+            raise ValueError(f"Constraints not respected {constraints_violated} times.")

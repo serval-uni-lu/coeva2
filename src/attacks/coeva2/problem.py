@@ -65,7 +65,7 @@ class Coeva2Problem(Problem):
         self._f2_scaler.fit([[0], [np.sqrt(self._x_initial_ml.shape[0])]])
 
     def _evaluate(self, x, out, *args, **kwargs):
-        x_ml = self._encoder.genetic_to_ml(x)
+        x_ml = self._encoder.genetic_to_ml(x, self._x_initial_ml)
         x_ml_mm = self._encoder.normalise(x_ml)
 
         # f1 Maximize probability of target
