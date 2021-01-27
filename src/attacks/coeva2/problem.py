@@ -25,7 +25,7 @@ class Coeva2Problem(Problem):
     ):
         self._x_initial_ml = x_initial_state
         self._x_initial_ml_mm = encoder.normalise(x_initial_state)
-        self._x_initial_ga = encoder.ml_to_genetic(x_initial_state)
+        self._x_initial_ga = encoder.ml_to_genetic(x_initial_state.reshape(1, -1))[0]
         self._classifier = classifier
         self._constraints = constraints
         self._scale_objectives = scale_objectives
@@ -64,6 +64,12 @@ class Coeva2Problem(Problem):
         self._f2_scaler = MinMaxScaler(feature_range=(0, 1))
         self._f2_scaler.fit([[0], [np.sqrt(self._x_initial_ml.shape[0])]])
 
+    def get_initial_state(self):
+        return self._x_initial_ml
+
+    def get_history(self):
+        return self._history
+
     def _evaluate(self, x, out, *args, **kwargs):
         x_ml = self._encoder.genetic_to_ml(x, self._x_initial_ml)
         x_ml_mm = self._encoder.normalise(x_ml)
@@ -78,7 +84,7 @@ class Coeva2Problem(Problem):
         f2 = l2_distance
 
         # f3 Maximize amount (f3 don't need scaler if amount > 1)
-        amount = copy.deepcopy(x_ml[:, 0])
+        amount = copy.deepcopy(x_ml[:, self._constraints.get_amount_feature_index()])
         amount[amount <= 0] = AVOID_ZERO
         f3 = 1 / amount
 

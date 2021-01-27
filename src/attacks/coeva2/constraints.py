@@ -25,10 +25,31 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def normalise(self, x: np.ndarray) -> np.ndarray:
+        """Normalise the constraints
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Constraints value as return by evaluate.
+
+        Returns
+        -------
+        np.ndarray
+            Constraints in normalised format.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_constraints_min_max(self) -> np.ndarray:
+    def get_constraints_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Retrieve the minimum and maximum values of each constraint.
+
+        Returns
+        -------
+        min : np.ndarray
+            Minimum values.
+        max : np.ndarray]
+            Maximum values.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -41,6 +62,10 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_feature_type(self) -> np.ndarray:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_amount_feature_index(self) -> int:
         raise NotImplementedError
 
     def check_constraints_error(self, x: np.ndarray):

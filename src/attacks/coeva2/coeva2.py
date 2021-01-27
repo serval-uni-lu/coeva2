@@ -1,31 +1,32 @@
+from joblib import Parallel, delayed
+from tqdm import tqdm
+from copy import deepcopy
+
+import numpy as np
+
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
+from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
+from pymoo.algorithms.nsga2 import NSGA2
+from pymoo.algorithms.so_genetic_algorithm import GA
+from pymoo.optimize import minimize
 from pymoo.operators.mixed_variable_operator import (
     MixedVariableSampling,
     MixedVariableCrossover,
     MixedVariableMutation,
 )
-from pymoo.optimize import minimize
-from tqdm import tqdm
 
-from .constraints import Constraints
 from .classifier import Classifier
-import numpy as np
-from pymoo.algorithms.so_genetic_algorithm import GA
-from pymoo.algorithms.nsga2 import NSGA2
-from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
-
 from .feature_encoder import FeatureEncoder
 from .problem import Coeva2Problem
-from copy import deepcopy
-from joblib import Parallel, delayed
+from .constraints import Constraints
+from .result_process import HistoryResult, EfficientResult
 
 
 class Coeva2:
     def __init__(
         self,
-        constraints: Constraints,
         classifier: Classifier,
-        encoder: FeatureEncoder,
+        constraints: Constraints,
         alg="nsga2",
         weights=None,
         n_gen=625,
@@ -48,7 +49,7 @@ class Coeva2:
             raise NotImplementedError
         self._alg = alg
         self._constraints = constraints
-        self._encoder = encoder
+        self._encoder = None
         self._classifier = classifier
         self._weights = weights
 
@@ -57,11 +58,9 @@ class Coeva2:
         self._n_gen = n_gen
         self._scale_objectives = scale_objectives
         self._save_history = save_history
-        self._n_jobs = -1
+        self._n_jobs = n_jobs
         self._verbose = verbose
-
-        self._classifier.set_n_jobs(1)
-        self._classifier.set_verbose(0)
+        self._create_encoder()
 
     def _check_input_size(self, x: np.ndarray) -> None:
         if x.shape[1] != self._encoder.mutable_mask.shape[0]:
@@ -72,7 +71,7 @@ class Coeva2:
 
     def _create_encoder(self):
         xl, xu = self._constraints.get_feature_min_max()
-        self.encoder = FeatureEncoder(
+        self._encoder = FeatureEncoder(
             self._constraints.get_mutable_mask(),
             self._constraints.get_feature_type(),
             xl,
@@ -83,7 +82,7 @@ class Coeva2:
 
         type_mask = self._encoder.get_type_mask_genetic()
         sampling = MixedVariableSampling(
-            self._encoder,
+            type_mask,
             {"real": get_sampling("real_random"), "int": get_sampling("int_random")},
         )
 
@@ -139,9 +138,13 @@ class Coeva2:
             algorithm,
             termination,
             verbose=0,
-            save_history=False,
+            save_history=False,  # Implemented from library should always be False
         )
-        return result
+
+        if self._save_history:
+            return HistoryResult(result)
+        else:
+            return EfficientResult(result)
 
     def generate(self, x: np.ndarray):
         self._check_input_size(x)
@@ -153,9 +156,9 @@ class Coeva2:
         if self._verbose > 0:
             iterable = tqdm(iterable, total=len(x))
 
-        results = Parallel(n_jobs=self._n_jobs)(
+        processed_result = Parallel(n_jobs=self._n_jobs)(
             delayed(self._one_generate)(initial_state)
-            for index, initial_state in tqdm(enumerate(x), total=len(x))
+            for index, initial_state in iterable
         )
 
-        return results
+        return processed_result
