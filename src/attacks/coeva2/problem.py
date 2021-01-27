@@ -4,20 +4,25 @@ from pymoo.model.problem import Problem
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from .. import venus_constraints
-from ..classifier import Classifier
-from ..constraints import Constraints
-from ..feature_encoder import FeatureEncoder
+from .classifier import Classifier
+from .constraints import Constraints
+from .feature_encoder import FeatureEncoder
 
 AVOID_ZERO = 0.00000001
 
 
-class FitnessFunctionProblem(Problem):
-
-
-
-    def __init__(self, x_initial_state: np.ndarray, classifier: Classifier,
-                 encoder: FeatureEncoder, constraints: Constraints, scale_objectives=True, save_history=False):
+class Coeva2Problem(Problem):
+    def __init__(
+        self,
+        x_initial_state: np.ndarray,
+        classifier: Classifier,
+        encoder: FeatureEncoder,
+        constraints: Constraints,
+        alg="nsga2",
+        weights=None,
+        scale_objectives=True,
+        save_history=False,
+    ):
         self._x_initial_ml = x_initial_state
         self._x_initial_ml_mm = encoder.normalise(x_initial_state)
         self._x_initial_ga = encoder.ml_to_genetic(x_initial_state)
@@ -27,6 +32,9 @@ class FitnessFunctionProblem(Problem):
         self._save_history = save_history
         self._encoder = encoder
         xl, xu = encoder.get_min_max_genetic()
+        self._weights = weights
+        self._alg = alg
+
         self._history = {
             "f1": [],
             "f2": [],
@@ -34,8 +42,21 @@ class FitnessFunctionProblem(Problem):
             "g1": [],
         }
         self._init_objective_scaler()
-        super().__init__(n_var=len(self._x_initial_ga.shape[0]), n_obj=1, n_constr=constraints.get_nb_constraints(),
-                         xl=xl, xu=xu)
+        self._alg = alg
+        if self._alg == "nsga2":
+            n_obj = 3
+        elif self._alg == "wff":
+            n_obj = 1
+        else:
+            raise NotImplementedError
+
+        super().__init__(
+            n_var=self._encoder.get_genetic_v_length(),
+            n_obj=n_obj,
+            n_constr=constraints.get_nb_constraints(),
+            xl=xl,
+            xu=xu,
+        )
 
     def _init_objective_scaler(self):
         self._f1_scaler = MinMaxScaler(feature_range=(0, 1))
@@ -44,7 +65,6 @@ class FitnessFunctionProblem(Problem):
         self._f2_scaler.fit([[0], [np.sqrt(self._x_initial_ml.shape[0])]])
 
     def _evaluate(self, x, out, *args, **kwargs):
-
         x_ml = self._encoder.genetic_to_ml(x)
         x_ml_mm = self._encoder.normalise(x_ml)
 
@@ -69,7 +89,21 @@ class FitnessFunctionProblem(Problem):
         if self._scale_objectives:
             f1 = self._f1_scaler.transform(f1.reshape(-1, 1))[:, 0]
             f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
-            constraints = self.encoder.constraint_scaler.transform(constraints)
+            constraints = self._constraints.normalise(constraints)
 
-        out["F"] = np.column_stack([f1, f2, f3])
-        out["G"] = constraints
+        if self._alg == "nsga2":
+            out["F"] = np.column_stack([f1, f2, f3])
+            out["G"] = constraints
+        elif self._alg == "wff":
+            out["F"] = (
+                self._weights["alpha"] * f1
+                + self._weights["beta"] * f2
+                + self._weights["gamma"] * f3
+            )
+            out["G"] = constraints * self._weights["delta"]
+
+        if self._save_history:
+            self._history["f1"].append(f1)
+            self._history["f2"].append(f2)
+            self._history["f3"].append(f3)
+            self._history["g1"].append(constraints)

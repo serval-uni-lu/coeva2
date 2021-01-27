@@ -21,3 +21,19 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_nb_constraints(self) -> int:
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def normalise(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_constraints_min_max(self) -> np.ndarray:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_mutable_mask(self) -> np.ndarray:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_feature_type(self) -> np.ndarray:
+        raise NotImplementedError
