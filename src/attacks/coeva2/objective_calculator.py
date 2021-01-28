@@ -4,7 +4,7 @@ from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.constraints import Constraints
 import numpy as np
 
-from attacks.coeva2.feature_encoder import FeatureEncoder, get_encoder_from_constraints
+from attacks.coeva2.feature_encoder import get_encoder_from_constraints
 from attacks.coeva2.result_process import EfficientResult
 
 
