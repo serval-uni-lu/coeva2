@@ -17,10 +17,10 @@
     "gamma": 100,
     "delta": 1000
   },
-  "n_gen": 625,
+  "n_gen": 5,
   "pop_size": 640,
   "n_offsprings": 320,
-  "n_initial_state": 100,
+  "n_initial_state": 10,
   "save_history": false,
   "random_seed": 0,
   "n_repetition": 1,

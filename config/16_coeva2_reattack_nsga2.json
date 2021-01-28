@@ -4,8 +4,8 @@
     "features": "../data/lcld/features.csv",
     "constraints": "../data/lcld/constraints.csv",
     "x_candidates": "../out/static/x_attack_candidate.npy",
-    "attack_results": "../out/attacks/14_coeva2_reattack_coeva2/results.pickle",
-    "objectives": "../out/attacks/14_coeva2_reattack_coeva2/objectives.csv"
+    "attack_results": "../out/attacks/16_coeva2_reattack_nsga2/results.pickle",
+    "objectives": "../out/attacks/16_coeva2_reattack_nsga2/objectives.csv"
   },
   "threshold": 0.24,
   "amount_feature_index": 0,
@@ -17,10 +17,10 @@
     "gamma": 100,
     "delta": 1000
   },
-  "n_gen": 625,
+  "n_gen": 5,
   "pop_size": 640,
   "n_offsprings": 320,
-  "n_initial_state": 100,
+  "n_initial_state": 10,
   "save_history": false,
   "random_seed": 0,
   "n_repetition": 1,
