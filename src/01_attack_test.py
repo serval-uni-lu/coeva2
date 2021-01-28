@@ -71,6 +71,7 @@ def run(
         N_GEN,
         POP_SIZE,
         N_OFFSPRINGS,
+        save_history=save_history
     )
 
     efficient_results = coeva2.generate(X_initial_states)
