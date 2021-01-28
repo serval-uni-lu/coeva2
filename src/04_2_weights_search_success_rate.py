@@ -28,19 +28,35 @@ out_columns = [
 def process(results, objective_calculator):
 
     success_rates = objective_calculator.success_rate(results)
-    return np.concatenate(
-        [
-            np.array(
-                [
-                    results[0].weights["alpha"],
-                    results[0].weights["beta"],
-                    results[0].weights["gamma"],
-                    results[0].weights["delta"],
-                ]
-            ),
-            success_rates,
-        ]
-    )
+    # Backward compatibility
+    if hasattr(results[0], "weights"):
+        return np.concatenate(
+            [
+                np.array(
+                    [
+                        results[0].weights["alpha"],
+                        results[0].weights["beta"],
+                        results[0].weights["gamma"],
+                        results[0].weights["delta"],
+                    ]
+                ),
+                success_rates,
+            ]
+        )
+    elif hasattr(results[0], "weight"):
+        return np.concatenate(
+            [
+                np.array(
+                    [
+                        results[0].weight["alpha"],
+                        results[0].weight["beta"],
+                        results[0].weight["gamma"],
+                        results[0].weight["delta"],
+                    ]
+                ),
+                success_rates,
+            ]
+        )
 
 
 def run():
