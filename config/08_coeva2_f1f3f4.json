@@ -1,24 +1,29 @@
 {
   "paths": {
-    "scaler": "../out/data_scaler.pickle",
     "model": "../out/static/model.joblib",
+    "features": "../data/lcld/features.csv",
+    "constraints": "../data/lcld/constraints.csv",
     "x_candidates": "../out/static/x_attack_candidate.npy",
     "attack_results": "../out/attacks/08_coeva2_f1f3f4/results.pickle",
     "objectives": "../out/attacks/08_coeva2_f1f3f4/objectives.csv"
   },
-  "algorithm": "coeva2",
+  "threshold": 0.24,
+  "amount_feature_index": 0,
+  "high_amount": 10000,
+  "algorithm": "wff",
   "weights": {
     "alpha": 2,
     "beta": 0,
     "gamma": 100,
     "delta": 1000
   },
-  "n_gen": 625,
+  "n_gen": 5,
   "pop_size": 640,
   "n_offsprings": 320,
+  "n_initial_state": 10,
+  "save_history": false,
   "random_seed": 0,
-  "n_initial_state": 4000,
   "n_repetition": 1,
-  "threshold": 0.24,
-  "initial_state_offset": 0
+  "initial_state_offset": 0,
+  "n_jobs": -1
 }

@@ -17,7 +17,7 @@ config = in_out.get_parameters()
 
 
 def run():
-    Path(config["dirs"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
+    Path(config["dirs"]["attack_results"]).mkdir(parents=True, exist_ok=True)
 
     save_history = False
     if "save_history" in config:
@@ -74,6 +74,7 @@ def run():
             pop_size,
             n_offsprings,
             save_history=save_history,
+            n_jobs=config["n_jobs"]
         )
 
         efficient_results = coeva2.generate(X_initial_states)

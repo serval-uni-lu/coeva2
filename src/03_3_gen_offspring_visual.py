@@ -19,8 +19,8 @@ config = in_out.get_parameters()
 N_OBJECTIVES = 4
 
 
-def run(OBJECTIVES_PATH=config["paths"]["objectives"]):
-    df = pd.read_csv(OBJECTIVES_PATH)
+def run():
+    df = pd.read_csv(config["paths"]["objectives"])
     df.sort_values(by=["n_offsprings"], inplace=True)
     fig, ax = plt.subplots()
     for i in range(N_OBJECTIVES):
@@ -28,8 +28,10 @@ def run(OBJECTIVES_PATH=config["paths"]["objectives"]):
 
     plt.ylabel("Success rate")
     fig.set_size_inches(11, 8)
-    plt.subplots_adjust(top=0.95, bottom=0.12, left=0.13, right=0.92, wspace = 0.3, hspace=0.3)
-    plt.savefig("plot.pdf")
+    plt.subplots_adjust(
+        top=0.95, bottom=0.12, left=0.13, right=0.92, wspace=0.3, hspace=0.3
+    )
+    plt.savefig(config["paths"]["figure"])
 
 
 if __name__ == "__main__":

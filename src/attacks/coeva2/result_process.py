@@ -11,8 +11,7 @@ class EfficientResult:
             self.n_gen = result.algorithm.n_gen
             self.pop_size = result.algorithm.pop_size
             self.n_offsprings = result.algorithm.n_offsprings
-            if hasattr(result.problem, "weights"):
-                self.weight = result.problem.weight
+            self.weights = result.problem.get_weights()
 
 
 class HistoryResult(EfficientResult):

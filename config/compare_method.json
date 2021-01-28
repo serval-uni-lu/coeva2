@@ -1,19 +1,19 @@
 {
   "methods": [
     {
-      "name":"Multi-objective (NSGA-II)",
+      "name":"Pareto Front (NSGA-II)",
       "path":"../out/attacks/11_nsga2/objectives.csv",
       "style": "*"
     },
     {
-      "name":"Weighted fitness function (by preference)",
+      "name":"Weighted Fitness Function\n(by preference)",
       "path":"../out/attacks/07_coeva2_all/objectives.csv",
       "style": "^"
     },
     {
       "name":"Weighted fitness function (random search)",
-      "path":"../out/attacks/10_weight_random_search/objectives.csv"
+      "path":"../out/attacks/10_weights_search/objectives.csv"
     }
   ],
-  "output_path": "../out/attacks/10_weight_random_search/plot_compare.pdf"
+  "output_path": "../out/attacks/10_weights_search/figure_compare.pdf"
 }

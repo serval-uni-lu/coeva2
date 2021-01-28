@@ -32,10 +32,10 @@ def process(results, objective_calculator):
         [
             np.array(
                 [
-                    results[0].weight["alpha"],
-                    results[0].weight["beta"],
-                    results[0].weight["gamma"],
-                    results[0].weight["delta"],
+                    results[0].weights["alpha"],
+                    results[0].weights["beta"],
+                    results[0].weights["gamma"],
+                    results[0].weights["delta"],
                 ]
             ),
             success_rates,
@@ -43,12 +43,7 @@ def process(results, objective_calculator):
     )
 
 
-def run(
-    ATTACK_RESULTS_DIR=config["dirs"]["attack_results"],
-    OBJECTIVES_PATH=config["paths"]["objectives"],
-    THRESHOLD=config["threshold"],
-    MODEL_PATH=config["paths"]["model"],
-):
+def run():
 
     classifier = Classifier(load(config["paths"]["model"]))
     constraints = LcldConstraints(
@@ -66,14 +61,14 @@ def run(
 
     success_rates = np.array(
         pickle_from_dir(
-            ATTACK_RESULTS_DIR,
+            config["dirs"]["attack_results"],
             handler=lambda i, x: process(x, objective_calculator),
             n_jobs=10
         )
     )
 
     success_rates_df = pd.DataFrame(success_rates, columns=out_columns)
-    success_rates_df.to_csv(OBJECTIVES_PATH, index=False)
+    success_rates_df.to_csv(config["paths"]["objectives"], index=False)
 
 
 if __name__ == "__main__":

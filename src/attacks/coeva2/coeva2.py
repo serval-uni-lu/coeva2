@@ -16,7 +16,7 @@ from pymoo.operators.mixed_variable_operator import (
 )
 
 from .classifier import Classifier
-from .feature_encoder import FeatureEncoder, get_encoder_from_constraints
+from .feature_encoder import get_encoder_from_constraints
 from .problem import Coeva2Problem
 from .constraints import Constraints
 from .result_process import HistoryResult, EfficientResult
@@ -135,7 +135,8 @@ class Coeva2:
         if self._save_history:
             return HistoryResult(result)
         else:
-            return EfficientResult(result)
+            result = EfficientResult(result)
+            return (result)
 
     def generate(self, x: np.ndarray):
         self._check_input_size(x)

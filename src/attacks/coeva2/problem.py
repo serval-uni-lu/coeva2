@@ -70,6 +70,9 @@ class Coeva2Problem(Problem):
     def get_history(self):
         return self._history
 
+    def get_weights(self):
+        return self._weights
+
     def _evaluate(self, x, out, *args, **kwargs):
         x_ml = self._encoder.genetic_to_ml(x, self._x_initial_ml)
         x_ml_mm = self._encoder.normalise(x_ml)

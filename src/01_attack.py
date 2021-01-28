@@ -58,6 +58,7 @@ def run():
         config["pop_size"],
         config["n_offsprings"],
         save_history=save_history,
+        n_jobs=config["n_jobs"]
     )
 
     efficient_results = coeva2.generate(X_initial_states)

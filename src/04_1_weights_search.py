@@ -3,11 +3,10 @@ import sys
 
 from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.coeva2 import Coeva2
+from attacks.coeva2.lcld_constraints import LcldConstraints
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-from attacks import attack_multiple_input
-from attacks.result_process import EfficientResult
 
 import random
 import logging
@@ -18,25 +17,14 @@ from joblib import load
 
 from utils import Pickler, in_out
 
-from attacks import venus_constraints
-from attacks.venus_encoder import VenusEncoder
 
 logging.getLogger().setLevel(logging.INFO)
 
 config = in_out.get_parameters()
-config["shift"] = int(sys.argv[2])
 
-def run(
-    ATTACK_RESULTS_DIR=config["dirs"]["attack_results"],
-    ALGORITHM=config["algorithm"],
-    N_GEN=config["n_gen"],
-    POP_SIZE=config["pop_size"],
-    N_OFFSPRINGS=config["n_offsprings"],
-    N_WEIGHTS=config["n_weights"],
-    WEIGHT_MIN=config["weight_min"],
-    WEIGHT_MAX=config["weight_max"],
-):
-    Path(config["dirs"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
+
+def run():
+    Path(config["dirs"]["attack_results"]).mkdir(parents=True, exist_ok=True)
 
     save_history = False
     if "save_history" in config:
@@ -47,9 +35,9 @@ def run(
     classifier = Classifier(load(config["paths"]["model"]))
     X_initial_states = np.load(config["paths"]["x_candidates"])
     X_initial_states = X_initial_states[
-                       config["initial_state_offset"]: config["initial_state_offset"]
-                                                       + config["n_initial_state"]
-                       ]
+        config["initial_state_offset"] : config["initial_state_offset"]
+        + config["n_initial_state"]
+    ]
     constraints = LcldConstraints(
         config["amount_feature_index"],
         config["paths"]["features"],
@@ -68,10 +56,10 @@ def run(
     X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
 
     # ----- Add shift
-    for i in range(config["shift"]):
+    for i in range(config["weight_shift"]):
         weights = np.random.uniform(config["weight_min"], config["weight_max"], 4)
 
-    for i in range(N_WEIGHTS):
+    for i in range(config["n_weights"]):
 
         weights = np.random.uniform(config["weight_min"], config["weight_max"], 4)
         weights = {
@@ -81,7 +69,7 @@ def run(
             "delta": weights[3],
         }
 
-        logging.info("Parameters: {} ({}/{})".format(weights, i + 1, N_WEIGHTS))
+        logging.info("Parameters: {} ({}/{})".format(weights, i + 1, config["n_weights"]))
 
         # Initial state loop (threaded)
         coeva2 = Coeva2(
@@ -93,13 +81,16 @@ def run(
             config["pop_size"],
             config["n_offsprings"],
             save_history=save_history,
+            n_jobs=config["n_jobs"],
         )
 
         efficient_results = coeva2.generate(X_initial_states)
 
         Pickler.save_to_file(
             efficient_results,
-            "{}/results_{}_{}.pickle".format(ATTACK_RESULTS_DIR, config["shift"], i),
+            "{}/results_{}_{}.pickle".format(
+                config["dirs"]["attack_results"], config["weight_shift"], i
+            ),
         )
 
 
