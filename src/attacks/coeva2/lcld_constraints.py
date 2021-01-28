@@ -11,20 +11,12 @@ class LcldConstraints(Constraints):
     def __init__(
         self,
         amount_feature_index: int,
-        constraints_min=None,
-        constraints_max=None,
-        feature_min=None,
-        feature_max=None,
-        mutable_mask=None,
-        feature_type=None,
+        feature_path: str,
+        constraints_path: str,
     ):
-        self._constraints_min = constraints_min
-        self._constraints_max = constraints_max
-        self._feature_min = feature_min
-        self._feature_max = feature_max
-        self._mutable_mask = mutable_mask
-        self._feature_type = feature_type
-        self._scaler = None
+        self._provision_constraints_min_max(constraints_path)
+        self._provision_feature_constraints(feature_path)
+        self._fit_scaler()
         self._amount_feature_index = amount_feature_index
 
     def _fit_scaler(self) -> None:
@@ -119,14 +111,14 @@ class LcldConstraints(Constraints):
     def get_amount_feature_index(self) -> int:
         return self._amount_feature_index
 
-    def provision_feature_constraints(self, path: str) -> None:
+    def _provision_feature_constraints(self, path: str) -> None:
         df = pd.read_csv(path, low_memory=False)
         self._feature_min = df["min"].to_numpy()
         self._feature_max = df["max"].to_numpy()
         self._mutable_mask = df["mutable"].to_numpy()
         self._feature_type = df["type"].to_numpy()
 
-    def provision_constraints_min_max(self, path: str) -> None:
+    def _provision_constraints_min_max(self, path: str) -> None:
         df = pd.read_csv(path, low_memory=False)
         self._constraints_min = df["min"].to_numpy()
         self._constraints_max = df["max"].to_numpy()

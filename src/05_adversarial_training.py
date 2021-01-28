@@ -1,7 +1,8 @@
 from joblib import load, dump
 
-from attacks.objectives import adversarial_training
-from attacks.venus_encoder import VenusEncoder
+from attacks.coeva2.classifier import Classifier
+from attacks.coeva2.lcld_constraints import LcldConstraints
+from attacks.coeva2.objective_calculator import ObjectiveCalculator
 from utils import Pickler, in_out
 import numpy as np
 from sklearn.base import clone
@@ -17,12 +18,25 @@ def run(
     TRAIN_TEST_DATA_DIR=config["dirs"]["train_test_data"],
     THRESHOLD=config["threshold"],
 ):
+    
     model = load(MODEL_PATH)
     model.set_params(verbose=0, n_jobs=1)
-    encoder = VenusEncoder()
+    classifier = Classifier(model)
+    constraints = LcldConstraints(
+        config["amount_feature_index"],
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+    objective_calculator = ObjectiveCalculator(
+        classifier,
+        constraints,
+        config["threshold"],
+        config["high_amount"],
+        config["amount_feature_index"]
+    )
 
     attack_results = Pickler.load_from_file(ATTACK_RESULTS_PATH)
-    X_adv = adversarial_training(attack_results, encoder, THRESHOLD, model)
+    X_adv = objective_calculator.get_successful_attacks(attack_results)
     y_adv = np.zeros(X_adv.shape[0]) + 1
 
     X_train = np.load("{}/X_train.npy".format(TRAIN_TEST_DATA_DIR))

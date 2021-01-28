@@ -4,6 +4,8 @@ from utils import Pickler
 class EfficientResult:
     def __init__(self, result=None):
         if result is not None:
+            if hasattr(result.problem, "alg"):
+                self.alg = result.problem.alg
             self.pop = result.pop
             self.initial_state = result.problem.get_initial_state()
             self.n_gen = result.algorithm.n_gen

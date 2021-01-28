@@ -4,7 +4,7 @@ from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.constraints import Constraints
 import numpy as np
 
-from attacks.coeva2.feature_encoder import FeatureEncoder
+from attacks.coeva2.feature_encoder import FeatureEncoder, get_encoder_from_constraints
 from attacks.coeva2.result_process import EfficientResult
 
 
@@ -13,14 +13,13 @@ class ObjectiveCalculator:
         self,
         classifier: Classifier,
         constraints: Constraints,
-        encoder: FeatureEncoder,
         threshold: float,
         high_amount: int,
         amount_index: int,
     ):
         self._classifier = classifier
         self._constraints = constraints
-        self._encoder = encoder
+        self._encoder = get_encoder_from_constraints(constraints)
         self._threshold = threshold
         self._high_amount = high_amount
         self._amount_index = amount_index

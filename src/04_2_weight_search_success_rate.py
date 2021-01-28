@@ -2,6 +2,9 @@ import pandas as pd
 from joblib import load
 import numpy as np
 
+from attacks.coeva2.classifier import Classifier
+from attacks.coeva2.lcld_constraints import LcldConstraints
+from attacks.coeva2.objective_calculator import ObjectiveCalculator
 from attacks.objectives import calculate_success_rates
 from attacks.venus_encoder import VenusEncoder
 from utils import Pickler, in_out
@@ -22,10 +25,9 @@ out_columns = [
 ]
 
 
-def process(i, results, encoder, threshold, model):
+def process(results, objective_calculator):
 
-    print("Processing at index {}".format(i))
-    success_rates = calculate_success_rates(results, encoder, threshold, model)
+    success_rates = objective_calculator.success_rate(results)
     return np.concatenate(
         [
             np.array(
@@ -47,15 +49,26 @@ def run(
     THRESHOLD=config["threshold"],
     MODEL_PATH=config["paths"]["model"],
 ):
-    print("Hello world!")
-    model = load(MODEL_PATH)
-    model.set_params(verbose=0, n_jobs=1)
-    encoder = VenusEncoder()
+
+    classifier = Classifier(load(config["paths"]["model"]))
+    constraints = LcldConstraints(
+        config["amount_feature_index"],
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+    objective_calculator = ObjectiveCalculator(
+        classifier,
+        constraints,
+        config["threshold"],
+        config["high_amount"],
+        config["amount_feature_index"]
+    )
 
     success_rates = np.array(
         pickle_from_dir(
             ATTACK_RESULTS_DIR,
-            handler=(lambda i, x: process(i, x, encoder, THRESHOLD, model)),
+            handler=lambda i, x: process(x, objective_calculator),
+            n_jobs=10
         )
     )
 

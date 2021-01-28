@@ -4,6 +4,8 @@ import numpy as np
 import pickle
 import json
 import glob
+from tqdm import tqdm
+from joblib import Parallel, delayed
 
 # Using pickle
 
@@ -13,22 +15,23 @@ def pickle_from_file(path):
         return pickle.load(f)
 
 
-def pickle_from_dir(input_dir, handler=None):
+def pickle_from_dir(input_dir, handler=None, n_jobs=1):
     files_regex = input_dir + "/*.pickle"
     files = glob.glob(files_regex)
     obj_list = []
 
-    for file_i, file in enumerate(files):
+    if handler == None:
+        handler = lambda i, x: id_function(x)
+
+    def load_handle(file_i, file):
         with open(file, "rb") as f:
-            print("Loading object")
             obj = pickle.load(f)
-            if handler is None:
-                obj_list.append(obj)
-            else:
-                print("Using handler")
-                obj_list.append(handler(file_i, obj))
-            obj = 0
-    return obj_list
+            return handler(file_i, obj)
+
+    return Parallel(n_jobs=n_jobs)(
+        delayed(load_handle)(file_i, file)
+        for file_i, file in tqdm(enumerate(files), total=len(files))
+    )
 
 
 def pickle_to_file(obj, path):
@@ -43,7 +46,12 @@ def load_from_file(path):
     return np.load(path)
 
 
-def load_from_dir(input_dir, handler=None):
+def id_function(obj):
+    return obj
+
+
+def load_from_dir(input_dir, handler=None, n_jobs=-1):
+
     files_regex = input_dir + "/*.npy"
     files = glob.glob(files_regex)
     obj_list = []

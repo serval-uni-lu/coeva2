@@ -3,6 +3,8 @@ from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
+from attacks.coeva2.constraints import Constraints
+
 ONEHOT_ENCODE_KEY = "ohe"
 
 
@@ -97,7 +99,7 @@ class FeatureEncoder:
         result = np.empty((x.shape[0], self.get_genetic_v_length()))
 
         # Put the not one encoded feature at the beginning
-        result[:, :self._no_one_hot_mask.sum()] = x[:, self._no_one_hot_mask]
+        result[:, : self._no_one_hot_mask.sum()] = x[:, self._no_one_hot_mask]
 
         # Put the cat value at the end
         for index, mask in enumerate(self._one_hot_masks):
@@ -135,14 +137,16 @@ class FeatureEncoder:
 
     def get_min_max_genetic(self) -> Tuple[np.ndarray, np.ndarray]:
 
-        min_max = np.array([self._ml_to_mutable(self._xl), self._ml_to_mutable(self._xu)])
+        min_max = np.array(
+            [self._ml_to_mutable(self._xl), self._ml_to_mutable(self._xu)]
+        )
         result = np.empty((min_max.shape[0], self.get_genetic_v_length()))
 
         # Put the not one encoded feature at the beginning
         result[:, : self._no_one_hot_mask.sum()] = min_max[:, self._no_one_hot_mask]
 
         min_one_hot = np.zeros(len(self._one_hot_masks))
-        max_one_hot = np.array([mask.shape[0]-1 for mask in self._one_hot_masks])
+        max_one_hot = np.array([mask.shape[0] - 1 for mask in self._one_hot_masks])
 
         for index, mask in enumerate(self._one_hot_masks):
             result[:, self._no_one_hot_mask.sum() + index] = np.array(
@@ -160,9 +164,21 @@ class FeatureEncoder:
         result = np.empty(self.get_genetic_v_length(), dtype=object)
 
         # Put the not one encoded feature at the beginning
-        result[:self._no_one_hot_mask.sum()] = self._ml_to_mutable(self.type_mask)[self._no_one_hot_mask]
+        result[: self._no_one_hot_mask.sum()] = self._ml_to_mutable(self.type_mask)[
+            self._no_one_hot_mask
+        ]
 
         for index, mask in enumerate(self._one_hot_masks):
             result[self._no_one_hot_mask.sum() + index] = "int"
 
         return result
+
+
+def get_encoder_from_constraints(constraints: Constraints) -> FeatureEncoder:
+    xl, xu = constraints.get_feature_min_max()
+    return FeatureEncoder(
+        constraints.get_mutable_mask(),
+        constraints.get_feature_type(),
+        xl,
+        xu,
+    )

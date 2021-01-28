@@ -16,7 +16,7 @@ from pymoo.operators.mixed_variable_operator import (
 )
 
 from .classifier import Classifier
-from .feature_encoder import FeatureEncoder
+from .feature_encoder import FeatureEncoder, get_encoder_from_constraints
 from .problem import Coeva2Problem
 from .constraints import Constraints
 from .result_process import HistoryResult, EfficientResult
@@ -60,7 +60,7 @@ class Coeva2:
         self._save_history = save_history
         self._n_jobs = n_jobs
         self._verbose = verbose
-        self._create_encoder()
+        self._encoder = get_encoder_from_constraints(self._constraints)
 
     def _check_input_size(self, x: np.ndarray) -> None:
         if x.shape[1] != self._encoder.mutable_mask.shape[0]:
@@ -68,15 +68,6 @@ class Coeva2:
                 f"Mutable mask has shape (n_features,): {self._encoder.mutable_mask.shape[0]}, x has shaper (n_sample, "
                 f"n_features): {x.shape}. n_features must be equal."
             )
-
-    def _create_encoder(self):
-        xl, xu = self._constraints.get_feature_min_max()
-        self._encoder = FeatureEncoder(
-            self._constraints.get_mutable_mask(),
-            self._constraints.get_feature_type(),
-            xl,
-            xu,
-        )
 
     def _create_algorithm(self) -> GeneticAlgorithm:
 

@@ -1,83 +1,67 @@
 import warnings
 
-warnings.simplefilter(action="ignore", category=FutureWarning)
+from attacks.coeva2.lcld_constraints import LcldConstraints
+
 import random
 from pathlib import Path
 import numpy as np
 from joblib import load
 from utils import Pickler, in_out
-from attacks import venus_constraints, attack_multiple_input
-from attacks.venus_encoder import VenusEncoder
-from attacks.result_process import EfficientResult, HistoryResult
+from attacks.coeva2.classifier import Classifier
+from attacks.coeva2.coeva2 import Coeva2
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 config = in_out.get_parameters()
 
 
-def run(
-    MODEL_PATH=config["paths"]["model"],
-    SCALER_PATH=config["paths"]["scaler"],
-    X_ATTACK_CANDIDATES_PATH=config["paths"]["x_candidates"],
-    ATTACK_RESULTS_PATH=config["paths"]["attack_results"],
-    N_GEN=config["n_gen"],
-    POP_SIZE=config["pop_size"],
-    N_OFFSPRINGS=config["n_offsprings"],
-    WEIGHT=config["weights"],
-    RANDOM_SEED=config["random_seed"],
-    N_INITIAL_STATE=config["n_initial_state"],
-    N_REPETITION=config["n_repetition"],
-    ALGORITHM=config["algorithm"],
-    INITIAL_STATE_OFFSET=config["initial_state_offset"],
-):
+def run():
+    Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 
-    Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
-
-    save_history=False
+    save_history = False
     if "save_history" in config:
-        save_history=config["save_history"]
+        save_history = config["save_history"]
 
     # ----- Load and create necessary objects
 
-    model = load(MODEL_PATH)
-    model.set_params(verbose=0, n_jobs=1)
-    X_initial_states = np.load(X_ATTACK_CANDIDATES_PATH)
-    scaler = Pickler.load_from_file(SCALER_PATH)
-    encoder = VenusEncoder()
+    classifier = Classifier(load(config["paths"]["model"]))
+    X_initial_states = np.load(config["paths"]["x_candidates"])
     X_initial_states = X_initial_states[
-        INITIAL_STATE_OFFSET : INITIAL_STATE_OFFSET + N_INITIAL_STATE
+        config["initial_state_offset"] : config["initial_state_offset"]
+        + config["n_initial_state"]
     ]
+    constraints = LcldConstraints(
+        config["amount_feature_index"],
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
 
     # ----- Check constraints
 
-    venus_constraints.respect_constraints_or_exit(X_initial_states)
+    constraints.check_constraints_error(X_initial_states)
 
     # ----- Set random seed
-    random.seed(RANDOM_SEED)
-    np.random.seed(RANDOM_SEED)
+    random.seed(config["random_seed"])
+    np.random.seed(config["random_seed"])
 
     # ----- Copy the initial states n_repetition times
-    X_initial_states = np.repeat(X_initial_states, N_REPETITION, axis=0)
+    X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
 
     # Initial state loop (threaded)
 
-    results = attack_multiple_input.attack(
-        model,
-        scaler,
-        encoder,
-        N_GEN,
-        POP_SIZE,
-        N_OFFSPRINGS,
-        X_initial_states,
-        weight=WEIGHT,
-        attack_type=ALGORITHM,
-        save_history=save_history
+    coeva2 = Coeva2(
+        classifier,
+        constraints,
+        config["algorithm"],
+        config["weights"],
+        config["n_gen"],
+        config["pop_size"],
+        config["n_offsprings"],
+        save_history=save_history,
     )
 
-    if save_history:
-        efficient_results = [HistoryResult(result) for result in results]
-    else:
-        efficient_results = [EfficientResult(result) for result in results]
-
-    Pickler.save_to_file(efficient_results, ATTACK_RESULTS_PATH)
+    efficient_results = coeva2.generate(X_initial_states)
+    Pickler.save_to_file(efficient_results, config["paths"]["attack_results"])
 
 
 if __name__ == "__main__":
