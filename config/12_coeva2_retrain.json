@@ -1,11 +1,15 @@
 {
-  "threshold": 0.24,
   "paths": {
-    "attack_results": "../out/attacks/07_coeva2_all/results.pickle",
     "model": "../out/static/model.joblib",
+    "features": "../data/lcld/features.csv",
+    "constraints": "../data/lcld/constraints.csv",
+    "attack_results": "../out/attacks/07_coeva2_all/results.pickle",
     "resistant_model": "../out/static/coeva2_resistant_model.joblib"
   },
   "dirs": {
     "train_test_data": "../data/lcld"
-  }
+  },
+  "threshold": 0.24,
+  "amount_feature_index": 0,
+  "high_amount": 10000
 }

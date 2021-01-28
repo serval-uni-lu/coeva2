@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from attacks.venus_encoder import VenusEncoder
-from utils import Pickler, in_out
+from utils import in_out
 
 config = in_out.get_parameters()
 
@@ -16,17 +15,17 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     history_df = pd.read_csv(HISTORY_PATH, low_memory=False)
 
     # history_df = history_df[100:]
-    encoder = VenusEncoder()
-
-    history_df["f1_mean"] = np.exp(
-        encoder.f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
-    )
-    history_df["f1_max"] = np.exp(
-        encoder.f1_scaler.inverse_transform([history_df["f1_max"]])[0]
-    )
-    history_df["f1_min"] = np.exp(
-        encoder.f1_scaler.inverse_transform([history_df["f1_min"]])[0]
-    )
+    # encoder = VenusEncoder()
+    #
+    # history_df["f1_mean"] = np.exp(
+    #     encoder.f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
+    # )
+    # history_df["f1_max"] = np.exp(
+    #     encoder.f1_scaler.inverse_transform([history_df["f1_max"]])[0]
+    # )
+    # history_df["f1_min"] = np.exp(
+    #     encoder.f1_scaler.inverse_transform([history_df["f1_min"]])[0]
+    # )
 
     history_df["f3_mean"] = 1 / history_df["f3_mean"]
     history_df["f3_max"] = 1 / history_df["f3_max"]
