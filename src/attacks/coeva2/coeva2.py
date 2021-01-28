@@ -136,7 +136,7 @@ class Coeva2:
             return HistoryResult(result)
         else:
             result = EfficientResult(result)
-            return (result)
+            return result
 
     def generate(self, x: np.ndarray):
         self._check_input_size(x)
