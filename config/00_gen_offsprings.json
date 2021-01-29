@@ -22,7 +22,7 @@
   },
   "budget": 200000,
   "list_n_offsprings": [10, 20, 40, 80, 160, 320, 640],
-  "n_initial_state": 1000,
+  "n_initial_state": 10,
   "random_seed": 0,
   "n_repetition": 1,
   "initial_state_offset": 0,
