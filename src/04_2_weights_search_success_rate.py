@@ -5,9 +5,7 @@ import numpy as np
 from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.lcld_constraints import LcldConstraints
 from attacks.coeva2.objective_calculator import ObjectiveCalculator
-from attacks.objectives import calculate_success_rates
-from attacks.venus_encoder import VenusEncoder
-from utils import Pickler, in_out
+from utils import in_out
 from utils.in_out import pickle_from_dir
 
 config = in_out.get_parameters()
