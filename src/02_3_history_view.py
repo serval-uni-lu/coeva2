@@ -1,6 +1,6 @@
 import warnings
 
-warnings.simplefilter(action="ignore", category=FutureWarning)
+#warnings.simplefilter(action="ignore", category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,9 +9,9 @@ from utils import in_out
 
 config = in_out.get_parameters()
 
-
+print(config)
 def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figure"]):
-
+    print("hello")
     history_df = pd.read_csv(HISTORY_PATH, low_memory=False)
 
     # history_df = history_df[100:]
@@ -27,16 +27,16 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     #     encoder.f1_scaler.inverse_transform([history_df["f1_min"]])[0]
     # )
 
-    history_df["f3_mean"] = 1 / history_df["f3_mean"]
-    history_df["f3_max"] = 1 / history_df["f3_max"]
-    history_df["f3_min"] = 1 / history_df["f3_min"]
-
+    #history_df["f3_mean"] = 1 / history_df["f3_mean"]
+    #history_df["f3_max"] = 1 / history_df["f3_max"]
+    #history_df["f3_min"] = 1 / history_df["f3_min"]
+    print("Heyya")
     font = {"size": 16}
     plt.rc("font", **font)
 
-    objectives = ["f1", "f2", "f3", "g1"]
-    scales = ["linear", "linear", "linear", "linear"]
-    y_labels = ["Prediction", "L2 Perturbation", "Overdraft", "Constraint violation"]
+    objectives = ["f1", "f2",  "g1"]
+    scales = ["linear", "linear",  "linear"]
+    y_labels = ["Prediction", "L2 Perturbation",  "Constraint violation"]
     for i, key in enumerate(objectives):
         fig, axs = plt.subplots(1, 1, figsize=(10, 4))
         ax = axs
@@ -54,6 +54,7 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
         ax.set_yscale(scales[i])
         ax.set_xlabel("Generation")
         ax.set_ylabel(y_labels[i])
+        print("why not")
         plt.tight_layout()
         plt.savefig(f"{FIGURE_DIR}/fig_{key}.pdf")
     
