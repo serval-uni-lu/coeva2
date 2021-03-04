@@ -1,15 +1,14 @@
 from joblib import Parallel, delayed
 from tqdm import tqdm
 from copy import deepcopy
-import warnings
+
 import numpy as np
-#warnings.simplefilter(action="ignore", category=RuntimeWarning)
+
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 from pymoo.algorithms.nsga2 import NSGA2
 from pymoo.algorithms.so_genetic_algorithm import GA
 from pymoo.optimize import minimize
-from pymoo.visualization.scatter import Scatter
 from pymoo.operators.mixed_variable_operator import (
     MixedVariableSampling,
     MixedVariableCrossover,
@@ -36,7 +35,7 @@ class Coeva2:
         scale_objectives=True,
         save_history=False,
         n_jobs=-1,
-        verbose=0,
+        verbose=1,
     ) -> None:
 
         if weights is None:
@@ -102,7 +101,7 @@ class Coeva2:
             sampling=sampling,
             crossover=crossover,
             mutation=mutation,
-            eliminate_duplicates=True,
+            eliminate_duplicates=False,
             return_least_infeasible=True,
         )
 
@@ -113,7 +112,8 @@ class Coeva2:
         algorithm = self._create_algorithm()
         classifier = deepcopy(self._classifier)
         constraints = deepcopy(self._constraints)
-        encoder = deepcopy(self._encoder)
+        encoder = get_encoder_from_constraints(self._constraints, x)
+
         problem = Coeva2Problem(
             x_initial_state=x,
             classifier=classifier,
@@ -130,12 +130,8 @@ class Coeva2:
             termination,
             verbose=0,
             save_history=False,  # Implemented from library should always be False
-            #return_least_infeasible=False
         )
 
-        #plot = Scatter()
-        #plot.add(result.F, color="red")
-        #plot.show()
         if self._save_history:
             return HistoryResult(result)
         else:
