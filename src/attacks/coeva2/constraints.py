@@ -47,7 +47,7 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
         -------
         min : np.ndarray
             Minimum values.
-        max : np.ndarray]
+        max : np.ndarray
             Maximum values.
         """
         raise NotImplementedError
@@ -57,7 +57,7 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_feature_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
+    def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError
 
     @abc.abstractmethod
