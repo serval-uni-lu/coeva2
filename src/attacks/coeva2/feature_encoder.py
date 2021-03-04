@@ -174,8 +174,8 @@ class FeatureEncoder:
         return result
 
 
-def get_encoder_from_constraints(constraints: Constraints) -> FeatureEncoder:
-    xl, xu = constraints.get_feature_min_max()
+def get_encoder_from_constraints(constraints: Constraints, dynamic_input=None) -> FeatureEncoder:
+    xl, xu = constraints.get_feature_min_max(dynamic_input=dynamic_input)
     return FeatureEncoder(
         constraints.get_mutable_mask(),
         constraints.get_feature_type(),
