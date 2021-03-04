@@ -102,8 +102,8 @@ class LcldConstraints(Constraints):
         feature_max = np.array([np.finfo(np.float32).max] * self._feature_max.shape[0])
 
         # Creating the mask of value that should be provided by input
-        min_dynamic = self._feature_min == "dynamic"
-        max_dynamic = self._feature_max == "dynamic"
+        min_dynamic = self._feature_min.astype(str) == "dynamic"
+        max_dynamic = self._feature_max.astype(str) == "dynamic"
 
         # Replace de non dynamic value by the value provided in the definition
         feature_min[~min_dynamic] = self._feature_min[~min_dynamic]
