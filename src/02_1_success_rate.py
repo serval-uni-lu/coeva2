@@ -12,8 +12,8 @@ import pandas as pd
 from utils import Pickler, in_out
 
 config = in_out.get_parameters()
-
-
+import pymoo
+print(pymoo.__version__)
 def run(
     MODEL_PATH=config["paths"]["model"],
     ATTACK_RESULTS_PATH=config["paths"]["attack_results"],
@@ -26,7 +26,7 @@ def run(
     efficient_results = Pickler.load_from_file(ATTACK_RESULTS_PATH)
     classifier = Classifier(load(MODEL_PATH))
     constraints = LcldConstraints(
-        config["amount_feature_index"],
+        #config["amount_feature_index"],
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
@@ -35,10 +35,10 @@ def run(
         classifier,
         constraints,
         THRESHOLD,
-        config["high_amount"],
-        config["amount_feature_index"]
+        #config["high_amount"],
+        #config["amount_feature_index"]
     )
-
+    objective_calculator.get_successful_attacks(efficient_results)
     success_rates = objective_calculator.success_rate(efficient_results)
 
     columns = ["o{}".format(i + 1) for i in range(success_rates.shape[0])]

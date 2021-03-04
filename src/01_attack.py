@@ -9,7 +9,7 @@ from joblib import load
 from utils import Pickler, in_out
 from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.coeva2 import Coeva2
-
+from datetime import datetime
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 config = in_out.get_parameters()
@@ -18,7 +18,7 @@ config = in_out.get_parameters()
 def run():
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 
-    save_history = False
+    save_history = True
     if "save_history" in config:
         save_history = config["save_history"]
 
@@ -31,7 +31,7 @@ def run():
         + config["n_initial_state"]
     ]
     constraints = LcldConstraints(
-        config["amount_feature_index"],
+        # config["amount_feature_index"],
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
@@ -63,7 +63,9 @@ def run():
 
     efficient_results = coeva2.generate(X_initial_states)
     Pickler.save_to_file(efficient_results, config["paths"]["attack_results"])
-
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
 
 if __name__ == "__main__":
     run()
