@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -6,6 +7,8 @@ from attacks.coeva2.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
 import pickle
+import logging
+
 
 class LcldConstraints(Constraints):
     def __init__(
@@ -22,7 +25,6 @@ class LcldConstraints(Constraints):
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
         min_c, max_c = self.get_constraints_min_max()
-
         self._scaler = self._scaler.fit([min_c, max_c])
 
     @staticmethod
@@ -57,8 +59,8 @@ class LcldConstraints(Constraints):
         m = x[:,13956]
         m = np.array(m, dtype=np.float)
         g3 = np.absolute( np.log2(m, out=np.zeros_like(m), where=(m!=0)) % 1  - 0)
-        
-       
+
+
         #api_import_nb is higher than the sum of total imports that we have considered as features
         g4 = np.sum(x[:,imports_idx], axis=1) - x[:,271]
 
@@ -93,8 +95,33 @@ class LcldConstraints(Constraints):
     def get_mutable_mask(self) -> np.ndarray:
         return self._mutable_mask
 
-    def get_feature_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self._feature_min, self._feature_max
+    def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
+
+        # By default min and max are the extreme values
+        feature_min = np.array([np.finfo(np.float32).min] * self._feature_min.shape[0])
+        feature_max = np.array([np.finfo(np.float32).max] * self._feature_max.shape[0])
+
+        # Creating the mask of value that should be provided by input
+        min_dynamic = self._feature_min == "dynamic"
+        max_dynamic = self._feature_max == "dynamic"
+
+        # Replace de non dynamic value by the value provided in the definition
+        feature_min[~min_dynamic] = self._feature_min[~min_dynamic]
+        feature_max[~max_dynamic] = self._feature_max[~max_dynamic]
+
+        # If the dynamic input was provided, replace value for output, else do nothing (keep the extreme values)
+        if dynamic_input is not None:
+            feature_min[min_dynamic] = dynamic_input[min_dynamic]
+            feature_max[max_dynamic] = dynamic_input[max_dynamic]
+
+        # Raise warning if dynamic input waited but not provided
+        dynamic_number = min_dynamic.sum() + max_dynamic.sum()
+        if dynamic_number > 0 and dynamic_input is None:
+            logging.getLogger().warning(f"{dynamic_number} feature min and max are dynamic but no input were provided.")
+
+        return feature_min, feature_max
+
+
 
     def get_feature_type(self) -> np.ndarray:
         return self._feature_type
@@ -112,5 +139,5 @@ class LcldConstraints(Constraints):
     def _provision_constraints_min_max(self, path: str) -> None:
         df = pd.read_csv(path, low_memory=False)
         self._constraints_min = df["min"].to_numpy()
-        self._constraints_max = df["max"].to_numpy() 
+        self._constraints_max = df["max"].to_numpy()
         self._fit_scaler()
