@@ -1,9 +1,9 @@
 from joblib import Parallel, delayed
 from tqdm import tqdm
 from copy import deepcopy
-import warnings
+
 import numpy as np
-#warnings.simplefilter(action="ignore", category=RuntimeWarning)
+
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 from pymoo.algorithms.nsga2 import NSGA2
@@ -101,7 +101,7 @@ class Coeva2:
             sampling=sampling,
             crossover=crossover,
             mutation=mutation,
-            eliminate_duplicates=True,
+            eliminate_duplicates=False,
             return_least_infeasible=True,
         )
 
