@@ -6,6 +6,9 @@ import numpy as np
 
 from attacks.coeva2.feature_encoder import get_encoder_from_constraints
 from attacks.coeva2.result_process import EfficientResult
+import sys
+import numpy
+numpy.set_printoptions(threshold=sys.maxsize)
 
 
 class ObjectiveCalculator:
@@ -29,9 +32,10 @@ class ObjectiveCalculator:
         x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
 
         respectsConstraints = (
-            self._constraints.normalise(self._constraints.evaluate(x_ml)).sum(axis=1)
+            (self._constraints.evaluate(x_ml)).sum(axis=1)
             <= 0
         ).astype(np.int64)
+        # print(self._constraints.evaluate(x_ml))
 
         isMisclassified = np.array(
             self._classifier.predict_proba(x_ml)[:, 1] < self._threshold
