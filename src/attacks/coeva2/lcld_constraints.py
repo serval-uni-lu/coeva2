@@ -36,16 +36,16 @@ class LcldConstraints(Constraints):
 
         tol = 1e-3
         # should write a function in utils for this part
-        with open('../data/lcld/section_names_idx.pkl', 'rb') as f:
+        with open('../data/malware/section_names_idx.pkl', 'rb') as f:
             section_names_idx = pickle.load(f)
 
-        with open('../data/lcld/imports_idx.pkl', 'rb') as f:
+        with open('../data/malware/imports_idx.pkl', 'rb') as f:
             imports_idx = pickle.load(f)
 
-        with open('../data/lcld/dll_imports_idx.pkl', 'rb') as f:
+        with open('../data/malware/dll_imports_idx.pkl', 'rb') as f:
             dll_imports_idx = pickle.load(f)
 
-        with open('../data/lcld/freq_idx.pkl', 'rb') as f:
+        with open('../data/malware/freq_idx.pkl', 'rb') as f:
             freq_idx = pickle.load(f)
 
         # NumberOfSections equals the sum of sections names not set to 'none'(label encoded to 832)
@@ -73,8 +73,9 @@ class LcldConstraints(Constraints):
         # FileEntropy is related to freqbytes through Shanon entropy
         m = x[:,freq_idx]
         m = np.array(m, dtype=np.float)
+        # Log of freq_idx
         logarithm = np.log2(m, out=np.zeros_like(m), where=(m!=0))
-        g7 = np.absolute(x[:,23549] + np.sum(x[:,freq_idx]*logarithm,axis=1))
+        g7 = np.absolute(x[:,23549] + np.sum(x[:, freq_idx]*logarithm, axis=1))
 
         constraints = anp.column_stack(
             [g1, g2, g3, g4, g5, g6, g7]
@@ -84,7 +85,7 @@ class LcldConstraints(Constraints):
         return constraints
 
     def get_nb_constraints(self) -> int:
-        return 10
+        return 7
 
     def normalise(self, x: np.ndarray) -> np.ndarray:
         return self._scaler.transform(x)

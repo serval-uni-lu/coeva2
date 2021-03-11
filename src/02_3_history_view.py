@@ -1,15 +1,20 @@
 import warnings
 
-#warnings.simplefilter(action="ignore", category=FutureWarning)
+# warnings.simplefilter(action="ignore", category=FutureWarning)
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
+from attacks.coeva2.feature_encoder import get_encoder_from_constraints
+from attacks.coeva2.lcld_constraints import LcldConstraints
 from utils import in_out
 
 config = in_out.get_parameters()
 
 print(config)
+
+
 def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figure"]):
     print("hello")
     history_df = pd.read_csv(HISTORY_PATH, low_memory=False)
@@ -17,26 +22,73 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     # history_df = history_df[100:]
     # encoder = VenusEncoder()
     #
-    # history_df["f1_mean"] = np.exp(
-    #     encoder.f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
-    # )
-    # history_df["f1_max"] = np.exp(
-    #     encoder.f1_scaler.inverse_transform([history_df["f1_max"]])[0]
-    # )
-    # history_df["f1_min"] = np.exp(
-    #     encoder.f1_scaler.inverse_transform([history_df["f1_min"]])[0]
-    # )
+    AVOID_ZERO = 0.00000001
 
-    #history_df["f3_mean"] = 1 / history_df["f3_mean"]
-    #history_df["f3_max"] = 1 / history_df["f3_max"]
-    #history_df["f3_min"] = 1 / history_df["f3_min"]
+    f1_scaler = MinMaxScaler(feature_range=(0, 1))
+    f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
+
+    history_df["f1_mean"] = np.exp(
+        f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
+    )
+    history_df["f1_max"] = np.exp(
+        f1_scaler.inverse_transform([history_df["f1_max"]])[0]
+    )
+    history_df["f1_min"] = np.exp(
+        f1_scaler.inverse_transform([history_df["f1_min"]])[0]
+    )
+
+    # history_df["f3_mean"] = 1 / history_df["f3_mean"]
+    # history_df["f3_max"] = 1 / history_df["f3_max"]
+    # history_df["f3_min"] = 1 / history_df["f3_min"]
+
+    # history_df["g1_6_min"] = history_df["g1_6_min"] * 13560
+    # history_df["g1_6_mean"] = history_df["g1_6_mean"] * 13560
+    # history_df["g1_6_max"] = history_df["g1_6_max"] * 13560
+    #
+    # history_df["g1_7_min"] = history_df["g1_7_min"] * 255
+    # history_df["g1_7_mean"] = history_df["g1_7_mean"] * 255
+    # history_df["g1_7_max"] = history_df["g1_7_max"] * 255
+
     print("Heyya")
     font = {"size": 16}
     plt.rc("font", **font)
 
-    objectives = ["f1", "f2",  "g1"]
-    scales = ["linear", "linear",  "linear"]
-    y_labels = ["Prediction", "L2 Perturbation",  "Constraint violation"]
+    objectives = [
+        "f1",
+        "f2",
+        "g1",
+        "g1_1",
+        "g1_2",
+        "g1_3",
+        "g1_4",
+        "g1_5",
+        "g1_6",
+        "g1_7",
+    ]
+    scales = [
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+        "linear",
+    ]
+    y_labels = [
+        "Prediction",
+        "L2 Perturbation",
+        "Constraint violation",
+        "g1_1",
+        "g1_2",
+        "g1_3",
+        "g1_4",
+        "g1_5",
+        "g1_6",
+        "g1_7",
+    ]
     for i, key in enumerate(objectives):
         fig, axs = plt.subplots(1, 1, figsize=(10, 4))
         ax = axs
@@ -57,7 +109,6 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
         print("why not")
         plt.tight_layout()
         plt.savefig(f"{FIGURE_DIR}/fig_{key}.pdf")
-    
 
 
 if __name__ == "__main__":
