@@ -8,6 +8,7 @@ from attacks.coeva2.feature_encoder import get_encoder_from_constraints
 from attacks.coeva2.result_process import EfficientResult
 import sys
 import numpy
+from tqdm import tqdm
 numpy.set_printoptions(threshold=sys.maxsize)
 
 
@@ -60,7 +61,7 @@ class ObjectiveCalculator:
 
     def success_rate(self, results: List[EfficientResult]):
         objectives = np.array(
-            [self._objective_per_initial_sample(result) for result in results]
+            [self._objective_per_initial_sample(result) for result in tqdm(results)]
         )
         success_rates = np.apply_along_axis(
             lambda x: x.sum() / x.shape[0], 0, objectives
