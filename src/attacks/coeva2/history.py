@@ -1,5 +1,5 @@
 import numpy as np
-
+from tqdm import tqdm
 
 def gen_mean(history):
     out = {}
@@ -15,7 +15,7 @@ def gen_mean(history):
 
 def get_history(results):
     histories = [x.history for x in results]
-    gen_means = [gen_mean(x) for x in histories]
+    gen_means = [gen_mean(x) for x in tqdm(histories)]
     out = {}
     for key in gen_means[0]:
         key_values = np.array([x[key] for x in gen_means])
