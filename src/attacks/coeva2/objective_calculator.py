@@ -36,10 +36,9 @@ class ObjectiveCalculator:
             <= 0
         ).astype(np.int64)
         # print(self._constraints.evaluate(x_ml))
-
-        isMisclassified = np.array(
-            self._classifier.predict_proba(x_ml)[:, 1] < self._threshold
-        ).astype(np.int64)
+        f1 = self._classifier.predict_proba(x_ml)
+        f1 = np.array(f1).flatten()
+        isMisclassified = np.array( f1 < self._threshold ).astype(np.int64)
 
         #isHighAmount = (x_ml[:, self._amount_index] >= self._high_amount).astype(
             #np.int64
@@ -49,7 +48,6 @@ class ObjectiveCalculator:
         o2 = isMisclassified
         o3 = o1 * o2
         #o4 = o3 * isHighAmount
-
         return np.array([respectsConstraints, isMisclassified, o3])
 
     def _objective_per_initial_sample(self, result: EfficientResult):
@@ -73,9 +71,7 @@ class ObjectiveCalculator:
         for result in results:
             adv_filter = self._objective_per_individual(result)[2].astype(np.bool)
             x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
-            #np.save("this.npy", x[adv_filter])
             x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
-            #np.save('hopefully_this.npy', x_ml)
             training.append(x_ml[adv_filter])
 
         return np.concatenate(training)

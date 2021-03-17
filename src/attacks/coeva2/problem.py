@@ -82,10 +82,9 @@ class Coeva2Problem(Problem):
         x_ml = self._encoder.genetic_to_ml(x, self._x_initial_ml)
         x_ml_mm = self._encoder.normalise(x_ml)
         # f1 Maximize probability of target
-        f1 = self._classifier.predict_proba(x_ml)[:, 1]
+        f1 = self._classifier.predict_proba(x_ml)
+        f1 = np.array(f1)
         f1[f1 < AVOID_ZERO] = AVOID_ZERO
-        f1 = np.log(f1)
-
         # f2 Minimize perturbation
         l2_distance = np.linalg.norm(x_ml_mm[:, 1:] - self._x_initial_ml_mm[1:], axis=1)
         f2 = l2_distance

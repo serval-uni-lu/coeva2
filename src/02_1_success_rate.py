@@ -12,8 +12,8 @@ import pandas as pd
 from utils import Pickler, in_out
 
 config = in_out.get_parameters()
+from tensorflow.keras.models import load_model
 import pymoo
-print(pymoo.__version__)
 def run(
     MODEL_PATH=config["paths"]["model"],
     ATTACK_RESULTS_PATH=config["paths"]["attack_results"],
@@ -24,7 +24,10 @@ def run(
 
     # Load and create object
     efficient_results = Pickler.load_from_file(ATTACK_RESULTS_PATH)
-    classifier = Classifier(load(MODEL_PATH))
+    keras_model = load_model(config["paths"]["model"])
+    keras_model.summary()
+    classifier = Classifier(keras_model)
+    #classifier = Classifier(load(MODEL_PATH))
     constraints = LcldConstraints(
         #config["amount_feature_index"],
         config["paths"]["features"],

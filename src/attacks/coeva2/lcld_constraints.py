@@ -36,50 +36,28 @@ class LcldConstraints(Constraints):
 
         tol = 1e-3
         # should write a function in utils for this part
-        with open('../data/malware/section_names_idx.pkl', 'rb') as f:
-            section_names_idx = pickle.load(f)
-
-        with open('../data/malware/imports_idx.pkl', 'rb') as f:
-            imports_idx = pickle.load(f)
-
-        with open('../data/malware/dll_imports_idx.pkl', 'rb') as f:
-            dll_imports_idx = pickle.load(f)
-
-        with open('../data/malware/freq_idx.pkl', 'rb') as f:
-            freq_idx = pickle.load(f)
-
-        # NumberOfSections equals the sum of sections names not set to 'none'(label encoded to 832)
-        g1 = np.absolute(x[:,12893] - np.count_nonzero(x[:,section_names_idx]!=832, axis=1))
-
-        # header_FileAlignment < header_SectionAlignment
-        g2 = x[:,13956] - x[:,10840]
+        with open('../data/botnet/feat_idx.pickle', 'rb') as f:
+            feat_idx = pickle.load(f)
 
 
-        #The value for FileAlignment should be a power of 2
-        m = x[:,13956]
-        m = np.array(m, dtype=np.float)
-        g3 = np.absolute( np.log2(m, out=np.zeros_like(m), where=(m!=0)) % 1  - 0)
+        sum_idx = [0, 3, 6, 12, 15, 18]
+        max_idx = [1, 4, 7, 13, 16, 19]
+        min_idx = [2, 5, 8, 14, 17, 20]
 
 
-        #api_import_nb is higher than the sum of total imports that we have considered as features
-        g4 = np.sum(x[:,imports_idx], axis=1) - x[:,271]
+        g1 = np.absolute((x[:, feat_idx['icmp_sum_s_idx']].sum(axis=1) + x[:, feat_idx['udp_sum_s_idx']].sum(axis=1) + x[:, feat_idx['tcp_sum_s_idx']].sum(axis=1)) - (x[:, feat_idx['bytes_in_sum_s_idx']].sum(axis=1)+x[:, feat_idx['bytes_out_sum_s_idx']].sum(axis=1)))
+        g2 = np.absolute((x[:, feat_idx['icmp_sum_d_idx']].sum(axis=1) + x[:, feat_idx['udp_sum_d_idx']].sum(axis=1) + x[:, feat_idx['tcp_sum_d_idx']].sum(axis=1)) - (x[:, feat_idx['bytes_in_sum_d_idx']].sum(axis=1)+x[:, feat_idx['bytes_out_sum_d_idx']].sum(axis=1)))
 
-        # api_dll_nb is higher than the sum of total dll that we have considered as features
-        g5 = np.sum(x[:,dll_imports_idx], axis=1) - x[:,8607]
+        constraints = [g1, g2]
+        cons_idx, constraints0 = self.define_individual_constraints(x,3,feat_idx,sum_idx,max_idx)
+        constraints.extend(constraints0)
+        cons_idx, constraints1 = self.define_individual_constraints(x,cons_idx,feat_idx,sum_idx,min_idx)
+        constraints.extend(constraints1)
+        cons_idx, constraints2 = self.define_individual_constraints(x,cons_idx, feat_idx,max_idx,min_idx)
+        constraints.extend(constraints2)
 
-        #Sum of individual byte frequencies is equal to 1. There is a small  difference due to rounding effect
-        g6 = np.absolute(1-np.sum(x[:,freq_idx],axis=1))
 
-        # FileEntropy is related to freqbytes through Shanon entropy
-        m = x[:,freq_idx]
-        m = np.array(m, dtype=np.float)
-        # Log of freq_idx
-        logarithm = np.log2(m, out=np.zeros_like(m), where=(m!=0))
-        g7 = np.absolute(x[:,23549] + np.sum(x[:, freq_idx]*logarithm, axis=1))
-
-        constraints = anp.column_stack(
-            [g1, g2, g3, g4, g5, g6, g7]
-        )
+        constraints = anp.column_stack(constraints)
         constraints[constraints <= tol] = 0.0
 
         return constraints
@@ -142,3 +120,20 @@ class LcldConstraints(Constraints):
         self._constraints_min = df["min"].to_numpy()
         self._constraints_max = df["max"].to_numpy()
         self._fit_scaler()
+
+
+    def define_individual_constraints(self, x, cons_idx, feat_idx, upper_idx, lower_idx):
+        constraints_part = []
+        keys = list(feat_idx.keys())
+    
+        for i in range (len(upper_idx)):
+            key = keys[upper_idx[i]]
+            type_lower = keys[lower_idx[i]]
+            type_upper = keys[upper_idx[i]]
+            for j in range (len(feat_idx[key])):
+                port_idx_lower = feat_idx[type_lower][j]
+                port_idx_upper = feat_idx[type_upper][j]
+                globals()['g%s' % cons_idx]= x[:, port_idx_lower]  - x[:, port_idx_upper]
+                constraints_part.append(globals()['g%s' % cons_idx])
+                cons_idx += 1
+        return cons_idx, constraints_part

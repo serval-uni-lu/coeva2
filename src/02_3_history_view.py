@@ -16,9 +16,8 @@ print(config)
 
 
 def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figure"]):
-    print("hello")
     history_df = pd.read_csv(HISTORY_PATH, low_memory=False)
-
+    print(history_df.shape)
     # history_df = history_df[100:]
     # encoder = VenusEncoder()
     #
@@ -30,6 +29,7 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     history_df["f1_mean"] = np.exp(
         f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
     )
+
     history_df["f1_max"] = np.exp(
         f1_scaler.inverse_transform([history_df["f1_max"]])[0]
     )
@@ -48,8 +48,6 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     # history_df["g1_7_min"] = history_df["g1_7_min"] * 255
     # history_df["g1_7_mean"] = history_df["g1_7_mean"] * 255
     # history_df["g1_7_max"] = history_df["g1_7_max"] * 255
-
-    print("Heyya")
     font = {"size": 16}
     plt.rc("font", **font)
 
@@ -106,7 +104,6 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
         ax.set_yscale(scales[i])
         ax.set_xlabel("Generation")
         ax.set_ylabel(y_labels[i])
-        print("why not")
         plt.tight_layout()
         plt.savefig(f"{FIGURE_DIR}/fig_{key}.pdf")
 

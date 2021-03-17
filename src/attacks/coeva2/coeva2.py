@@ -1,9 +1,11 @@
 from joblib import Parallel, delayed
 from tqdm import tqdm
 from copy import deepcopy
-
+import tensorflow as tf
 import numpy as np
-
+from utils import Pickler, in_out
+from tensorflow.keras.models import load_model
+config = in_out.get_parameters()
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 from pymoo.algorithms.nsga2 import NSGA2
@@ -110,7 +112,9 @@ class Coeva2:
     def _one_generate(self, x):
         termination = get_termination("n_gen", self._n_gen)
         algorithm = self._create_algorithm()
-        classifier = deepcopy(self._classifier)
+        #classifier = tf.keras.models.clone_model(self._classifier)    
+        #classifier = deepcopy(self._classifier)
+        classifier = Classifier(load_model(config["paths"]["model"]))
         constraints = deepcopy(self._constraints)
         encoder = get_encoder_from_constraints(self._constraints, x)
 

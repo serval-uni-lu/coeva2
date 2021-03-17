@@ -6,11 +6,15 @@ import random
 from pathlib import Path
 import numpy as np
 from joblib import load
-from utils import Pickler, in_out
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+
+from utils import Pickler, in_out, load_keras_model
 from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.coeva2 import Coeva2
 from datetime import datetime
 warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 config = in_out.get_parameters()
 
@@ -24,7 +28,10 @@ def run():
 
     # ----- Load and create necessary objects
 
-    classifier = Classifier(load(config["paths"]["model"]))
+    #classifier = load_keras_model.MDModel(config["paths"]["model"])
+    keras_model = load_model(config["paths"]["model"])
+    keras_model.summary()
+    classifier = Classifier(keras_model)
     X_initial_states = np.load(config["paths"]["x_candidates"])
     X_initial_states = X_initial_states[
         config["initial_state_offset"] : config["initial_state_offset"]
