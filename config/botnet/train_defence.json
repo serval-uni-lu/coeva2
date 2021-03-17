@@ -1,0 +1,23 @@
+{
+  "threshold": 0.24,
+  "paths": {
+    "dataset": "../data/lcld/dataset.csv",
+    "dataset_sorted": "../data/lcld/dataset_sorted.csv",
+    "scaler": "../out/data_scaler_defence.pickle",
+    "static_model": "../out/static_defence/model.joblib",
+    "static_x_candidates": "../out/static_defence/x_attack_candidate.npy"
+  },
+  "dirs": {
+    "train_test_data": "../out/static_defence"
+  },
+  "model_parameters":{
+    "n_estimators": 125,
+    "min_samples_split": 6,
+    "min_samples_leaf": 2,
+    "max_depth": 10,
+    "bootstrap": true
+  },
+  "target": "charged_off",
+  "n_initial_state": 1000
+
+}

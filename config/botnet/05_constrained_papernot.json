@@ -1,0 +1,13 @@
+{
+  "paths": {
+    "model": "../out/static/model.joblib",
+    "x_candidates": "../out/static/x_attack_candidate.npy",
+    "objectives": "../out/attacks/05_constrained_papernot/objectives.csv"
+  },
+  "random_seed": 0,
+  "n_initial_state": 4000,
+  "n_repetition": 1000,
+  "threshold": 0.24,
+  "initial_state_offset": 0
+
+}

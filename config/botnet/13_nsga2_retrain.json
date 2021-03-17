@@ -1,0 +1,17 @@
+{
+  "paths": {
+    "model": "../out/static/model_whole_scenarios19_ctu",
+    "features": "../data/botnet/features_ctu.csv",
+    "constraints": "../data/botnet/constraints_ctu.csv",
+    "x_candidates": "../out/static/x_attack_candidates_ctu.npy",
+    "attack_results": "../out/attacks/09_coeva2_f1f2f4/results_ctu.pickle",
+    "resistant_model": "../out/static/nsga2_resistant_model_ctu.joblib"
+  },
+    "dirs": {
+    "train_test_data": "../data/lcld"
+  },
+  "threshold": 0.9,
+  "amount_feature_index": 0,
+  "high_amount": 10000
+
+}
