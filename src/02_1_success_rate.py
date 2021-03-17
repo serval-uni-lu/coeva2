@@ -38,7 +38,6 @@ def run(
         #config["high_amount"],
         #config["amount_feature_index"]
     )
-    objective_calculator.get_successful_attacks(efficient_results)
     success_rates = objective_calculator.success_rate(efficient_results)
 
     columns = ["o{}".format(i + 1) for i in range(success_rates.shape[0])]
