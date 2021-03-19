@@ -62,8 +62,11 @@ class LcldConstraints(Constraints):
 
         return constraints
 
+    ### --------
+    # PLEASE UPDATE THE NUMBER HERE
+    ### -------
     def get_nb_constraints(self) -> int:
-        return 7
+        return 326
 
     def normalise(self, x: np.ndarray) -> np.ndarray:
         return self._scaler.transform(x)
@@ -125,7 +128,7 @@ class LcldConstraints(Constraints):
     def define_individual_constraints(self, x, cons_idx, feat_idx, upper_idx, lower_idx):
         constraints_part = []
         keys = list(feat_idx.keys())
-    
+
         for i in range (len(upper_idx)):
             key = keys[upper_idx[i]]
             type_lower = keys[lower_idx[i]]

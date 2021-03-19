@@ -1,9 +1,9 @@
 {
   "paths": {
     "model": "../models/botnet/model_whole_scenarios19",
-    "features": "../data/botnet/features_ctu.csv",
+    "features": "../data/botnet/features_443_80.csv",
     "constraints": "../data/botnet/constraints_ctu.csv",
-    "x_candidates": "../data/botnet/x_attack_candidates_ctu.npy",
+    "x_candidates": "../data/botnet/x_attack_candidates.npy",
     "attack_results": "../out/attacks/botnet/nsga2/results.pickle",
     "objectives": "../out/attacks/botnet/nsga2/objectives.csv",
     "history": "../out/attacks/botnet/nsga2/history.csv"
