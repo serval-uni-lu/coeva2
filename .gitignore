@@ -10,3 +10,5 @@ src/advm/advm.egg-info/
 src/playground.py
 .venv
 .vscode/
+.vs/
+.ipynb_checkpoints/

@@ -49,13 +49,16 @@ class LcldConstraints(Constraints):
         g2 = np.absolute((x[:, feat_idx['icmp_sum_d_idx']].sum(axis=1) + x[:, feat_idx['udp_sum_d_idx']].sum(axis=1) + x[:, feat_idx['tcp_sum_d_idx']].sum(axis=1)) - (x[:, feat_idx['bytes_in_sum_d_idx']].sum(axis=1)+x[:, feat_idx['bytes_out_sum_d_idx']].sum(axis=1)))
 
         constraints = [g1, g2]
-        cons_idx, constraints0 = self.define_individual_constraints(x,3,feat_idx,sum_idx,max_idx)
-        constraints.extend(constraints0)
-        cons_idx, constraints1 = self.define_individual_constraints(x,cons_idx,feat_idx,sum_idx,min_idx)
-        constraints.extend(constraints1)
-        cons_idx, constraints2 = self.define_individual_constraints(x,cons_idx, feat_idx,max_idx,min_idx)
-        constraints.extend(constraints2)
 
+        cons_idx = 3
+        cons_idx,  constraints0 = self.define_individual_constraints_pkts_bytes(x, cons_idx, feat_idx)
+        constraints.extend(constraints0)
+        cons_idx, constraints1 = self.define_individual_constraints(x,cons_idx,feat_idx,sum_idx,max_idx)
+        constraints.extend(constraints1)
+        cons_idx, constraints2 = self.define_individual_constraints(x,cons_idx,feat_idx,sum_idx,min_idx)
+        constraints.extend(constraints2)
+        cons_idx, constraints3 = self.define_individual_constraints(x,cons_idx, feat_idx,max_idx,min_idx)
+        constraints.extend(constraints3)
 
         constraints = anp.column_stack(constraints)
         constraints[constraints <= tol] = 0.0
@@ -66,7 +69,7 @@ class LcldConstraints(Constraints):
     # PLEASE UPDATE THE NUMBER HERE
     ### -------
     def get_nb_constraints(self) -> int:
-        return 326
+        return 360
 
     def normalise(self, x: np.ndarray) -> np.ndarray:
         return self._scaler.transform(x)
@@ -128,7 +131,7 @@ class LcldConstraints(Constraints):
     def define_individual_constraints(self, x, cons_idx, feat_idx, upper_idx, lower_idx):
         constraints_part = []
         keys = list(feat_idx.keys())
-
+    
         for i in range (len(upper_idx)):
             key = keys[upper_idx[i]]
             type_lower = keys[lower_idx[i]]
@@ -137,6 +140,24 @@ class LcldConstraints(Constraints):
                 port_idx_lower = feat_idx[type_lower][j]
                 port_idx_upper = feat_idx[type_upper][j]
                 globals()['g%s' % cons_idx]= x[:, port_idx_lower]  - x[:, port_idx_upper]
+                constraints_part.append(globals()['g%s' % cons_idx])
+                cons_idx += 1
+        return cons_idx, constraints_part
+
+    def define_individual_constraints_pkts_bytes(self, x , cons_idx, feat_idx):
+        constraints_part = []
+        keys = list(feat_idx.keys())
+        bytes_out = ['bytes_out_sum_s_idx', 'bytes_out_sum_d_idx']
+        pkts_out = ['pkts_out_sum_s_idx', 'pkts_out_sum_d_idx']
+        for i in range (len(bytes_out)):
+            pkts = feat_idx[pkts_out[i]]
+            bytes_ = feat_idx[bytes_out[i]]
+            for j in range (len(bytes_out[i])-2):
+                port_idx_pkts = pkts[j]
+                port_idx_bytes = bytes_[j]
+                a = x[:, port_idx_bytes]
+                b = x[:, port_idx_pkts]
+                globals()['g%s' % cons_idx]= np.divide(a, b, out=np.zeros_like(a), where=b!=0) - 1500
                 constraints_part.append(globals()['g%s' % cons_idx])
                 cons_idx += 1
         return cons_idx, constraints_part
