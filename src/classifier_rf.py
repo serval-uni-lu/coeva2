@@ -8,28 +8,25 @@ LOGGER = logging.getLogger()
 from utils import Pickler, in_out, load_keras_model
 from sklearn.metrics import confusion_matrix
 import pickle
-
+import joblib
 CONFIG = in_out.get_parameters()
 import matplotlib.pyplot as plt
 from utils import Datafilter
 
 
 def run():
-    classifier = Classifier(load_model(in_out.get_parameters()["paths"]["model"]))
-    nb_features = 756
-    nb_samples = 100000
-    random_samples = np.random.rand((nb_samples * nb_features)).reshape(
-        nb_samples, nb_features
-    )
-    with open('../models/botnet/scaler.pickle', 'rb') as f:
-        scaler = pickle.load(f)
+    classifier = joblib.load("../models/botnet/random_forest.joblib")
+    # nb_features = 756
+    # nb_samples = 100000
+    # random_samples = np.random.rand((nb_samples * nb_features)).reshape(
+    #     nb_samples, nb_features
+    # )
+
     X_test = (np.load("../data/botnet/x_test.npy"))
-    X_test_scaled = scaler.transform(X_test)
     y_test = np.load("../data/botnet/y_test.npy")
 
-    y_pred_proba = classifier.predict_proba(X_test_scaled).reshape(-1)
-
-    y_pred = (y_pred_proba >= CONFIG["threshold"]).astype(bool)
+    y_pred_proba = classifier.predict_proba(X_test)
+    y_pred = (y_pred_proba[:, 1] >= CONFIG["threshold"]).astype(bool)
     cm = confusion_matrix(y_test, y_pred)
     print(cm)
 
@@ -44,7 +41,7 @@ def run():
     X_test = X_test[np.random.permutation(X_test.shape[0])]
     print(X_test.shape)
 
-    y_pred_proba = classifier.predict_proba(scaler.transform(X_test)).reshape(-1)
+    y_pred_proba = classifier.predict_proba((X_test))[:,1]
     print(y_pred_proba.min())
 
     np.save(CONFIG["paths"]["x_candidates"], X_test)

@@ -17,7 +17,7 @@ from utils import Datafilter
 def run():
     classifier = Classifier(load_model(in_out.get_parameters()["paths"]["model"]))
     nb_features = 756
-    nb_samples = 100000
+    nb_samples = 10000
     random_samples = np.random.rand((nb_samples * nb_features)).reshape(
         nb_samples, nb_features
     )
@@ -47,7 +47,14 @@ def run():
     y_pred_proba = classifier.predict_proba(scaler.transform(X_test)).reshape(-1)
     print(y_pred_proba.min())
 
-    np.save(CONFIG["paths"]["x_candidates"], X_test)
+    # X_test = np.load(CONFIG["paths"]["x_candidates"] )
+
+    X_test[:,597] = X_test[:,597] + 300
+    y_pred_proba = classifier.predict_proba(scaler.transform(X_test)).reshape(-1)
+    print(y_pred_proba.min())
+
+    y_pred_proba = classifier.predict_proba(scaler.transform(random_samples)).reshape(-1)
+    print(y_pred_proba.min())
 
 
     # X_initial_states = np.load(CONFIG["paths"]["x_candidates"])
@@ -56,8 +63,8 @@ def run():
     # y_pred = classifier.predict_proba(X_initial_states)
     # print(y_pred)
     # # print(y_pred[:10])
-    # sns.distplot(y_pred, hist=True, kde=True, kde_kws={"linewidth": 3}, label="Class")
-    # plt.show()
+    sns.distplot(y_pred_proba, hist=True, kde=True, kde_kws={"linewidth": 3}, label="Class")
+    plt.show()
     # print((y_pred == 0).sum())
 
 
