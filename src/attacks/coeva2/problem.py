@@ -1,4 +1,5 @@
 import copy
+import pickle
 
 from pymoo.model.problem import Problem
 import numpy as np
@@ -8,6 +9,8 @@ from .classifier import Classifier
 from .constraints import Constraints
 from .feature_encoder import FeatureEncoder
 
+from utils import in_out
+config = in_out.get_parameters()
 AVOID_ZERO = 0.00000001
 
 
@@ -38,7 +41,11 @@ class Coeva2Problem(Problem):
         #np.save('high_genetic.npy', xu)
         self._weights = weights
         self._alg = alg
-
+        if config["paths"]["ml_scaler"] is not None:
+            with open(config["paths"]["ml_scaler"], 'rb') as f:
+                self._ml_scaler = pickle.load(f)
+        else:
+            self._ml_scaler = None
         self._history = {
             "f1": [],
             "f2": [],
@@ -82,7 +89,11 @@ class Coeva2Problem(Problem):
         x_ml = self._encoder.genetic_to_ml(x, self._x_initial_ml)
         x_ml_mm = self._encoder.normalise(x_ml)
         # f1 Maximize probability of target
-        f1 = self._classifier.predict_proba(x_ml)
+
+        if self._ml_scaler is not None:
+            f1 = self._classifier.predict_proba(self._ml_scaler.transform(x_ml))
+        else:
+            f1 = self._classifier.predict_proba(x_ml)[:, 1]
         f1[f1 < AVOID_ZERO] = AVOID_ZERO
         f1 = np.log(f1)
 

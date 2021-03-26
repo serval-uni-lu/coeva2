@@ -1,3 +1,4 @@
+import pickle
 from typing import List
 
 from attacks.coeva2.classifier import Classifier
@@ -9,6 +10,8 @@ from attacks.coeva2.result_process import EfficientResult
 import sys
 import numpy
 numpy.set_printoptions(threshold=sys.maxsize)
+from utils import in_out
+config = in_out.get_parameters()
 
 
 class ObjectiveCalculator:
@@ -26,6 +29,11 @@ class ObjectiveCalculator:
         self._threshold = threshold
         #self._high_amount = high_amount
         #self._amount_index = amount_index
+        if config["paths"]["ml_scaler"] is not None:
+            with open(config["paths"]["ml_scaler"], 'rb') as f:
+                self._ml_scaler = pickle.load(f)
+        else:
+            self._ml_scaler = None
 
     def _objective_per_individual(self, result: EfficientResult) -> np.ndarray:
         x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
@@ -36,9 +44,16 @@ class ObjectiveCalculator:
             <= 0
         ).astype(np.int64)
         # print(self._constraints.evaluate(x_ml))
-        f1 = self._classifier.predict_proba(x_ml)
-        f1 = np.array(f1).flatten()
-        isMisclassified = np.array( f1 < self._threshold ).astype(np.int64)
+
+        if self._ml_scaler is not None:
+            f1 = self._classifier.predict_proba(self._ml_scaler.transform(x_ml))
+            f1 = np.array(f1).flatten()
+        else:
+            f1 = self._classifier.predict_proba(x_ml)[:, 1]
+
+        # f1 = self._classifier.predict_proba(x_ml)
+        # f1 = np.array(f1).flatten()
+        isMisclassified = np.array(f1 < self._threshold).astype(np.int64)
 
         #isHighAmount = (x_ml[:, self._amount_index] >= self._high_amount).astype(
             #np.int64

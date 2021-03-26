@@ -29,9 +29,9 @@ def run():
     # ----- Load and create necessary objects
 
     #classifier = load_keras_model.MDModel(config["paths"]["model"])
-    keras_model = load_model(config["paths"]["model"])
-    keras_model.summary()
-    classifier = Classifier(keras_model)
+    # keras_model = load_model(config["paths"]["model"])
+    # keras_model.summary()
+    # classifier = Classifier(keras_model)
     X_initial_states = np.load(config["paths"]["x_candidates"])
     X_initial_states = X_initial_states[
         config["initial_state_offset"] : config["initial_state_offset"]
@@ -57,7 +57,7 @@ def run():
     # Initial state loop (threaded)
 
     coeva2 = Coeva2(
-        classifier,
+        None,
         constraints,
         config["algorithm"],
         config["weights"],
