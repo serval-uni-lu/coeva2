@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 from utils import Pickler, in_out
 from tensorflow.keras.models import load_model
-
+import joblib
 config = in_out.get_parameters()
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
