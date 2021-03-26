@@ -24,10 +24,10 @@ def run(
 
     # Load and create object
     efficient_results = Pickler.load_from_file(ATTACK_RESULTS_PATH)
-    keras_model = load_model(config["paths"]["model"])
-    keras_model.summary()
-    classifier = Classifier(keras_model)
-    #classifier = Classifier(load(MODEL_PATH))
+    # keras_model = load_model(config["paths"]["model"])
+    # keras_model.summary()
+    # classifier = Classifier(keras_model)
+    classifier = Classifier(load_model(MODEL_PATH))
     constraints = LcldConstraints(
         #config["amount_feature_index"],
         config["paths"]["features"],
