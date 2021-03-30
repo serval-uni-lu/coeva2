@@ -1,5 +1,6 @@
 import warnings
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from attacks.coeva2.lcld_constraints import LcldConstraints
 
 import random

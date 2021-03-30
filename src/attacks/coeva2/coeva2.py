@@ -6,6 +6,8 @@ import numpy as np
 from utils import Pickler, in_out
 from tensorflow.keras.models import load_model
 import joblib
+import os
+
 config = in_out.get_parameters()
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
@@ -114,8 +116,10 @@ class Coeva2:
         return algorithm
 
     def _one_generate(self, x):
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         warnings.simplefilter(action="ignore", category=FutureWarning)
         warnings.simplefilter(action="ignore", category=RuntimeWarning)
+        warnings.simplefilter(action="ignore", category=UserWarning)
         termination = get_termination("n_gen", self._n_gen)
         classifier = Classifier(load_model(config["paths"]["model"]))
         # self._encoder = get_encoder_from_constraints(con)
