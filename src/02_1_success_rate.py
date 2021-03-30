@@ -27,7 +27,7 @@ def run(
     # keras_model = load_model(config["paths"]["model"])
     # keras_model.summary()
     # classifier = Classifier(keras_model)
-    classifier = Classifier(load_model(MODEL_PATH))
+    classifier = Classifier(load(MODEL_PATH))
     constraints = LcldConstraints(
         #config["amount_feature_index"],
         config["paths"]["features"],

@@ -27,14 +27,14 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
 
     history_df["f1_mean"] = np.exp(
-        f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
+        ([history_df["f1_mean"]])[0]
     )
 
     history_df["f1_max"] = np.exp(
-        f1_scaler.inverse_transform([history_df["f1_max"]])[0]
+        ([history_df["f1_max"]])[0]
     )
     history_df["f1_min"] = np.exp(
-        f1_scaler.inverse_transform([history_df["f1_min"]])[0]
+        ([history_df["f1_min"]])[0]
     )
 
     # history_df["f3_mean"] = 1 / history_df["f3_mean"]
@@ -62,7 +62,7 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     ]
     objectives = objectives + constraints_min_col
 
-    scales = ["log" for o in objectives]
+    scales = ["linear" for o in objectives]
     y_labels = [
         "Prediction",
         "L2 Perturbation"]

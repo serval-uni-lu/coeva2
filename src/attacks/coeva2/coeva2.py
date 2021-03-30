@@ -1,4 +1,4 @@
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, load
 from tqdm import tqdm
 from copy import deepcopy
 import tensorflow as tf
@@ -121,7 +121,7 @@ class Coeva2:
         warnings.simplefilter(action="ignore", category=RuntimeWarning)
         warnings.simplefilter(action="ignore", category=UserWarning)
         termination = get_termination("n_gen", self._n_gen)
-        classifier = Classifier(load_model(config["paths"]["model"]))
+        classifier = Classifier(load(config["paths"]["model"]))
         # self._encoder = get_encoder_from_constraints(con)
         algorithm = self._create_algorithm()
         # classifier = tf.keras.models.clone_model(self._classifier)
