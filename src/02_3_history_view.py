@@ -51,42 +51,23 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     font = {"size": 16}
     plt.rc("font", **font)
 
+    constraints_min_col = [c for c in history_df.columns if c.startswith("g1_") and c.endswith("min")]
+    constraints_min_col = [c.replace("_min", "") for c in constraints_min_col]
+    constraints_min_col = [c for c in constraints_min_col if history_df[f"{c}_min"].iloc[-1]]
+
+
     objectives = [
         "f1",
         "f2",
-        "g1",
-        "g1_1",
-        "g1_2",
-        "g1_3",
-        "g1_4",
-        "g1_5",
-        "g1_6",
-        "g1_7",
     ]
-    scales = [
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-    ]
+    objectives = objectives + constraints_min_col
+
+    scales = ["log" for o in objectives]
     y_labels = [
         "Prediction",
-        "L2 Perturbation",
-        "Constraint violation",
-        "g1_1",
-        "g1_2",
-        "g1_3",
-        "g1_4",
-        "g1_5",
-        "g1_6",
-        "g1_7",
-    ]
+        "L2 Perturbation"]
+    y_labels = y_labels + constraints_min_col
+
     for i, key in enumerate(objectives):
         fig, axs = plt.subplots(1, 1, figsize=(10, 4))
         ax = axs
