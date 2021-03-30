@@ -109,6 +109,12 @@ class Coeva2Problem(Problem):
         # f4 Domain constraints
         constraints = self._constraints.evaluate(x_ml)
 
+        if self._save_history:
+            self._history["f1"].append(f1)
+            self._history["f2"].append(f2)
+            #self._history["f3"].append(f3)
+            self._history["g1"].append(constraints)
+
         if self._scale_objectives:
             f1 = self._f1_scaler.transform(f1.reshape(-1, 1))[:, 0]
             f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
@@ -125,8 +131,4 @@ class Coeva2Problem(Problem):
             )
             out["G"] = constraints * self._weights["delta"]
 
-        if self._save_history:
-            self._history["f1"].append(f1)
-            self._history["f2"].append(f2)
-            #self._history["f3"].append(f3)
-            self._history["g1"].append(constraints)
+
