@@ -338,7 +338,7 @@ distinct_dst_port_d_53,int,False,0.0,1.0
 bytes_in_sum_s_80,int,False,0.0,4277426661.0
 bytes_in_min_s_80,int,False,0.0,450243362.0
 bytes_in_max_s_80,int,False,0.0,4276001650.0
-bytes_out_sum_s_80,int,True,dynamic,1999271276.0
+bytes_out_sum_s_80,int,True,dynamic,608194500.0
 bytes_out_min_s_80,int,True,dynamic,1999271276.0
 bytes_out_max_s_80,int,True,dynamic,1999271276.0
 pkts_in_sum_s_80,int,False,0.0,730585.0
@@ -359,7 +359,7 @@ distinct_dst_port_s_80,int,False,0.0,1.0
 bytes_in_sum_d_80,int,False,0.0,10691181708.0
 bytes_in_min_d_80,int,False,0.0,561398137.0
 bytes_in_max_d_80,int,False,0.0,10691181708.0
-bytes_out_sum_d_80,int,True,dynamic,1949649056.0
+bytes_out_sum_d_80,int,True,dynamic,608194500.0
 bytes_out_min_d_80,int,True,dynamic,364132.0
 bytes_out_max_d_80,int,True,dynamic,1949648324.0
 pkts_in_sum_d_80,int,False,0.0,1312538.0
@@ -611,7 +611,7 @@ distinct_dst_port_s_443,int,False,0.0,1.0
 bytes_in_sum_d_443,int,False,0.0,9662724483.0
 bytes_in_min_d_443,int,False,0.0,82021574.0
 bytes_in_max_d_443,int,False,0.0,9662697547.0
-bytes_out_sum_d_443,int,True,dynamic,14411004278.0
+bytes_out_sum_d_443,int,True,dynamic,348811500.0
 bytes_out_min_d_443,int,True,dynamic,24483588.0
 bytes_out_max_d_443,int,True,dynamic,14410956052.0
 pkts_in_sum_d_443,int,False,0.0,421005.0
