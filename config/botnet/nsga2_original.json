@@ -21,7 +21,7 @@
   "pop_size": 640,
   "n_offsprings": 320,
   "n_initial_state": 387,
-  "save_history": true,
+  "save_history": false,
   "random_seed": 0,
   "n_repetition": 1,
   "initial_state_offset": 0,
