@@ -1,0 +1,4 @@
+outs:
+- md5: f829b5d340e54b3915b2667958b43e64
+  size: 2447
+  path: data_scaler.pickle

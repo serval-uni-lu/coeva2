@@ -1,0 +1,22 @@
+{
+  "paths": {
+    "dataset": "../data/lcld/dataset.csv",
+    "model": "../out/static/model.joblib",
+    "surrogate": "../out/static/surrogate.model",
+    "scaler": "../out/data_scaler.pickle",
+    "x_candidates": "../out/static/x_attack_candidate.npy",
+    "x_surrogate_candidates": "../out/static/x_surrogate_candidate.npy"
+  },
+  "dirs": {
+    "train_test_data": "../data/lcld"
+  },
+  "target": "charged_off",
+  "model_parameters":{
+    "n_estimators": 125,
+    "min_samples_split": 6,
+    "min_samples_leaf": 2,
+    "max_depth": 10,
+    "bootstrap": true
+  },
+  "threshold": 0.24
+}

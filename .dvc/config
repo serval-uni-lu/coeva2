@@ -1,0 +1,7 @@
+[core]
+    analytics = false
+    remote = master
+['remote "dev"']
+    url = s3://coeva2.dev
+    endpointurl = https://minio.serval
+

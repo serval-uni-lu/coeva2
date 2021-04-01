@@ -1,0 +1,5 @@
+outs:
+- md5: 8eb235cc282bbfb6eeea4788d0cf0192.dir
+  size: 383657
+  nfiles: 3
+  path: surrogate.model

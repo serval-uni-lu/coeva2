@@ -11,3 +11,10 @@ class EfficientResult:
             self.n_offsprings = result.algorithm.n_offsprings
             if hasattr(result.problem, "weight"):
                 self.weight = result.problem.weight
+
+
+class HistoryResult(EfficientResult):
+    def __init__(self, result=None):
+        super().__init__(result)
+        if result is not None:
+            self.history = result.problem.history
