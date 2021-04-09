@@ -1,0 +1,17 @@
+{
+  "paths": {
+    "model": "../models/botnet/model_whole_scenarios19_2n",
+    "features": "../data/botnet/features_ctu.csv",
+    "constraints": "../data/botnet/constraints_ctu.csv",
+    "x_candidates": "../data/botnet/x_attack_candidates_2n.npy",
+    "attack_results": "../out/attacks/botnet/pgd/results.npy",
+    "objectives": "../out/attacks/botnet/pgd/objectives.csv",
+    "scaler": "../models/botnet/scaler.pickle"
+  },
+  "algorithm": "pgd",
+  "random_seed": 0,
+  "n_initial_state": -1,
+  "n_repetition": 10,
+  "initial_state_offset": 0,
+  "threshold": 0.8
+}

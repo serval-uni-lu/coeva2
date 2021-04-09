@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from art.classifiers import KerasClassifier as kc
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
-from utils import in_out
+from utils import in_out, Pickler
 from art.attacks.evasion import ProjectedGradientDescent as PGD
 import logging
 
@@ -29,7 +29,8 @@ def run(
         X_initial_states = X_initial_states[
                            INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
                            ]
-
+    scaler = Pickler.load_from_file(config["paths"]["scaler"])
+    X_initial_states = scaler.transform(X_initial_states)
     logging.info(f"Attacking with {X_initial_states.shape[0]} initial states.")
 
     # ----- Load Model

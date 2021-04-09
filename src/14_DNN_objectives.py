@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
 
-from attacks import venus_constraints
+from attacks.coeva2.lcld_constraints import LcldConstraints
 from utils import in_out, Pickler
 import pandas as pd
 import logging
@@ -42,7 +42,7 @@ def run(
 
     # ----- Predict
     y_attack_proba = model.predict(X_attacks)
-    y_pred_proba = model.predict(X_initial_states)
+    y_pred_proba = model.predict(scaler.transform(X_initial_states))
 
     y_attack = (y_attack_proba[:, 1] >= THRESHOLD).astype(bool)
     y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
@@ -54,7 +54,12 @@ def run(
     misclassification_rate = X_misclassified.shape[0] / X_attacks.shape[0]
 
     # Constraints (O3)
-    constraints = venus_constraints.evaluate(scaler.inverse_transform(X_misclassified))
+    constraints_evaluator = LcldConstraints(
+        # config["amount_feature_index"],
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+    constraints = constraints_evaluator.evaluate(scaler.inverse_transform(X_misclassified))
     constraints_violated = constraints.sum(axis=1) > 0
     X_missclassified_constraints = X_misclassified[(1 - constraints_violated).astype(bool)]
     misclasiffication_constraints_rate = X_missclassified_constraints.shape[0] / X_attacks.shape[0]
@@ -65,10 +70,10 @@ def run(
 
     # Shape and save metrics
     objectives = {
-        "n_sample": X_initial_states.shape[0],
+        "n_sample": np.array([X_initial_states.shape[0]]),
         "gross_success_rate": np.array([misclassification_rate]),
         "real_success_rate": np.array([misclasiffication_constraints_rate]),
-        "L2_distance": distance_mean
+        "L2_distance": np.array([distance_mean])
     }
     objectives_df = pd.DataFrame.from_dict(objectives)
 
