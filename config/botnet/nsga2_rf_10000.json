@@ -7,7 +7,8 @@
     "attack_results": "../out/attacks/botnet/nsga2/results_rf_10000.pickle",
     "objectives": "../out/attacks/botnet/nsga2/objectives_rf_10000.csv",
     "history": "../out/attacks/botnet/nsga2/history_rf_10000.csv",
-    "ml_scaler": null
+    "ml_scaler": null,
+    "scaler": "../models/botnet/scaler.pickle"
   },
   "dirs": {
     "figure": "../out/attacks/botnet/nsga2"
