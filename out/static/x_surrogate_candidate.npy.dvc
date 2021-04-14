@@ -1,0 +1,4 @@
+outs:
+- md5: dcaf87c48339ce1872b50b79c5d53db2
+  size: 12833008
+  path: x_surrogate_candidate.npy

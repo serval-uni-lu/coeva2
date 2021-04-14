@@ -1,0 +1,4 @@
+outs:
+- md5: 4483b507df3505db1a5273cd6d35d9bd
+  size: 10085564
+  path: coeva2_resistant_model.joblib

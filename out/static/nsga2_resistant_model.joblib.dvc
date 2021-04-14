@@ -1,0 +1,4 @@
+outs:
+- md5: 0d8b1032cb38d3f1b2dcc14cbcc0b2eb
+  size: 10141292
+  path: nsga2_resistant_model.joblib
