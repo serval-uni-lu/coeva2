@@ -80,3 +80,15 @@ class ObjectiveCalculator:
             training.append(x_ml[adv_filter])
 
         return np.concatenate(training)
+
+    def get_single_successful_attack(self, results: List[EfficientResult]) -> np.ndarray:
+        training = []
+        for result in results:
+            adv_filter = self._objective_per_individual(result)[2].astype(np.bool)
+            x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
+            x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
+            successful = x_ml[adv_filter]
+            if successful.shape[0] > 0:
+                rnd_idx = np.random.choice(successful.shape[0], size=1, replace=False)
+                training.append(successful[rnd_idx, :])
+        return np.concatenate(training)
