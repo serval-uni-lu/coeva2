@@ -1,0 +1,4 @@
+outs:
+- md5: bc30cc02ce4eccbd8699db8132f6e60d
+  size: 5672594
+  path: random_forest_retrained.joblib

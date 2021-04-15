@@ -1,0 +1,18 @@
+{
+  "paths": {
+    "model": "../models/botnet/random_forest.joblib",
+    "features": "../data/botnet/features_ctu.csv",
+    "constraints": "../data/botnet/constraints_ctu.csv",
+    "attack_results": "../out/attacks/botnet/nsga2/results_rf_10000.pickle",
+    "resistant_model": "../models/botnet/random_forest_retrained.joblib",
+    "ml_scaler": null
+  },
+  "dirs": {
+    "train_test_data": "../data/botnet/train_test"
+  },
+  "threshold": 0.65,
+  "amount_feature_index": 0,
+  "high_amount": 10000,
+  "attack_results_offset": 0,
+  "n_attack_results": 194
+}

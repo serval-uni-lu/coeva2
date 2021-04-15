@@ -34,6 +34,7 @@ def run():
     # keras_model.summary()
     # classifier = Classifier(keras_model)
     X_initial_states = np.load(config["paths"]["x_candidates"])
+    X_initial_states = np.delete(X_initial_states, [165, 166], 0)
     X_initial_states = X_initial_states[
         config["initial_state_offset"] : config["initial_state_offset"]
         + config["n_initial_state"]
