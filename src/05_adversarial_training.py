@@ -16,7 +16,7 @@ def run(
     RESISTANT_MODEL_PATH=config["paths"]["resistant_model"],
     TRAIN_TEST_DATA_DIR=config["dirs"]["train_test_data"],
     THRESHOLD=config["threshold"],
-    X_ADV=['paths']["x_adv"]
+    X_ADV=config['paths']["x_adv"]
 ):
 
     # Load
@@ -41,7 +41,7 @@ def run(
     # Adv
     # attack_results = Pickler.load_from_file(ATTACK_RESULTS_PATH)
     # X_adv = objective_calculator.get_successful_attacks(attack_results)
-    X_adv = np.load('../out/static/x_generated_candidate.npy')
+    X_adv = np.load(X_ADV)
     y_adv = np.zeros(X_adv.shape[0]) + 1
 
     # Legits
