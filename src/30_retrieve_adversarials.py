@@ -42,7 +42,7 @@ def run(
         # config["high_amount"],
         # config["amount_feature_index"]
     )
-    adv = objective_calculator.get_single_successful_attack(efficient_results)
+    adv = objective_calculator.get_successful_attacks(efficient_results)
 
     np.save(config["paths"]["x_adv"], adv)
 
