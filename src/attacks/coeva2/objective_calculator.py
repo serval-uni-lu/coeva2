@@ -77,7 +77,7 @@ class ObjectiveCalculator:
             #np.save("this.npy", x[adv_filter])
             x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
             #np.save('hopefully_this.npy', x_ml)
-            training.append(x_ml[adv_filter])
+            training.append(x_ml[adv_filter][:20])
 
         return np.concatenate(training)
 
