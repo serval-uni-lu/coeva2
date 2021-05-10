@@ -1,23 +1,31 @@
+import joblib
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.metrics import AUC
-
-from attacks import venus_constraints
+from tensorflow.keras.optimizers import Adam
 from utils import Pickler, Datafilter
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
 import tensorflow as tf
-
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
+from attacks.coeva2.lcld_constraints import LcldConstraints
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    f1_score,
+    matthews_corrcoef,
+)
 from utils import in_out
 
 config = in_out.get_parameters()
+
 
 def print_score(label, prediction):
     print("Test Result:\n================================================")
     print(f"Accuracy Score: {accuracy_score(label, prediction) * 100:.2f}%")
     print("_______________________________________________")
-    print("Classification Report:", end='')
+    print("Classification Report:", end="")
     print(f"\tPrecision Score: {precision_score(label, prediction) * 100:.2f}%")
     print(f"\t\t\tRecall Score: {recall_score(label, prediction) * 100:.2f}%")
     print(f"\t\t\tF1 score: {f1_score(label, prediction) * 100:.2f}%")
@@ -36,19 +44,19 @@ def run(
     # ----- Load and Scale
     tf.compat.v1.disable_eager_execution()
 
-
     X_train = np.load("{}/X_train.npy".format(TRAIN_TEST_DATA_DIR))
     y_train = np.load("{}/y_train.npy".format(TRAIN_TEST_DATA_DIR))
     X_test = np.load("{}/X_test.npy".format(TRAIN_TEST_DATA_DIR))
     y_test = np.load("{}/y_test.npy".format(TRAIN_TEST_DATA_DIR))
-    scaler = Pickler.load_from_file(SCALER_PATH)
+    scaler = joblib.load(SCALER_PATH)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
 
     # ----- Split and Scale
 
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, stratify=y_train)
-
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train, y_train, stratify=y_train
+    )
 
     X_train = np.array(X_train).astype(np.float32)
     X_val = np.array(X_val).astype(np.float32)
@@ -58,26 +66,25 @@ def run(
     # ----- Model Definition
 
     model = Sequential()
-    model.add(Dense(X_train.shape[1], activation='relu'))
-    # model.add(Dropout(0.2))
-    model.add(Dense(128, activation='relu'))
-    # model.add(Dropout(0.2))
-    model.add(Dense(56, activation='relu'))
-    # model.add(Dropout(0.2))
-    model.add(Dense(28, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(2, activation='softmax'))
+    model.add(Dense(units=128, activation="relu", input_dim=X_train.shape[1]))
+    model.add(Dense(units=128, activation="relu"))
+    model.add(Dropout(0.001))
+    model.add(Dense(units=64, activation="relu"))
+    model.add(Dense(units=2, activation="softmax"))
+    sgd = Adam(lr=0.001)
+    model.compile(loss="binary_crossentropy", optimizer=sgd)
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(0.001),
-                  loss='binary_crossentropy',
-                  metrics=["accuracy", AUC()])
+    # model.compile(optimizer=tf.keras.optimizers.Adam(0.001),
+    #               loss='binary_crossentropy',
+    #               metrics=["accuracy", AUC()])
 
     # ----- Model Training
 
     r = model.fit(
-        X_train, y_train,
+        X_train,
+        y_train,
         validation_data=(X_val, y_val),
-        epochs=25,
+        epochs=10,
         batch_size=128,
     )
 
@@ -96,8 +103,13 @@ def run(
         include_optimizer=True,
         save_format=None,
         signatures=None,
-        options=None
+        options=None,
     )
+
+    X_test = scaler.fit_transform(np.load(config["paths"]["x_candidates"]))
+    y_pred_proba = model.predict(X_test)
+    y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
+    y_test = np.ones(X_test.shape[0])
 
     X_test, y_test, y_pred = Datafilter.filter_correct_prediction(
         X_test, y_test, y_pred
@@ -108,7 +120,14 @@ def run(
     X_test = X_test[np.random.permutation(X_test.shape[0])]
 
     # Removing x that violates constraints
-    constraints = venus_constraints.evaluate(scaler.inverse_transform(X_test))
+    constraints_evaluator = LcldConstraints(
+        # config["amount_feature_index"],
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+    constraints = constraints_evaluator.evaluate(scaler.inverse_transform(X_test))
+    # Scaling tolerance = 5
+    constraints[:, 0] = constraints[:, 0] - 1
     constraints_violated = constraints > 0
     constraints_violated = constraints_violated.sum(axis=1).astype(bool)
     X_test = X_test[(1 - constraints_violated).astype(bool)]
