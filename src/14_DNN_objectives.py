@@ -25,15 +25,16 @@ def run(
 
 ):
     logging.basicConfig(level=logging.INFO)
-    tf.compat.v1.disable_eager_execution()
+    # tf.compat.v1.disable_eager_execution()
     Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
 
     # ----- Load and Scale
 
     X_initial_states = np.load(X_ATTACK_CANDIDATES_PATH)
-    X_initial_states = X_initial_states[
-                       INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
-                       ]
+    if N_INITIAL_STATE > -1:
+        X_initial_states = X_initial_states[
+                           INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
+                           ]
     X_attacks = np.load(ATTACK_RESULTS_PATH)
     scaler = joblib.load(SCALER_PATH)
     model = tf.keras.models.load_model(MODEL_PATH)
@@ -64,6 +65,7 @@ def run(
     constraints = constraints_evaluator.evaluate(scaler.inverse_transform(X_misclassified))
     constraints[:, 0] = constraints[:, 0] - 5
     constraints_violated = constraints.sum(axis=1) > 0
+    constraints_rate = (1 - constraints_violated).sum() / X_attacks.shape[0]
     X_missclassified_constraints = X_misclassified[(1 - constraints_violated).astype(bool)]
     misclasiffication_constraints_rate = X_missclassified_constraints.shape[0] / X_attacks.shape[0]
 
@@ -74,8 +76,9 @@ def run(
     # Shape and save metrics
     objectives = {
         "n_sample": np.array([X_initial_states.shape[0]]),
-        "gross_success_rate": np.array([misclassification_rate]),
-        "real_success_rate": np.array([misclasiffication_constraints_rate]),
+        "o1": np.array([constraints_rate]),
+        "o2": np.array([misclassification_rate]),
+        "o3": np.array([misclasiffication_constraints_rate]),
         "L2_distance": np.array([distance_mean])
     }
     objectives_df = pd.DataFrame.from_dict(objectives)
