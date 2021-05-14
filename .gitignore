@@ -1,6 +1,7 @@
 .idea/
 .python-version
 venv/
+.cenv
 adv/
 __pycache__/
 dask-worker-space/
