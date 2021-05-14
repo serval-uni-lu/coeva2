@@ -4,3 +4,4 @@
 /x_attack_candidate.npy
 /surrogate.model
 /x_surrogate_candidate.npy
+/x_generated_candidate.npy
