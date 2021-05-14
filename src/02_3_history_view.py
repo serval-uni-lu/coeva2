@@ -16,9 +16,8 @@ print(config)
 
 
 def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figure"]):
-    print("hello")
     history_df = pd.read_csv(HISTORY_PATH, low_memory=False)
-
+    print(history_df.shape)
     # history_df = history_df[100:]
     # encoder = VenusEncoder()
     #
@@ -28,13 +27,14 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
 
     history_df["f1_mean"] = np.exp(
-        f1_scaler.inverse_transform([history_df["f1_mean"]])[0]
+        ([history_df["f1_mean"]])[0]
     )
+
     history_df["f1_max"] = np.exp(
-        f1_scaler.inverse_transform([history_df["f1_max"]])[0]
+        ([history_df["f1_max"]])[0]
     )
     history_df["f1_min"] = np.exp(
-        f1_scaler.inverse_transform([history_df["f1_min"]])[0]
+        ([history_df["f1_min"]])[0]
     )
 
     # history_df["f3_mean"] = 1 / history_df["f3_mean"]
@@ -48,47 +48,26 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
     # history_df["g1_7_min"] = history_df["g1_7_min"] * 255
     # history_df["g1_7_mean"] = history_df["g1_7_mean"] * 255
     # history_df["g1_7_max"] = history_df["g1_7_max"] * 255
-
-    print("Heyya")
     font = {"size": 16}
     plt.rc("font", **font)
+
+    constraints_min_col = [c for c in history_df.columns if c.startswith("g1_") and c.endswith("min")]
+    constraints_min_col = [c.replace("_min", "") for c in constraints_min_col]
+    constraints_min_col = [c for c in constraints_min_col if history_df[f"{c}_min"].iloc[-1]]
+
 
     objectives = [
         "f1",
         "f2",
-        "g1",
-        "g1_1",
-        "g1_2",
-        "g1_3",
-        "g1_4",
-        "g1_5",
-        "g1_6",
-        "g1_7",
     ]
-    scales = [
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-        "linear",
-    ]
+    objectives = objectives + constraints_min_col
+
+    scales = ["linear" for o in objectives]
     y_labels = [
         "Prediction",
-        "L2 Perturbation",
-        "Constraint violation",
-        "g1_1",
-        "g1_2",
-        "g1_3",
-        "g1_4",
-        "g1_5",
-        "g1_6",
-        "g1_7",
-    ]
+        "L2 Perturbation"]
+    y_labels = y_labels + constraints_min_col
+
     for i, key in enumerate(objectives):
         fig, axs = plt.subplots(1, 1, figsize=(10, 4))
         ax = axs
@@ -106,7 +85,6 @@ def run(HISTORY_PATH=config["paths"]["history"], FIGURE_DIR=config["dirs"]["figu
         ax.set_yscale(scales[i])
         ax.set_xlabel("Generation")
         ax.set_ylabel(y_labels[i])
-        print("why not")
         plt.tight_layout()
         plt.savefig(f"{FIGURE_DIR}/fig_{key}.pdf")
 

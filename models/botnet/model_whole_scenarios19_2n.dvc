@@ -1,0 +1,5 @@
+outs:
+- md5: 2e163025513b97e029a6d3ab1c133b16.dir
+  size: 2965061
+  nfiles: 3
+  path: model_whole_scenarios19_2n

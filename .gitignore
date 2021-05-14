@@ -1,6 +1,7 @@
 .idea/
 .python-version
 venv/
+.cenv
 adv/
 __pycache__/
 dask-worker-space/
@@ -10,4 +11,6 @@ src/advm/advm.egg-info/
 src/playground.py
 .venv
 .vscode/
+.vs/
+.ipynb_checkpoints/
 .cenv

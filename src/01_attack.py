@@ -1,16 +1,21 @@
 import warnings
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from attacks.coeva2.lcld_constraints import LcldConstraints
 
 import random
 from pathlib import Path
 import numpy as np
 from joblib import load
-from utils import Pickler, in_out
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+
+from utils import Pickler, in_out, load_keras_model
 from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.coeva2 import Coeva2
 from datetime import datetime
 warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 config = in_out.get_parameters()
 
@@ -24,8 +29,12 @@ def run():
 
     # ----- Load and create necessary objects
 
-    classifier = Classifier(load(config["paths"]["model"]))
+    #classifier = load_keras_model.MDModel(config["paths"]["model"])
+    # keras_model = load_model(config["paths"]["model"])
+    # keras_model.summary()
+    # classifier = Classifier(keras_model)
     X_initial_states = np.load(config["paths"]["x_candidates"])
+    X_initial_states = np.delete(X_initial_states, [165, 166], 0)
     X_initial_states = X_initial_states[
         config["initial_state_offset"] : config["initial_state_offset"]
         + config["n_initial_state"]
@@ -50,7 +59,7 @@ def run():
     # Initial state loop (threaded)
 
     coeva2 = Coeva2(
-        classifier,
+        None,
         constraints,
         config["algorithm"],
         config["weights"],

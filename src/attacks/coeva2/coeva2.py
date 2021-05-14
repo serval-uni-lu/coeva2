@@ -1,9 +1,14 @@
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, load
 from tqdm import tqdm
 from copy import deepcopy
-
+import tensorflow as tf
 import numpy as np
+from utils import Pickler, in_out
+from tensorflow.keras.models import load_model
+import joblib
+import os
 
+config = in_out.get_parameters()
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 from pymoo.algorithms.nsga2 import NSGA2
@@ -14,12 +19,15 @@ from pymoo.operators.mixed_variable_operator import (
     MixedVariableCrossover,
     MixedVariableMutation,
 )
+from utils import in_out
+config = in_out.get_parameters()
 
 from .classifier import Classifier
 from .feature_encoder import get_encoder_from_constraints
 from .problem import Coeva2Problem
 from .constraints import Constraints
 from .result_process import HistoryResult, EfficientResult
+import warnings
 
 
 class Coeva2:
@@ -50,7 +58,7 @@ class Coeva2:
         self._alg = alg
         self._constraints = constraints
         self._encoder = None
-        self._classifier = classifier
+        # self._classifier = classifier
         self._weights = weights
 
         self._n_offsprings = n_offsprings
@@ -108,9 +116,18 @@ class Coeva2:
         return algorithm
 
     def _one_generate(self, x):
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        warnings.simplefilter(action="ignore", category=FutureWarning)
+        warnings.simplefilter(action="ignore", category=RuntimeWarning)
+        warnings.simplefilter(action="ignore", category=UserWarning)
         termination = get_termination("n_gen", self._n_gen)
+        classifier = Classifier(load(config["paths"]["model"]))
+        # self._encoder = get_encoder_from_constraints(con)
         algorithm = self._create_algorithm()
-        classifier = deepcopy(self._classifier)
+        # classifier = tf.keras.models.clone_model(self._classifier)
+        # classifier = deepcopy(self._classifier)
+        # classifier = Classifier(load_model(config["paths"]["model"]))
+        # classifier = self._classifier.get_deep_copy()
         constraints = deepcopy(self._constraints)
         encoder = get_encoder_from_constraints(self._constraints, x)
 
@@ -138,6 +155,7 @@ class Coeva2:
             result = EfficientResult(result)
             return result
 
+    # Loop over inputs to generate adversarials using the _one_generate function above
     def generate(self, x: np.ndarray):
         self._check_input_size(x)
 
@@ -148,9 +166,15 @@ class Coeva2:
         if self._verbose > 0:
             iterable = tqdm(iterable, total=len(x))
 
+        # Parallel run
         processed_result = Parallel(n_jobs=self._n_jobs)(
             delayed(self._one_generate)(initial_state)
             for index, initial_state in iterable
         )
+
+        # Sequential Run
+        # processed_result = [
+        #     self._one_generate(initial_state) for index, initial_state in iterable
+        # ]
 
         return processed_result

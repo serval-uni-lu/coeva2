@@ -1,0 +1,4 @@
+outs:
+- md5: c71ca63e047af6a5c7fac46e8aeab772
+  size: 1161344
+  path: results.npy
