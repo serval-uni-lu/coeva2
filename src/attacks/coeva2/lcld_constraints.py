@@ -6,20 +6,21 @@ from sklearn.preprocessing import MinMaxScaler
 from attacks.coeva2.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
+import pickle
 import logging
 
 
 class LcldConstraints(Constraints):
     def __init__(
         self,
-        amount_feature_index: int,
+        #amount_feature_index: int,
         feature_path: str,
         constraints_path: str,
     ):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
-        self._amount_feature_index = amount_feature_index
+        #self._amount_feature_index = amount_feature_index
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
@@ -34,66 +35,41 @@ class LcldConstraints(Constraints):
         # ----- PARAMETERS
 
         tol = 1e-3
+        # should write a function in utils for this part
+        with open('../data/botnet/feat_idx.pickle', 'rb') as f:
+            feat_idx = pickle.load(f)
 
-        # installment = loan_amount * int_rate (1 + int_rate) ^ term / ((1+int_rate) ^ term - 1)
-        calculated_installment = (
-            np.ceil(
-                100
-                * (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
-                / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1)
-            )
-            / 100
-        )
-        g41 = np.absolute(x[:, 3] - calculated_installment)
 
-        # open_acc <= total_acc
-        g42 = x[:, 10] - x[:, 14]
+        sum_idx = [0, 3, 6, 12, 15, 18]
+        max_idx = [1, 4, 7, 13, 16, 19]
+        min_idx = [2, 5, 8, 14, 17, 20]
 
-        # pub_rec_bankruptcies <= pub_rec
-        g43 = x[:, 16] - x[:, 11]
 
-        # term = 36 or term = 60
-        g44 = np.absolute((36 - x[:, 1]) * (60 - x[:, 1]))
+        g1 = np.absolute((x[:, feat_idx['icmp_sum_s_idx']].sum(axis=1) + x[:, feat_idx['udp_sum_s_idx']].sum(axis=1) + x[:, feat_idx['tcp_sum_s_idx']].sum(axis=1)) - (x[:, feat_idx['bytes_in_sum_s_idx']].sum(axis=1)+x[:, feat_idx['bytes_out_sum_s_idx']].sum(axis=1)))
+        g2 = np.absolute((x[:, feat_idx['icmp_sum_d_idx']].sum(axis=1) + x[:, feat_idx['udp_sum_d_idx']].sum(axis=1) + x[:, feat_idx['tcp_sum_d_idx']].sum(axis=1)) - (x[:, feat_idx['bytes_in_sum_d_idx']].sum(axis=1)+x[:, feat_idx['bytes_out_sum_d_idx']].sum(axis=1)))
 
-        # ratio_loan_amnt_annual_inc
-        g45 = np.absolute(x[:, 20] - x[:, 0] / x[:, 6])
+        constraints = [g1, g2]
 
-        # ratio_open_acc_total_acc
-        g46 = np.absolute(x[:, 21] - x[:, 10] / x[:, 14])
+        cons_idx = 3
+        cons_idx,  constraints0 = self.define_individual_constraints_pkts_bytes(x, cons_idx, feat_idx)
+        constraints.extend(constraints0)
+        cons_idx, constraints1 = self.define_individual_constraints(x,cons_idx,feat_idx,sum_idx,max_idx)
+        constraints.extend(constraints1)
+        cons_idx, constraints2 = self.define_individual_constraints(x,cons_idx,feat_idx,sum_idx,min_idx)
+        constraints.extend(constraints2)
+        cons_idx, constraints3 = self.define_individual_constraints(x,cons_idx, feat_idx,max_idx,min_idx)
+        constraints.extend(constraints3)
 
-        # diff_issue_d_earliest_cr_line
-        g47 = np.absolute(
-            x[:, 22]
-            - (
-                self._date_feature_to_month(x[:, 7])
-                - self._date_feature_to_month(x[:, 9])
-            )
-        )
-
-        # ratio_pub_rec_diff_issue_d_earliest_cr_line
-        g48 = np.absolute(x[:, 23] - x[:, 11] / x[:, 22])
-
-        # ratio_pub_rec_bankruptcies_pub_rec
-        g49 = np.absolute(x[:, 24] - x[:, 16] / x[:, 22])
-
-        # ratio_pub_rec_bankruptcies_pub_rec
-        ratio_mask = x[:, 11] == 0
-        ratio = np.empty(x.shape[0])
-        ratio = np.ma.masked_array(ratio, mask=ratio_mask, fill_value=-1).filled()
-        ratio[~ratio_mask] = x[~ratio_mask, 16] / x[~ratio_mask, 11]
-        ratio[ratio == np.inf] = -1
-        ratio[np.isnan(ratio)] = -1
-        g410 = np.absolute(x[:, 25] - ratio)
-
-        constraints = anp.column_stack(
-            [g41, g42, g43, g44, g45, g46, g47, g48, g49, g410]
-        )
+        constraints = anp.column_stack(constraints)
         constraints[constraints <= tol] = 0.0
 
         return constraints
 
+    ### --------
+    # PLEASE UPDATE THE NUMBER HERE
+    ### -------
     def get_nb_constraints(self) -> int:
-        return 10
+        return 360
 
     def normalise(self, x: np.ndarray) -> np.ndarray:
         return self._scaler.transform(x)
@@ -150,3 +126,38 @@ class LcldConstraints(Constraints):
         self._constraints_min = df["min"].to_numpy()
         self._constraints_max = df["max"].to_numpy()
         self._fit_scaler()
+
+
+    def define_individual_constraints(self, x, cons_idx, feat_idx, upper_idx, lower_idx):
+        constraints_part = []
+        keys = list(feat_idx.keys())
+    
+        for i in range (len(upper_idx)):
+            key = keys[upper_idx[i]]
+            type_lower = keys[lower_idx[i]]
+            type_upper = keys[upper_idx[i]]
+            for j in range (len(feat_idx[key])):
+                port_idx_lower = feat_idx[type_lower][j]
+                port_idx_upper = feat_idx[type_upper][j]
+                globals()['g%s' % cons_idx]= x[:, port_idx_lower]  - x[:, port_idx_upper]
+                constraints_part.append(globals()['g%s' % cons_idx])
+                cons_idx += 1
+        return cons_idx, constraints_part
+
+    def define_individual_constraints_pkts_bytes(self, x , cons_idx, feat_idx):
+        constraints_part = []
+        keys = list(feat_idx.keys())
+        bytes_out = ['bytes_out_sum_s_idx', 'bytes_out_sum_d_idx']
+        pkts_out = ['pkts_out_sum_s_idx', 'pkts_out_sum_d_idx']
+        for i in range (len(bytes_out)):
+            pkts = feat_idx[pkts_out[i]]
+            bytes_ = feat_idx[bytes_out[i]]
+            for j in range (len(bytes_out[i])-2):
+                port_idx_pkts = pkts[j]
+                port_idx_bytes = bytes_[j]
+                a = x[:, port_idx_bytes]
+                b = x[:, port_idx_pkts]
+                globals()['g%s' % cons_idx]= np.divide(a, b, out=np.zeros_like(a), where=b!=0) - 1500
+                constraints_part.append(globals()['g%s' % cons_idx])
+                cons_idx += 1
+        return cons_idx, constraints_part

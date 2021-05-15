@@ -32,7 +32,7 @@ def run():
         + config["n_initial_state"]
     ]
     constraints = LcldConstraints(
-        config["amount_feature_index"],
+        #config["amount_feature_index"],
         config["paths"]["features"],
         config["paths"]["constraints"],
     )

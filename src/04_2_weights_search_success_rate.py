@@ -61,7 +61,7 @@ def run():
 
     classifier = Classifier(load(config["paths"]["model"]))
     constraints = LcldConstraints(
-        config["amount_feature_index"],
+        #config["amount_feature_index"],
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
@@ -70,7 +70,7 @@ def run():
         constraints,
         config["threshold"],
         config["high_amount"],
-        config["amount_feature_index"]
+        #config["amount_feature_index"]
     )
 
     success_rates = np.array(

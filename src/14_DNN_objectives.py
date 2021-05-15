@@ -1,9 +1,11 @@
 from pathlib import Path
+
+import joblib
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, matthews_corrcoef
 
-from attacks import venus_constraints
+from attacks.coeva2.lcld_constraints import LcldConstraints
 from utils import in_out, Pickler
 import pandas as pd
 import logging
@@ -23,26 +25,27 @@ def run(
 
 ):
     logging.basicConfig(level=logging.INFO)
-    tf.compat.v1.disable_eager_execution()
+    # tf.compat.v1.disable_eager_execution()
     Path(ATTACK_RESULTS_PATH).parent.mkdir(parents=True, exist_ok=True)
 
     # ----- Load and Scale
 
     X_initial_states = np.load(X_ATTACK_CANDIDATES_PATH)
-    X_initial_states = X_initial_states[
-                       INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
-                       ]
+    if N_INITIAL_STATE > -1:
+        X_initial_states = X_initial_states[
+                           INITIAL_STATE_OFFSET: INITIAL_STATE_OFFSET + N_INITIAL_STATE
+                           ]
     X_attacks = np.load(ATTACK_RESULTS_PATH)
-    scaler = Pickler.load_from_file(SCALER_PATH)
+    scaler = joblib.load(SCALER_PATH)
     model = tf.keras.models.load_model(MODEL_PATH)
 
     # Verification
     if X_initial_states.shape[0] != X_attacks.shape[0]:
-          raise Exception(f"Number of initial state ({X_initial_states.shape[0]}) is different from the number of attacks ({X_attacks.shape[0]})") 
+          raise Exception(f"Number of initial state ({X_initial_states.shape[0]}) is different from the number of attacks ({X_attacks.shape[0]})")
 
     # ----- Predict
     y_attack_proba = model.predict(X_attacks)
-    y_pred_proba = model.predict(X_initial_states)
+    y_pred_proba = model.predict(scaler.transform(X_initial_states))
 
     y_attack = (y_attack_proba[:, 1] >= THRESHOLD).astype(bool)
     y_pred = (y_pred_proba[:, 1] >= THRESHOLD).astype(bool)
@@ -54,8 +57,15 @@ def run(
     misclassification_rate = X_misclassified.shape[0] / X_attacks.shape[0]
 
     # Constraints (O3)
-    constraints = venus_constraints.evaluate(scaler.inverse_transform(X_misclassified))
+    constraints_evaluator = LcldConstraints(
+        # config["amount_feature_index"],
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+    constraints = constraints_evaluator.evaluate(scaler.inverse_transform(X_misclassified))
+    constraints[:, 0] = constraints[:, 0] - 5
     constraints_violated = constraints.sum(axis=1) > 0
+    constraints_rate = (1 - constraints_violated).sum() / X_attacks.shape[0]
     X_missclassified_constraints = X_misclassified[(1 - constraints_violated).astype(bool)]
     misclasiffication_constraints_rate = X_missclassified_constraints.shape[0] / X_attacks.shape[0]
 
@@ -65,10 +75,11 @@ def run(
 
     # Shape and save metrics
     objectives = {
-        "n_sample": X_initial_states.shape[0],
-        "gross_success_rate": np.array([misclassification_rate]),
-        "real_success_rate": np.array([misclasiffication_constraints_rate]),
-        "L2_distance": distance_mean
+        "n_sample": np.array([X_initial_states.shape[0]]),
+        "o1": np.array([constraints_rate]),
+        "o2": np.array([misclassification_rate]),
+        "o3": np.array([misclasiffication_constraints_rate]),
+        "L2_distance": np.array([distance_mean])
     }
     objectives_df = pd.DataFrame.from_dict(objectives)
 
