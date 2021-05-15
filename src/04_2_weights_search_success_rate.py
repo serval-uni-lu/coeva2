@@ -3,7 +3,7 @@ from joblib import load
 import numpy as np
 
 from attacks.coeva2.classifier import Classifier
-from attacks.coeva2.lcld_constraints import LcldConstraints
+from src.examples.lcld.lcld_constraints import LcldConstraints
 from attacks.coeva2.objective_calculator import ObjectiveCalculator
 from utils import in_out
 from utils.in_out import pickle_from_dir

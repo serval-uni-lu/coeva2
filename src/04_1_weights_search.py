@@ -1,9 +1,8 @@
 import warnings
-import sys
 
 from attacks.coeva2.classifier import Classifier
 from attacks.coeva2.coeva2 import Coeva2
-from attacks.coeva2.lcld_constraints import LcldConstraints
+from src.examples.lcld.lcld_constraints import LcldConstraints
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 

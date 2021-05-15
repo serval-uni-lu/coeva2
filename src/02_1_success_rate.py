@@ -1,7 +1,7 @@
 import warnings
 
 from attacks.coeva2.classifier import Classifier
-from attacks.coeva2.lcld_constraints import LcldConstraints
+from src.examples.lcld.lcld_constraints import LcldConstraints
 from attacks.coeva2.objective_calculator import ObjectiveCalculator
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -12,8 +12,8 @@ import pandas as pd
 from utils import Pickler, in_out
 
 config = in_out.get_parameters()
-from tensorflow.keras.models import load_model
-import pymoo
+
+
 def run(
     MODEL_PATH=config["paths"]["model"],
     ATTACK_RESULTS_PATH=config["paths"]["attack_results"],

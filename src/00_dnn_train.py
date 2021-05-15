@@ -1,13 +1,10 @@
 import joblib
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tensorflow.python.keras.metrics import AUC
 from tensorflow.keras.optimizers import Adam
-from utils import Pickler, Datafilter
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 import tensorflow as tf
-from attacks.coeva2.lcld_constraints import LcldConstraints
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,

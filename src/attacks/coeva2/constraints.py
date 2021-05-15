@@ -64,10 +64,6 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     def get_feature_type(self) -> np.ndarray:
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def get_amount_feature_index(self) -> int:
-        raise NotImplementedError
-
     def check_constraints_error(self, x: np.ndarray):
         constraints = self.evaluate(x)
         constraints_violated = (constraints > 0).sum()

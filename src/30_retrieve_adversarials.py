@@ -1,14 +1,13 @@
 import warnings
 
 from attacks.coeva2.classifier import Classifier
-from attacks.coeva2.lcld_constraints import LcldConstraints
+from src.examples.lcld.lcld_constraints import LcldConstraints
 from attacks.coeva2.objective_calculator import ObjectiveCalculator
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 from pathlib import Path
 from joblib import load
-import pandas as pd
 from utils import Pickler, in_out
 import numpy as np
 
