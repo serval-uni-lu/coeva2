@@ -1,0 +1,29 @@
+{
+  "paths": {
+    "model": "./models/botnet/random_forest.joblib",
+    "features": "./data/botnet/features_ctu.csv",
+    "constraints": "./data/botnet/constraints_ctu.csv",
+    "x_candidates": "./data/botnet/x_attack_candidates_rf.npy",
+    "attack_results": "./out/attacks/botnet/constraints_only/results_rf_10000.pickle",
+    "objectives": "./out/attacks/botnet/constraints_only/objectives_rf_10000.csv",
+    "history": "./out/attacks/botnet/constraints_only/history_rf_10000.csv",
+    "ml_scaler": null
+  },
+  "dirs": {
+    "figure": "./out/attacks/botnet/constraints_only"
+  },
+  "thresholds": {
+    "f1": 0.65,
+    "f2": null
+  },
+  "threshold": 0.65,
+  "n_gen": 10000,
+  "pop_size": 40,
+  "n_offsprings": 20,
+  "n_initial_state": 10,
+  "save_history": false,
+  "seed": 1905,
+  "n_repetition": 1,
+  "initial_state_offset": 0,
+  "n_jobs": 10
+}

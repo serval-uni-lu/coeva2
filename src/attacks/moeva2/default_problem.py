@@ -24,7 +24,7 @@ class DefaultProblem(Problem):
     ):
         # Essential passed parameters
         self.x_initial_ml = x_initial_state
-        self.classifier = classifier,
+        self.classifier = (classifier,)
         self.minimize_class = minimize_class
         self._constraints = constraints
         self._encoder = encoder

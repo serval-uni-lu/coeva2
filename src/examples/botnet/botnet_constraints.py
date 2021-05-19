@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from src.attacks.coeva2.constraints import Constraints
+from attacks.moeva2.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
 import pickle

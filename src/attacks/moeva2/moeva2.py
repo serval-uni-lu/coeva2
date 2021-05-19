@@ -24,7 +24,7 @@ from pymoo.operators.mixed_variable_operator import (
 import warnings
 
 
-class Coeva2:
+class Moeva2:
     def __init__(
         self,
         classifier: Classifier,
@@ -36,6 +36,7 @@ class Coeva2:
         n_offsprings=320,
         scale_objectives=True,
         save_history=False,
+        seed=None,
         n_jobs=-1,
         verbose=1,
     ) -> None:
@@ -49,6 +50,7 @@ class Coeva2:
         self._n_offsprings = n_offsprings
         self._scale_objectives = scale_objectives
         self._save_history = save_history
+        self._seed = seed
         self._n_jobs = n_jobs
         self._verbose = verbose
         self._encoder = get_encoder_from_constraints(self._constraints)
@@ -133,6 +135,7 @@ class Coeva2:
             algorithm,
             termination,
             verbose=0,
+            seed=self._seed,
             save_history=False,  # Implemented from library should always be False
         )
 
@@ -165,13 +168,14 @@ class Coeva2:
         # Sequential Run
         if self._n_jobs == 1:
             processed_result = [
-                self._one_generate(initial_state, minimize_class[index]) for index, initial_state in iterable
+                self._one_generate(initial_state, minimize_class[index])
+                for index, initial_state in iterable
             ]
 
         # Parallel run
         else:
             processed_result = Parallel(n_jobs=self._n_jobs)(
-                delayed(self._one_generate)(initial_state)
+                delayed(self._one_generate)(initial_state, minimize_class[index])
                 for index, initial_state in iterable
             )
 

@@ -7,7 +7,7 @@ from .feature_encoder import FeatureEncoder
 from .classifier import Classifier
 
 AVOID_ZERO = 0.00000001
-NB_OBJECTIVES = 0
+NB_OBJECTIVES = 1
 
 
 class ConstraintsOnlyProblem(Problem):
@@ -70,6 +70,7 @@ class ConstraintsOnlyProblem(Problem):
         G = self._constraints.evaluate(x_f)
 
         # --- Out and History
+        out["F"] = np.zeros(x.shape[0])
         out["G"] = G
 
         if self._save_history:
