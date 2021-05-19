@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
-from attacks.coeva2.constraints import Constraints
+from .constraints import Constraints
 
 ONEHOT_ENCODE_KEY = "ohe"
 
@@ -174,7 +174,9 @@ class FeatureEncoder:
         return result
 
 
-def get_encoder_from_constraints(constraints: Constraints, dynamic_input=None) -> FeatureEncoder:
+def get_encoder_from_constraints(
+    constraints: Constraints, dynamic_input=None
+) -> FeatureEncoder:
     xl, xu = constraints.get_feature_min_max(dynamic_input=dynamic_input)
     return FeatureEncoder(
         constraints.get_mutable_mask(),

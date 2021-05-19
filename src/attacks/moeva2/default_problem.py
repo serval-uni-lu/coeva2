@@ -112,7 +112,7 @@ class DefaultProblem(Problem):
         G = self._constraints.evaluate(x_f)
 
         # --- Out and History
-        out["F"] = F
+        out["F"] = np.column_stack(F)
         out["G"] = G
 
         if self._save_history:
