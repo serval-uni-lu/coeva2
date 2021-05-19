@@ -1,7 +1,7 @@
 import warnings
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-from src.examples.lcld.lcld_constraints import LcldConstraints
+from src.examples.botnet.botnet_constraints import LcldConstraints
 
 import random
 from pathlib import Path

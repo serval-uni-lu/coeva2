@@ -4,7 +4,7 @@ import joblib
 import numpy as np
 import tensorflow as tf
 
-from src.examples.lcld.lcld_constraints import LcldConstraints
+from src.examples.botnet.botnet_constraints import LcldConstraints
 from utils import in_out
 import pandas as pd
 import logging

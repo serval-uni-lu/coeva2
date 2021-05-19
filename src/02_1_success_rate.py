@@ -1,7 +1,7 @@
 import warnings
 
 from attacks.coeva2.classifier import Classifier
-from src.examples.lcld.lcld_constraints import LcldConstraints
+from src.examples.botnet.botnet_constraints import LcldConstraints
 from attacks.coeva2.objective_calculator import ObjectiveCalculator
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
