@@ -1,7 +1,7 @@
-from src.attacks.moeva2.classifier import Classifier
-from src.attacks.moeva2.constraints import Constraints
-from src.attacks.moeva2.default_problem import DefaultProblem
-from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
+from .classifier import Classifier
+from .constraints import Constraints
+from .default_problem import DefaultProblem
+from .feature_encoder import get_encoder_from_constraints
 
 from joblib import Parallel, delayed
 from tqdm import tqdm
@@ -9,7 +9,7 @@ from copy import deepcopy
 import numpy as np
 import os
 
-from src.attacks.moeva2.result_process import HistoryResult, EfficientResult
+from .result_process import HistoryResult, EfficientResult
 
 from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm

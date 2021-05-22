@@ -2,11 +2,11 @@ import warnings
 
 import joblib
 
-from examples.botnet.botnet_constraints import BotnetConstraints
+from src.examples.botnet.botnet_constraints import BotnetConstraints
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
-from utils import Pickler, in_out, filter_initial_states
+from src.utils import Pickler, in_out, filter_initial_states
 from datetime import datetime
 from art.classifiers import KerasClassifier as kc
 from tensorflow.keras.models import load_model

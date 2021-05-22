@@ -17,13 +17,13 @@
     "f2": null
   },
   "threshold": 0.65,
-  "n_gen": 10000,
+  "n_gen": 100,
   "pop_size": 40,
   "n_offsprings": 20,
-  "n_initial_state": 10,
+  "n_initial_state": 1,
   "save_history": false,
   "seed": 1905,
   "n_repetition": 1,
   "initial_state_offset": 0,
-  "n_jobs": 10
+  "n_jobs": 1
 }

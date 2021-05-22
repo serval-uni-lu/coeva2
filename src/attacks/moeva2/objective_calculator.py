@@ -24,6 +24,7 @@ class ObjectiveCalculator:
         constraints: Constraints,
         minimize_class: int,
         thresholds: dict,
+        min_max_scaler,
         ml_scaler=None,
         problem_class=None,
     ):
@@ -34,8 +35,9 @@ class ObjectiveCalculator:
         self._problem_class = problem_class
         self._minimize_class = minimize_class
         self._encoder = get_encoder_from_constraints(self._constraints)
+        self._min_max_scaler = min_max_scaler
 
-    def _objective_array(self, x_f):
+    def _objective_array(self, x_initial, x_f):
 
         # Constraints
         constraint_violation = Problem.calc_constraint_violation(
@@ -52,7 +54,15 @@ class ObjectiveCalculator:
         f1 = self._classifier.predict_proba(x_ml)[:, self._minimize_class]
         misclassified = f1 < self._thresholds["f1"]
 
+        # In the ball
 
+        l2 = np.linalg.norm(
+            self._min_max_scaler.transform(x_initial.reshape(1, -1))
+            - self._min_max_scaler.transform(x_f),
+            axis=1,
+        )
+
+        l2_in_ball = l2 < self._thresholds["f2"]
 
         # Additional
         # to implement
@@ -61,17 +71,21 @@ class ObjectiveCalculator:
             [
                 constraints_respected,
                 misclassified,
+                l2_in_ball,
                 constraints_respected * misclassified,
+                constraints_respected * misclassified * l2_in_ball
             ]
         )
 
-    def success_rate_bis(self, x_f):
-        return self._objective_array(x_f).mean(axis=0)
+    def success_rate_bis(self, x_initial, x_f):
+        return self._objective_array(x_initial, x_f).mean(axis=0)
 
     def success_rate_genetic(self, results: List[EfficientResult]):
 
         initial_states = [result.initial_state for result in results]
-        pops_x = [np.array([e.X for e in result.pop]).astype(np.float64) for result in results]
+        pops_x = [
+            np.array([e.X for e in result.pop]).astype(np.float64) for result in results
+        ]
         pops_x_f = [
             self._encoder.genetic_to_ml(pops_x[i], initial_states[i])
             for i in range(len(results))
@@ -83,6 +97,12 @@ class ObjectiveCalculator:
         )
 
         return pops_at_least_one.mean(axis=0)
+
+    def success_rate_3d(self, x_initial, x):
+        at_leat_one = np.array(
+            [self.success_rate_bis(x_initial[i], e) > 0 for i, e in enumerate(x)]
+        )
+        return at_leat_one.mean(axis=0)
 
     def _objective_per_individual(self, result: EfficientResult) -> np.ndarray:
         x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
