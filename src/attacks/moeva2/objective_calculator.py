@@ -56,11 +56,20 @@ class ObjectiveCalculator:
 
         # In the ball
 
+        x_i_scaled = self._min_max_scaler.transform(x_initial.reshape(1, -1))
+        x_scaled = self._min_max_scaler.transform(x_f)
+        tol = 0.0001
+        assert np.all(x_i_scaled >= 0-tol)
+        assert np.all(x_i_scaled <= 1+tol)
+        assert np.all(x_scaled >= 0-tol)
+        assert np.all(x_scaled <= 1+tol)
+
         l2 = np.linalg.norm(
-            self._min_max_scaler.transform(x_initial.reshape(1, -1))
-            - self._min_max_scaler.transform(x_f),
+            x_i_scaled
+            - x_scaled,
             axis=1,
         )
+        print(l2)
 
         l2_in_ball = l2 < self._thresholds["f2"]
 
@@ -73,7 +82,7 @@ class ObjectiveCalculator:
                 misclassified,
                 l2_in_ball,
                 constraints_respected * misclassified,
-                constraints_respected * misclassified * l2_in_ball
+                constraints_respected * misclassified * l2_in_ball,
             ]
         )
 
@@ -93,7 +102,10 @@ class ObjectiveCalculator:
 
         # For each pop (results) check if the success rate is over 1
         pops_at_least_one = np.array(
-            [self.success_rate_bis(pop_x_f) > 0 for pop_x_f in pops_x_f]
+            [
+                self.success_rate_bis(initial_states[i], pop_x_f) > 0
+                for i, pop_x_f in tqdm(enumerate(pops_x_f), total=len(pops_x_f))
+            ]
         )
 
         return pops_at_least_one.mean(axis=0)

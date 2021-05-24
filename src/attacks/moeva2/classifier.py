@@ -21,7 +21,10 @@ class Classifier:
         self.set_verbose(verbose)
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
-        return self._classifier.predict_proba(x)
+        proba = self._classifier.predict_proba(x)
+        if proba.shape[1] == 1:
+            proba = np.concatenate((1-proba, proba), axis=1)
+        return proba
 
     def set_verbose(self, verbose: int) -> None:
         if hasattr(self._classifier, "set_params") and callable(

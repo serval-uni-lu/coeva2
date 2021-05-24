@@ -7,7 +7,7 @@ from .feature_encoder import FeatureEncoder
 from .classifier import Classifier
 
 AVOID_ZERO = 0.00000001
-NB_OBJECTIVES = 2
+NB_OBJECTIVES = 3
 
 
 class DefaultProblem(Problem):
@@ -24,29 +24,28 @@ class DefaultProblem(Problem):
     ):
         # Essential passed parameters
         self.x_initial_ml = x_initial_state
-        self.classifier = (classifier,)
+        self.classifier = classifier
         self.minimize_class = minimize_class
         self._constraints = constraints
-        self._encoder = encoder
+        self.encoder = encoder
 
         # Optional parameters
         self.scale_objectives = scale_objectives
         self._save_history = save_history
 
         # Computed attributes
-        self._x_initial_f_mm = encoder.normalise(x_initial_state)
+        self.x_initial_f_mm = encoder.normalise(x_initial_state)
         self._create_default_scaler()
         xl, xu = encoder.get_min_max_genetic()
 
-        if ml_scaler is not None:
-            self._ml_scaler = ml_scaler
+        self._ml_scaler = ml_scaler
 
         self._history = []
 
         super().__init__(
-            n_var=self._encoder.get_genetic_v_length(),
+            n_var=self.encoder.get_genetic_v_length(),
             n_obj=self.get_nb_objectives(),
-            n_constr=constraints.get_nb_constraints(),
+            n_constr=0,
             xl=xl,
             xu=xu,
         )
@@ -66,10 +65,11 @@ class DefaultProblem(Problem):
         self._f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
 
         self._f2_scaler = MinMaxScaler(feature_range=(0, 1))
-        self._f2_scaler.fit([[0], [np.sqrt(self._x_initial_f_mm.shape[0])]])
+        self._f2_scaler.fit([[0], [np.sqrt(self.x_initial_f_mm.shape[0])]])
 
     def _obj_misclassify(self, x_ml: np.ndarray) -> np.ndarray:
         f1 = self.classifier.predict_proba(x_ml)[:, self.minimize_class]
+        print(np.mean(f1))
         f1[f1 < AVOID_ZERO] = AVOID_ZERO
         f1 = np.log(f1)
 
@@ -78,8 +78,19 @@ class DefaultProblem(Problem):
 
         return f1
 
+    def _obj_distance_l0(self, x_f: np.ndarray) -> np.ndarray:
+
+        f2 = np.abs(x_f - self.x_initial_ml)
+        f2 = np.count_nonzero(f2 > 0.001, axis=1)
+        print(f2.min())
+        if self.scale_objectives:
+            f2 = f2/self.x_initial_f_mm.shape[0]
+        return f2
+
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
-        f2 = np.linalg.norm(x_f_mm[:, 1:] - self._x_initial_f_mm[1:], axis=1)
+
+        f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, axis=1)
+        print(np.mean(f2))
         if self.scale_objectives:
             f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
         return f2
@@ -92,10 +103,10 @@ class DefaultProblem(Problem):
         x = x
 
         # Machine learning representation
-        x_f = self._encoder.genetic_to_ml(x, self.x_initial_ml)
+        x_f = self.encoder.genetic_to_ml(x, self.x_initial_ml)
 
         # Min max scaled representation
-        x_f_mm = self._encoder.normalise(x_f)
+        x_f_mm = self.encoder.normalise(x_f)
 
         # ML scaled
         x_ml = x_f
@@ -106,14 +117,27 @@ class DefaultProblem(Problem):
         f1 = self._obj_misclassify(x_ml)
         f2 = self._obj_distance(x_f_mm)
 
-        F = [f1, f2] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
+        # F = [f1, f2] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 
         # --- Domain constraints
         G = self._constraints.evaluate(x_f)
+        if self.scale_objectives:
+            G = self._constraints.normalise(G)
+
+        CV = Problem.calc_constraint_violation(
+            G
+        ).reshape(-1)
+
+        # if self.scale_objectives:
+        #     CV = CV / G.shape[1]
+
+        print(CV.min())
+
+        F = [f1, f2, CV] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 
         # --- Out and History
         out["F"] = np.column_stack(F)
-        out["G"] = G
+        # out["G"] = G
 
         if self._save_history:
             self._history.append(out)

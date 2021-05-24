@@ -7,6 +7,7 @@
     "attack_results": "../out/attacks/botnet/nsga2/results_rf_10000.pickle",
     "objectives": "../out/attacks/botnet/nsga2/objectives_rf_10000.csv",
     "history": "../out/attacks/botnet/nsga2/history_rf_10000.csv",
+    "min_max_scaler": "../models/botnet/min_max_scaler.joblib",
     "ml_scaler": null,
     "scaler": "../models/botnet/scaler.pickle"
   },
@@ -15,7 +16,7 @@
   },
   "thresholds": {
     "f1": 0.65,
-    "f2": null
+    "f2": 5
   },
   "amount_feature_index": 0,
   "high_amount": 10000,

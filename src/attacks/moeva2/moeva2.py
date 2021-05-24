@@ -1,3 +1,7 @@
+from pymoo.algorithms.nsga3 import NSGA3
+from pymoo.algorithms.rnsga3 import RNSGA3
+from pymoo.operators.integer_from_float_operator import IntegerFromFloatSampling
+
 from .classifier import Classifier
 from .constraints import Constraints
 from .default_problem import DefaultProblem
@@ -9,9 +13,16 @@ from copy import deepcopy
 import numpy as np
 import os
 
+from .random_sampling import FloatRandomSamplingL2
 from .result_process import HistoryResult, EfficientResult
 
-from pymoo.factory import get_termination, get_mutation, get_crossover, get_sampling
+from pymoo.factory import (
+    get_termination,
+    get_mutation,
+    get_crossover,
+    get_sampling,
+    get_reference_directions,
+)
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 from pymoo.algorithms.nsga2 import NSGA2
 from pymoo.optimize import minimize
@@ -31,6 +42,7 @@ class Moeva2:
         constraints: Constraints,
         ml_scaler=None,
         problem_class=None,
+        l2_ball_size=0.1,
         n_gen=625,
         n_pop=640,
         n_offsprings=320,
@@ -54,7 +66,8 @@ class Moeva2:
         self._n_jobs = n_jobs
         self._verbose = verbose
         self._encoder = get_encoder_from_constraints(self._constraints)
-        self._alg_class = NSGA2
+        self._alg_class = RNSGA3
+        self.l2_ball_size = l2_ball_size
 
         if problem_class is None:
             self._problem_class = DefaultProblem
@@ -69,10 +82,16 @@ class Moeva2:
     def _create_algorithm(self) -> GeneticAlgorithm:
 
         type_mask = self._encoder.get_type_mask_genetic()
-        sampling = MixedVariableSampling(
-            type_mask,
-            {"real": get_sampling("real_random"), "int": get_sampling("int_random")},
-        )
+        # sampling = MixedVariableSampling(
+        #     type_mask,
+        #     {
+        #         "real": FloatRandomSamplingL2(l2_max=0.1),
+        #         "int": IntegerFromFloatSampling(
+        #             clazz=FloatRandomSamplingL2, l2_max=0.1
+        #         ),
+        #     },
+        # )
+        sampling = FloatRandomSamplingL2(l2_max=self.l2_ball_size, type_mask=type_mask)
 
         # Default parameters for crossover (prob=0.9, eta=30)
         crossover = MixedVariableCrossover(
@@ -92,8 +111,11 @@ class Moeva2:
             },
         )
 
+        ref_points = get_reference_directions("das-dennis", 3, n_partitions=12)
+
         algorithm = self._alg_class(
-            pop_size=self._n_pop,
+            pop_per_ref_point=self._n_pop,
+            ref_points=ref_points,
             n_offsprings=self._n_offsprings,
             sampling=sampling,
             crossover=crossover,
@@ -112,7 +134,8 @@ class Moeva2:
         warnings.simplefilter(action="ignore", category=UserWarning)
 
         termination = get_termination("n_gen", self._n_gen)
-        classifier = deepcopy(self._classifier)
+        # classifier = deepcopy(self._classifier)
+        classifier = self._classifier
 
         # self._encoder = get_encoder_from_constraints(con)
         algorithm = self._create_algorithm()
@@ -134,7 +157,7 @@ class Moeva2:
             problem,
             algorithm,
             termination,
-            verbose=0,
+            verbose=1,
             seed=self._seed,
             save_history=False,  # Implemented from library should always be False
         )

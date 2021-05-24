@@ -135,6 +135,13 @@ class FeatureEncoder:
         elif len(x.shape) == 1:
             return self._min_max_scaler.transform(x.reshape(1, -1))[0]
 
+    def denormalize(self, x: np.ndarray) -> np.ndarray:
+        if len(x.shape) == 2:
+            return self._min_max_scaler.inverse_transform(x)
+        elif len(x.shape) == 1:
+            return self._min_max_scaler.inverse_transform(x.reshape(1, -1))[0]
+
+
     def get_min_max_genetic(self) -> Tuple[np.ndarray, np.ndarray]:
 
         min_max = np.array(

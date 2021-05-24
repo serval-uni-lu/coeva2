@@ -30,8 +30,10 @@ def run():
 
     classifier = Classifier(joblib.load(config["paths"]["model"]))
 
+    scaler = joblib.load(config["paths"]["min_max_scaler"])
     objective_calc = ObjectiveCalculator(
-        classifier, constraints, minimize_class=1, thresholds=config["thresholds"]
+        classifier, constraints, minimize_class=1, thresholds=config["thresholds"],
+        min_max_scaler=scaler
     )
     success_rates = objective_calc.success_rate_genetic(efficient_results)
 
