@@ -71,7 +71,7 @@ class ConstraintsProblem(Problem):
 
         f2 = np.abs(x_f - self.x_initial_ml)
         f2 = np.count_nonzero(f2 > 0.001, axis=1)
-        print(f2.min())
+        # print(f2.min())
         if self.scale_objectives:
             f2 = f2 / self.x_initial_f_mm.shape[0]
         return f2
@@ -79,7 +79,7 @@ class ConstraintsProblem(Problem):
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
 
         f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, axis=1)
-        print(np.mean(f2))
+        # print(np.mean(f2))
         if self.scale_objectives:
             f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
         return f2
@@ -116,7 +116,10 @@ class ConstraintsProblem(Problem):
             G
         ).reshape(-1)
 
-        print(CV.min())
+        if self.scale_objectives:
+            CV = CV / G.shape[1]
+
+        # print(CV.min())
 
         F = [f2, CV] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 

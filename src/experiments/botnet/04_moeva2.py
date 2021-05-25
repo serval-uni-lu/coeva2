@@ -1,10 +1,15 @@
 import warnings
-from src.attacks.moeva2.constraints_only_problem import ConstraintsOnlyProblem
-from src.attacks.moeva2.constraints_problem import ConstraintsProblem
-from src.examples.botnet.botnet_constraints import BotnetConstraints
+
+import joblib
+from tensorflow.keras.models import load_model
+
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.moeva2 import Moeva2
 from pathlib import Path
 import numpy as np
 
+from src.examples.botnet.botnet_constraints import BotnetConstraints
+from src.examples.malware.malware_constraints import MalwareConstraints
 from src.utils import Pickler, in_out, filter_initial_states
 from src.attacks.moeva2.moeva2 import Moeva2
 from datetime import datetime
@@ -16,6 +21,7 @@ config = in_out.get_parameters()
 
 
 def run():
+
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 
     save_history = True
@@ -24,16 +30,18 @@ def run():
 
     # ----- Load and create necessary objects
 
-    X_initial_states = np.load(config["paths"]["x_candidates"])
-    X_initial_states = np.delete(X_initial_states, [165, 166], 0)
-    X_initial_states = filter_initial_states(
-        X_initial_states, config["initial_state_offset"], config["n_initial_state"]
-    )
-
     constraints = BotnetConstraints(
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
+
+    X_initial_states = np.load(config["paths"]["x_candidates"])
+    # X_initial_states = np.delete(X_initial_states, [165, 166], 0)
+    X_initial_states = filter_initial_states(
+        X_initial_states, config["initial_state_offset"], config["n_initial_state"]
+    )
+
+    scaler = joblib.load(config["paths"]["ml_scaler"])
 
     # ----- Check constraints
 
@@ -42,12 +50,17 @@ def run():
     # ----- Copy the initial states n_repetition times
     X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
 
-    # Initial state loop (threaded)
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
 
-    moeva2 = Moeva2(
-        None,
+    # scaler = joblib.load(config["paths"]["min_max_scaler"])
+
+    moeva = Moeva2(
+        config["paths"]["model"],
         constraints,
-        problem_class=ConstraintsProblem,
+        problem_class=None,
+        l2_ball_size=config["l2_ball_size"],
         n_gen=config["n_gen"],
         n_pop=config["n_pop"],
         n_offsprings=config["n_offsprings"],
@@ -55,14 +68,13 @@ def run():
         save_history=save_history,
         seed=config["seed"],
         n_jobs=config["n_jobs"],
+        ml_scaler=scaler,
         verbose=1,
     )
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
 
-    efficient_results = moeva2.generate(X_initial_states, 1)
-    Pickler.save_to_file(efficient_results, config["paths"]["attack_results"])
+    attacks = moeva.generate(X_initial_states, 1)
+
+    Pickler.save_to_file(attacks, config["paths"]["attack_results"])
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")

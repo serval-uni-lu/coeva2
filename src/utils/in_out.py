@@ -1,5 +1,6 @@
 import sys
 
+import joblib
 import numpy as np
 import pickle
 import json
@@ -106,3 +107,22 @@ def get_parameters():
         config_path = "../config/default.json"
 
     return json_from_file(config_path)
+
+
+def load_model(path: str):
+
+    model = None
+    if path.endswith(".joblib"):
+        import joblib
+
+        model = joblib.load(path)
+
+    if path.endswith(".model"):
+        from tensorflow.keras.models import load_model
+
+        model = load_model(path)
+
+    if model is None:
+        raise NotImplementedError
+
+    return model

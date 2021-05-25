@@ -5,8 +5,8 @@
     "features": "./data/botnet/features_ctu.csv",
     "constraints": "./data/botnet/constraints_ctu.csv",
     "x_candidates": "./data/botnet/x_attack_candidate_small.npy",
-    "attack_results": "./out/attacks/botnet/constraints/results.npy",
-    "objectives": "./out/attacks/botnet/constraints/objectives.csv",
+    "attack_results": "./out/attacks/botnet/moeva/results.npy",
+    "objectives": "./out/attacks/botnet/moeva/objectives.csv",
     "min_max_scaler": "./models/botnet/scaler.joblib",
     "ml_scaler": "./models/botnet/scaler.joblib"
   },
@@ -17,15 +17,15 @@
     "f1": 0.5,
     "f2": 0.1
   },
-  "n_initial_state": 100,
+  "n_initial_state": 1,
   "seed": 1905,
   "n_repetition": 1,
   "initial_state_offset": 0,
-  "n_jobs": 10,
+  "n_jobs": 1,
   "verbose": 1,
   "save_history": false,
-  "l2_ball_size": 0.05,
-  "n_gen": 3000,
+  "l2_ball_size": 0.00,
+  "n_gen": 1000,
   "n_pop": 100,
   "n_offsprings": 50
 

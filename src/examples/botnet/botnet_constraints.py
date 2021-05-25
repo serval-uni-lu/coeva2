@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from attacks.moeva2.constraints import Constraints
+from src.attacks.moeva2.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
 import pickle
@@ -35,7 +35,7 @@ class BotnetConstraints(Constraints):
 
         tol = 1e-3
         # should write a function in utils for this part
-        with open("../data/botnet/feat_idx.pickle", "rb") as f:
+        with open("./data/botnet/feat_idx.pickle", "rb") as f:
             feat_idx = pickle.load(f)
 
         sum_idx = [0, 3, 6, 12, 15, 18]

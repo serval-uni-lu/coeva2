@@ -4,13 +4,15 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from attacks.moeva2.classifier import Classifier
-from attacks.moeva2.objective_calculator import ObjectiveCalculator
-from examples.botnet.botnet_constraints import BotnetConstraints
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 from pathlib import Path
 from tensorflow.keras.models import load_model
 
-from utils import Pickler, in_out
+from src.examples.botnet.botnet_constraints import BotnetConstraints
+from src.utils import Pickler, in_out, filter_initial_states
+
+from src.examples.malware.malware_constraints import MalwareConstraints
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
@@ -23,7 +25,11 @@ def run():
 
     # ----- Load and create necessary objects
 
-    efficient_results = np.load(config["paths"]["attack_results"])
+    results = np.load(config["paths"]["attack_results"])
+    x_initial = np.load(config["paths"]["x_candidates"])
+    x_initial = filter_initial_states(
+        x_initial, config["initial_state_offset"], config["n_initial_state"]
+    )
 
     constraints = BotnetConstraints(
         config["paths"]["features"],
@@ -31,11 +37,22 @@ def run():
     )
 
     classifier = Classifier(load_model(config["paths"]["model"]))
+    scaler = joblib.load(config["paths"]["min_max_scaler"])
 
     objective_calc = ObjectiveCalculator(
-        classifier, constraints, minimize_class=1, thresholds=config["thresholds"]
+        classifier,
+        constraints,
+        minimize_class=1,
+        thresholds=config["thresholds"],
+        min_max_scaler=scaler,
+        ml_scaler=scaler
     )
-    success_rates = objective_calc.success_rate_bis(efficient_results)
+
+    if len(results.shape) == 2:
+        results = results[:, np.newaxis, :]
+
+
+    success_rates = objective_calc.success_rate_3d(x_initial, results)
 
     columns = ["o{}".format(i + 1) for i in range(success_rates.shape[0])]
     success_rate_df = pd.DataFrame(
@@ -43,6 +60,7 @@ def run():
         columns=columns,
     )
     success_rate_df.to_csv(config["paths"]["objectives"], index=False)
+    print(success_rate_df)
 
 
 if __name__ == "__main__":

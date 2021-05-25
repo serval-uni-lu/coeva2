@@ -35,11 +35,13 @@ from pymoo.operators.mixed_variable_operator import (
 
 import warnings
 
+from ...utils.in_out import load_model
+
 
 class Moeva2:
     def __init__(
         self,
-        classifier: Classifier,
+        classifier_path: str,
         constraints: Constraints,
         ml_scaler=None,
         problem_class=None,
@@ -54,7 +56,7 @@ class Moeva2:
         verbose=1,
     ) -> None:
 
-        self._classifier = classifier
+        self._classifier_path = classifier_path
         self._constraints = constraints
         self._ml_scaler = ml_scaler
         self._problem_class = problem_class
@@ -80,7 +82,7 @@ class Moeva2:
                 f"n_features): {x.shape}. n_features must be equal."
             )
 
-    def _create_algorithm(self) -> GeneticAlgorithm:
+    def _create_algorithm(self, n_obj) -> GeneticAlgorithm:
 
         type_mask = self._encoder.get_type_mask_genetic()
         # sampling = MixedVariableSampling(
@@ -112,7 +114,7 @@ class Moeva2:
             },
         )
 
-        ref_points = get_reference_directions("das-dennis", 3, n_partitions=12)
+        ref_points = get_reference_directions("das-dennis", n_obj, n_partitions=12)
 
         algorithm = self._alg_class(
             pop_size=self._n_pop,
@@ -135,11 +137,12 @@ class Moeva2:
         warnings.simplefilter(action="ignore", category=UserWarning)
 
         termination = get_termination("n_gen", self._n_gen)
-        # classifier = deepcopy(self._classifier)
-        classifier = self._classifier
+        if self._classifier_path is not None:
+            classifier = Classifier(load_model(self._classifier_path))
+        else:
+            classifier = None
 
         # self._encoder = get_encoder_from_constraints(con)
-        algorithm = self._create_algorithm()
         constraints = deepcopy(self._constraints)
         encoder = get_encoder_from_constraints(self._constraints, x)
 
@@ -153,6 +156,9 @@ class Moeva2:
             save_history=self._save_history,
             ml_scaler=self._ml_scaler,
         )
+
+        algorithm = self._create_algorithm(n_obj=problem.get_nb_objectives())
+
 
         result = minimize(
             problem,

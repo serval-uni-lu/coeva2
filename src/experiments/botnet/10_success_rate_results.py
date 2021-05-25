@@ -2,13 +2,14 @@ import warnings
 
 import joblib
 import pandas as pd
+from tensorflow.keras.models import load_model
 
-from attacks.moeva2.classifier import Classifier
-from attacks.moeva2.objective_calculator import ObjectiveCalculator
-from examples.botnet.botnet_constraints import BotnetConstraints
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
+from src.examples.botnet.botnet_constraints import BotnetConstraints
 from pathlib import Path
 
-from utils import Pickler, in_out
+from src.utils import Pickler, in_out
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
@@ -28,12 +29,12 @@ def run():
         config["paths"]["constraints"],
     )
 
-    classifier = Classifier(joblib.load(config["paths"]["model"]))
+    classifier = Classifier(load_model(config["paths"]["model"]))
 
     scaler = joblib.load(config["paths"]["min_max_scaler"])
     objective_calc = ObjectiveCalculator(
         classifier, constraints, minimize_class=1, thresholds=config["thresholds"],
-        min_max_scaler=scaler
+        min_max_scaler=scaler, ml_scaler=scaler
     )
     success_rates = objective_calc.success_rate_genetic(efficient_results)
 
@@ -43,6 +44,7 @@ def run():
         columns=columns,
     )
     success_rate_df.to_csv(config["paths"]["objectives"], index=False)
+    print(success_rate_df)
 
 
 if __name__ == "__main__":
