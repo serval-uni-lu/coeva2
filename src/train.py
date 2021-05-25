@@ -3,8 +3,10 @@ import matplotlib.pyplot as plt
 from numpy.random import seed
 from tensorflow.python.keras.callbacks import EarlyStopping
 from sklearn.metrics import r2_score
+
 seed(2305)
 import tensorflow as tf
+
 tf.random.set_seed(2405)
 import seaborn as sns
 import joblib
@@ -168,6 +170,15 @@ for e in man_col:
 ## Train a surrogate
 
 
+def build_model(units, lr_param):
+    network = Sequential()
+    network.add(Dense(units=units[0], activation="relu"))
+    network.add(Dropout(0.1))
+    network.add(Dense(units=units[1], activation="relu"))
+    network.add(Dense(units=1, activation="sigmoid"))
+    sgd = Adam(lr=lr_param)
+    network.compile(loss="binary_crossentropy", optimizer=sgd)
+    return network
 
 
 # ----- Model Training
@@ -176,24 +187,41 @@ x_train_surrogate = scaler.transform(x_train[:, index_to_keep])
 y_train_surrogate = (model.predict_proba(x_train_surrogate)[:, 1] >= 0.5).astype(int)
 
 
-surrogate = Sequential()
-surrogate.add(Dense(units=128, activation="relu", input_dim=x_train_surrogate.shape[1]))
-surrogate.add(Dense(units=56, activation="relu"))
-surrogate.add(Dense(units=28, activation="relu"))
-surrogate.add(Dropout(0.2))
-surrogate.add(Dense(1, activation='sigmoid'))
-sgd = Adam(lr=0.001)
-surrogate.compile(loss="binary_crossentropy", optimizer=sgd)
+# surrogate = Sequential()
+# surrogate.add(Dense(units=128, activation="relu", input_dim=x_train_surrogate.shape[1]))
+# surrogate.add(Dense(units=56, activation="relu"))
+# surrogate.add(Dense(units=28, activation="relu"))
+# surrogate.add(Dropout(0.2))
+# surrogate.add(Dense(1, activation="sigmoid"))
+# sgd = Adam(lr=0.001)
+# surrogate.compile(loss="binary_crossentropy", optimizer=sgd)
+#
+# es = EarlyStopping(
+#     monitor="val_loss", min_delta=0.001, patience=10, mode="min", verbose=1
+# )
+# r = surrogate.fit(
+#     x_train_surrogate,
+#     y_train_surrogate,
+#     validation_data=(x_train_surrogate, y_train_surrogate),
+#     epochs=400,
+#     batch_size=128,
+#     callbacks=[es],
+# )
 
-es = EarlyStopping(monitor='val_loss', min_delta=0.001, patience=10, mode='min', verbose=1)
-r = surrogate.fit(
+es = EarlyStopping(monitor="val_loss", mode="min", verbose=1)
+
+surrogate = build_model([128, 64], lr_param=0.001)
+surrogate.fit(
     x_train_surrogate,
     y_train_surrogate,
-    validation_data=(x_train_surrogate, y_train_surrogate),
-    epochs=400,
-    batch_size=128,
+    verbose=1,
+    epochs=10,
+    batch_size=64,
     callbacks=[es],
+    shuffle=True,
+    validation_split=0.1,
 )
+
 
 y_proba_surrogate = surrogate.predict_proba(scaler.transform(x_test[:, index_to_keep]))
 y_pred_surrogate = (y_proba_surrogate >= 0.5).astype(int).reshape(-1)
@@ -206,7 +234,9 @@ print_score(y_test, y_pred_surrogate)
 
 # X_candidates
 
-candidates_index = (y_test == predictions) * (y_test == 1) * (y_test == y_pred_surrogate)
+candidates_index = (
+    (y_test == predictions) * (y_test == 1) * (y_test == y_pred_surrogate)
+)
 print(candidates_index.shape)
 print(candidates_index.sum())
 X_candidate = x_test[:, index_to_keep][candidates_index]
@@ -214,13 +244,12 @@ print(X_candidate.shape)
 
 # Save
 tf.keras.models.save_model(
-        surrogate,
-        "../models/malware/surrogate_small.model",
-        overwrite=True,
-        include_optimizer=True,
-        save_format=None,
-        signatures=None,
-        options=None,
-    )
+    surrogate,
+    "../models/malware/surrogate_small.model",
+    overwrite=True,
+    include_optimizer=True,
+    save_format=None,
+    signatures=None,
+    options=None,
+)
 np.save("../data/malware/x_attack_candidate_small.npy", X_candidate)
-

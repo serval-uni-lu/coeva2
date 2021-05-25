@@ -69,7 +69,7 @@ class DefaultProblem(Problem):
 
     def _obj_misclassify(self, x_ml: np.ndarray) -> np.ndarray:
         f1 = self.classifier.predict_proba(x_ml)[:, self.minimize_class]
-        print(np.mean(f1))
+        # print(np.mean(f1))
         f1[f1 < AVOID_ZERO] = AVOID_ZERO
         f1 = np.log(f1)
 
@@ -82,7 +82,7 @@ class DefaultProblem(Problem):
 
         f2 = np.abs(x_f - self.x_initial_ml)
         f2 = np.count_nonzero(f2 > 0.001, axis=1)
-        print(f2.min())
+        # print(f2.min())
         if self.scale_objectives:
             f2 = f2/self.x_initial_f_mm.shape[0]
         return f2
@@ -90,7 +90,7 @@ class DefaultProblem(Problem):
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
 
         f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, axis=1)
-        print(np.mean(f2))
+        # print(np.mean(f2))
         if self.scale_objectives:
             f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
         return f2
@@ -128,10 +128,10 @@ class DefaultProblem(Problem):
             G
         ).reshape(-1)
 
-        # if self.scale_objectives:
-        #     CV = CV / G.shape[1]
+        if self.scale_objectives:
+            CV = CV / G.shape[1]
 
-        print(CV.min())
+        # print(CV.min())
 
         F = [f1, f2, CV] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 

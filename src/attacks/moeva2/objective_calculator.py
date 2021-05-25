@@ -69,7 +69,7 @@ class ObjectiveCalculator:
             - x_scaled,
             axis=1,
         )
-        print(l2)
+        # print(l2)
 
         l2_in_ball = l2 < self._thresholds["f2"]
 
