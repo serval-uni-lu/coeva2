@@ -5,7 +5,15 @@ from gurobipy import GRB, QuadExpr, LinExpr
 from src.attacks.moeva2.constraints import Constraints
 from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
 
-type_mask_transform = {"real": GRB.CONTINUOUS, "int": GRB.INTEGER}
+type_mask_transform = {
+    "real": GRB.CONTINUOUS,
+    "int": GRB.INTEGER,
+    "ohe0": GRB.INTEGER,
+    "ohe1": GRB.INTEGER,
+    "ohe2": GRB.INTEGER,
+}
+
+SAFETY_DELTA = 0.0000001
 
 
 class SatAttack:
@@ -55,11 +63,11 @@ class SatAttack:
             if lb[i] != ub[i]:
                 scaled = (vars[i] - lb[i]) / (ub[i] - lb[i])
                 m.addConstr(
-                    scaled <= x_init_scaled[i] + self.eps,
+                    scaled <= x_init_scaled[i] + self.eps - SAFETY_DELTA,
                     f"scaled_{i}",
                 )
                 m.addConstr(
-                    scaled >= x_init_scaled[i] - self.eps,
+                    scaled >= x_init_scaled[i] - self.eps + SAFETY_DELTA,
                     f"scaled_{i}",
                 )
             else:
@@ -107,7 +115,7 @@ class SatAttack:
             m = self.create_model(x_init, x_hot_start)
             m.setParam(GRB.Param.PoolSolutions, self.n_sample)
             m.setParam(GRB.Param.PoolSearchMode, 2)
-            # m.setParam(GRB.Param.NonConvex, 2)
+            m.setParam(GRB.Param.NonConvex, 2)
             m.setParam(GRB.Param.NumericFocus, 3)
             m.setParam(GRB.Param.StartNodeLimit, 1000)
             m.optimize()
@@ -115,7 +123,8 @@ class SatAttack:
 
             def get_vars(e):
                 m.setParam(GRB.Param.SolutionNumber, e)
-                # print([v for v in m.getVars()])
+                # for v in m.getVars():
+                #     print(v)
                 return [v.X for v in m.getVars()]
 
             solutions = np.array([get_vars(e) for e in range(nSolutions)])[

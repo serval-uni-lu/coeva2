@@ -34,14 +34,9 @@ class LcldConstraints(Constraints):
 
         # installment = loan_amount * int_rate (1 + int_rate) ^ term / ((1+int_rate) ^ term - 1)
         calculated_installment = (
-            np.ceil(
-                100
-                * (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
-                / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1)
-            )
-            / 100
-        )
-        g41 = np.absolute(x[:, 3] - calculated_installment)
+            x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1]
+        ) / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1)
+        g41 = np.absolute(x[:, 3] - calculated_installment) - 0.099999
 
         # open_acc <= total_acc
         g42 = x[:, 10] - x[:, 14]

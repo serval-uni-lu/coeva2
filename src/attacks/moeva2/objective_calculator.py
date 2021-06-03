@@ -74,6 +74,7 @@ class ObjectiveCalculator:
         # print(np.min(l2[(constraints_respected * misclassified)]))
 
         l2_in_ball = l2 <= self._thresholds["f2"]
+        # print(l2)
         # print(np.max(l2))
         # Additional
         # to implement
@@ -91,7 +92,6 @@ class ObjectiveCalculator:
         )
 
     def success_rate_bis(self, x_initial, x_f):
-        print(x_f.shape)
         return self._objective_array(x_initial, x_f).mean(axis=0)
 
     def at_least_one(self, x_initial, x_f):
@@ -123,7 +123,7 @@ class ObjectiveCalculator:
 
     def success_rate_3d(self, x_initial, x):
         at_leat_one = np.array(
-            [self.success_rate_bis(x_initial[i], e) > 0 for i, e in enumerate(x)]
+            [self.success_rate_bis(x_initial[i], e) > 0 for i, e in tqdm(enumerate(x), total=len(x))]
         )
         return at_leat_one.mean(axis=0)
 
