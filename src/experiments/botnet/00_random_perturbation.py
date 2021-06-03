@@ -5,21 +5,26 @@ from tqdm import tqdm
 
 from src.examples.botnet.botnet_constraints import BotnetConstraints
 from src.examples.malware.malware_constraints import MalwareConstraints
-from src.utils import Pickler, in_out, filter_initial_states
+from src.utils import Pickler, in_out, filter_initial_states, sample_in_norm
 from art.utils import projection
 
 config = in_out.get_parameters()
 
 
-def apply_random_perturbation(x_init, n_repetition, mask, l2_max):
-    x_perturbed = np.repeat(x_init[np.newaxis, :], n_repetition, axis=0)
-    x_perturbation = np.random.random((n_repetition, mask.sum())) * 2 - 1
+def random_sample_hyperball(n, d):
+    u = np.random.normal(0, 1, (d + 2) * n).reshape(n, d + 2)
+    norm = np.linalg.norm(u, axis=1)
+    u = u / norm.reshape(-1, 1)
+    x = u[:, 0:d]
+    return x
 
-    x_perturbation = projection(x_perturbation, l2_max, 2)
+
+def apply_random_perturbation(x_init, n_repetition, mask, eps, norm):
+    x_perturbed = np.repeat(x_init[np.newaxis, :], n_repetition, axis=0)
+
+    x_perturbation = sample_in_norm(n_repetition, mask.sum(), eps, norm)
 
     x_perturbed[:, mask] = x_perturbed[:, mask] + x_perturbation
-
-    x_perturbed = np.clip(x_perturbed, 0.0, 1.0)
 
     return x_perturbed
 
@@ -52,7 +57,9 @@ def run():
 
     x_attack_scaled = np.array(
         [
-            apply_random_perturbation(x_init, config["n_repetition"], mask, l2_max)
+            apply_random_perturbation(
+                x_init, config["n_repetition"], mask, l2_max, "inf"
+            )
             for x_init in iterable
         ]
     )

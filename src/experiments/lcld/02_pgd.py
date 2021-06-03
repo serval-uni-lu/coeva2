@@ -1,17 +1,16 @@
 import warnings
+from datetime import datetime
+from pathlib import Path
 
 import joblib
-
-from pathlib import Path
 import numpy as np
 import tensorflow as tf
-
-from src.examples.malware.malware_constraints import MalwareConstraints
-from src.utils import Pickler, in_out, filter_initial_states
-from datetime import datetime
+from art.attacks.evasion import ProjectedGradientDescent as PGD
 from art.classifiers import KerasClassifier as kc
 from tensorflow.keras.models import load_model
-from art.attacks.evasion import ProjectedGradientDescent as PGD
+
+from src.examples.lcld.lcld_constraints import LcldConstraints
+from src.utils import in_out, filter_initial_states
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
@@ -30,7 +29,7 @@ def run():
 
     # ----- Load and create necessary objects
 
-    constraints = MalwareConstraints(
+    constraints = LcldConstraints(
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
@@ -41,14 +40,14 @@ def run():
     )
 
     model = load_model(config["paths"]["model"])
-    scaler = joblib.load(config["paths"]["scaler"])
+    scaler = joblib.load(config["paths"]["ml_scaler"])
 
     # ----- Check constraints
 
     constraints.check_constraints_error(X_initial_states)
 
     # ----- Copy the initial states n_repetition times
-    X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
+    # X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -62,7 +61,7 @@ def run():
         kc_classifier,
         eps=config["thresholds"]["f2"]-0.000001,
         eps_step=config["thresholds"]["f2"] / 3,
-        norm=0,
+        norm=np.inf,
         verbose=True,
     )
     X_initial_states = scaler.transform(X_initial_states)

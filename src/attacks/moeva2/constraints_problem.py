@@ -121,7 +121,7 @@ class ConstraintsProblem(Problem):
 
         # print(CV.min())
 
-        F = [f2, CV] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
+        F = [f2*0, CV] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 
         # --- Out and History
         out["F"] = np.column_stack(F)

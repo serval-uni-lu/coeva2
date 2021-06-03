@@ -1,21 +1,22 @@
 {
   "paths": {
-    "model": "./models/malware/model_small.joblib",
-    "features": "./data/malware/features_small.csv",
-    "constraints": "./data/malware/constraints.csv",
-    "x_candidates": "./data/malware/x_attack_candidate_small.npy",
-    "attack_results": "./out/attacks/malware/constraints/results.npy",
-    "objectives": "./out/attacks/malware/constraints/objectives.csv",
-    "min_max_scaler": "./models/malware/scaler_small.pickle",
-    "ml_scaler": null
+    "model": "./models/botnet/nn.model",
+    "surrogate": "./models/botnet/nn.model",
+    "features": "./data/botnet/features_ctu.csv",
+    "constraints": "./data/botnet/constraints_ctu.csv",
+    "x_candidates": "./data/botnet/x_attack_candidate_small.npy",
+    "attack_results": "./out/attacks/botnet/constraints/results.npy",
+    "objectives": "./out/attacks/botnet/constraints/objectives.csv",
+    "min_max_scaler": "./models/botnet/scaler.joblib",
+    "ml_scaler": "./models/botnet/scaler.joblib"
   },
   "thresholds": {
     "f1": 0.5,
-    "f2": 0.100001
+    "f2": 1
   },
-  "n_initial_state": 20,
+  "n_initial_state": 100,
   "seed": 1905,
-  "n_repetition": 100,
+  "n_repetition": 1000,
   "initial_state_offset": 0,
   "n_jobs": 10,
   "verbose": 1

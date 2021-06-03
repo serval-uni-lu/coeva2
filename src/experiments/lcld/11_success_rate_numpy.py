@@ -1,17 +1,15 @@
 import warnings
+from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
+from tensorflow.keras.models import load_model
 
 from src.attacks.moeva2.classifier import Classifier
 from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
-from pathlib import Path
-from tensorflow.keras.models import load_model
-
-from src.utils import Pickler, in_out, filter_initial_states
-
-from src.examples.malware.malware_constraints import MalwareConstraints
+from src.examples.lcld.lcld_constraints import LcldConstraints
+from src.utils import in_out, filter_initial_states
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
@@ -30,7 +28,7 @@ def run():
         x_initial, config["initial_state_offset"], config["n_initial_state"]
     )
 
-    constraints = MalwareConstraints(
+    constraints = LcldConstraints(
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
@@ -44,12 +42,11 @@ def run():
         minimize_class=1,
         thresholds=config["thresholds"],
         min_max_scaler=scaler,
-        ml_scaler=scaler
+        ml_scaler=scaler,
     )
 
     if len(results.shape) == 2:
         results = results[:, np.newaxis, :]
-
 
     success_rates = objective_calc.success_rate_3d(x_initial, results)
 

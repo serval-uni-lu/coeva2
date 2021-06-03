@@ -11,10 +11,10 @@ import logging
 
 class BotnetConstraints(Constraints):
     def __init__(
-            self,
-            # amount_feature_index: int,
-            feature_path: str,
-            constraints_path: str,
+        self,
+        # amount_feature_index: int,
+        feature_path: str,
+        constraints_path: str,
     ):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
@@ -55,13 +55,13 @@ class BotnetConstraints(Constraints):
         )
         g2 = np.absolute(
             (
-                    x[:, feat_idx["icmp_sum_d_idx"]].sum(axis=1)
-                    + x[:, feat_idx["udp_sum_d_idx"]].sum(axis=1)
-                    + x[:, feat_idx["tcp_sum_d_idx"]].sum(axis=1)
+                x[:, feat_idx["icmp_sum_d_idx"]].sum(axis=1)
+                + x[:, feat_idx["udp_sum_d_idx"]].sum(axis=1)
+                + x[:, feat_idx["tcp_sum_d_idx"]].sum(axis=1)
             )
             - (
-                    x[:, feat_idx["bytes_in_sum_d_idx"]].sum(axis=1)
-                    + x[:, feat_idx["bytes_out_sum_d_idx"]].sum(axis=1)
+                x[:, feat_idx["bytes_in_sum_d_idx"]].sum(axis=1)
+                + x[:, feat_idx["bytes_out_sum_d_idx"]].sum(axis=1)
             )
         )
 
@@ -150,9 +150,7 @@ class BotnetConstraints(Constraints):
         self._fit_scaler()
 
     @staticmethod
-    def define_individual_constraints(
-            x, cons_idx, feat_idx, upper_idx, lower_idx
-    ):
+    def define_individual_constraints(x, cons_idx, feat_idx, upper_idx, lower_idx):
         constraints_part = []
         keys = list(feat_idx.keys())
 
@@ -164,7 +162,7 @@ class BotnetConstraints(Constraints):
                 port_idx_lower = feat_idx[type_lower][j]
                 port_idx_upper = feat_idx[type_upper][j]
                 globals()["g%s" % cons_idx] = (
-                        x[:, port_idx_lower] - x[:, port_idx_upper]
+                    x[:, port_idx_lower] - x[:, port_idx_upper]
                 )
                 constraints_part.append(globals()["g%s" % cons_idx])
                 cons_idx += 1
@@ -185,7 +183,7 @@ class BotnetConstraints(Constraints):
                 a = x[:, port_idx_bytes]
                 b = x[:, port_idx_pkts]
                 globals()["g%s" % cons_idx] = (
-                        np.divide(a, b, out=np.zeros_like(a), where=b != 0) - 1500
+                    np.divide(a, b, out=np.zeros_like(a), where=b != 0) - 1500
                 )
                 constraints_part.append(globals()["g%s" % cons_idx])
                 cons_idx += 1

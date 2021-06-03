@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+from tensorflow.python.keras.callbacks import EarlyStopping
 
 np.random.seed(2505)
 import tensorflow as tf
@@ -47,17 +49,31 @@ y_train = np.load("./data/botnet/train_test/y_train.npy")
 x_test = np.load("./data/botnet/train_test/x_test.npy")
 y_test = np.load("./data/botnet/train_test/y_test.npy")
 scaler = MinMaxScaler()
-scaler.fit(np.concatenate((x_train, x_test)))
+df = pd.read_csv("./data/botnet/features_ctu.csv")
+
+x_all = np.concatenate((x_train, x_test))
+x_min = df["min"]
+x_max = df["max"]
+x_min[x_min == "dynamic"] = np.min(x_all, axis=0)[x_min == "dynamic"]
+x_max[x_max == "dynamic"] = np.max(x_all, axis=0)[x_max == "dynamic"]
+x_min = x_min.astype(np.float).to_numpy().reshape(1, -1)
+x_max = x_max.astype(np.float).to_numpy().reshape(1, -1)
+x_min = np.min(np.concatenate((x_min, x_all)), axis=0).reshape(1, -1)
+x_max = np.max(np.concatenate((x_max, x_all)), axis=0).reshape(1, -1)
+scaler.fit(np.concatenate((np.floor(x_min), np.ceil(x_max))))
+
 joblib.dump(scaler, "./models/botnet/scaler.joblib")
 
 
-LAYERS = [256, 128, 64]
+LAYERS = [32, 16, 8]
 INPUT_DIM = 756
-LR = [0.0002592943797404667]
+LR = [0.001]
+
+es = EarlyStopping(monitor="val_loss", mode="min", verbose=1)
 
 nn = create_DNN(units=LAYERS, input_dim_param=INPUT_DIM, lr_param=LR[0])
 
-nn.fit(scaler.transform(x_train), y_train, verbose=1, epochs=50, batch_size=64, shuffle=True)
+nn.fit(scaler.transform(x_train), y_train, verbose=1, epochs=20, batch_size=64, shuffle=True, callbacks=[es], validation_split=0.1,)
 
 y_proba = nn.predict_proba(scaler.transform(x_test)).reshape(-1)
 y_pred = (y_proba >= 0.5).astype(int)

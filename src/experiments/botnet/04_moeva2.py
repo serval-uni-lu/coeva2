@@ -1,6 +1,7 @@
 import warnings
 
 import joblib
+import tensorflow
 from tensorflow.keras.models import load_model
 
 from src.attacks.moeva2.classifier import Classifier
@@ -18,6 +19,10 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 config = in_out.get_parameters()
+
+# tensorflow.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.5)
+# # opts = tensorflow.GPUOptions(per_process_gpu_memory_fraction=0.5)
+# # sess = tensorflow.Session(config=tensorflow.ConfigProto(gpu_options=opts))
 
 
 def run():

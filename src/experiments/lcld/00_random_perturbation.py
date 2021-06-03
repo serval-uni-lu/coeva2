@@ -1,13 +1,16 @@
 from pathlib import Path
+
 import joblib
 import numpy as np
+import pandas as pd
+from joblib import delayed, Parallel
 from tqdm import tqdm
 
-from src.examples.botnet.botnet_constraints import BotnetConstraints
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 from src.examples.lcld.lcld_constraints import LcldConstraints
-from src.examples.malware.malware_constraints import MalwareConstraints
-from src.utils import Pickler, in_out, filter_initial_states, sample_in_norm
-from art.utils import projection
+from src.utils import in_out, filter_initial_states, sample_in_norm
+from src.utils.in_out import load_model
 
 config = in_out.get_parameters()
 
@@ -20,12 +23,16 @@ def random_sample_hyperball(n, d):
     return x
 
 
-def apply_random_perturbation(x_init, n_repetition, mask, eps, norm):
+def apply_random_perturbation(
+    x_init, n_repetition, mask, eps, norm, a_min, a_max, mask_int
+):
     x_perturbed = np.repeat(x_init[np.newaxis, :], n_repetition, axis=0)
 
     x_perturbation = sample_in_norm(n_repetition, mask.sum(), eps, norm)
 
     x_perturbed[:, mask] = x_perturbed[:, mask] + x_perturbation
+
+    x_perturbed = np.clip(x_perturbed, a_min, a_max)
 
     return x_perturbed
 
@@ -33,14 +40,15 @@ def apply_random_perturbation(x_init, n_repetition, mask, eps, norm):
 def run():
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 
+    classifier = Classifier(load_model(config["paths"]["model"]))
     scaler = joblib.load(config["paths"]["min_max_scaler"])
-
     x_initial = np.load(config["paths"]["x_candidates"])
     x_initial = filter_initial_states(
         x_initial, config["initial_state_offset"], config["n_initial_state"]
     )
 
-    l2_max = config["thresholds"]["f2"]
+    eps = config["thresholds"]["f2"]
+    norm = config["norm"]
 
     x_initial_scaled = scaler.transform(x_initial)
 
@@ -50,29 +58,61 @@ def run():
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
+
     mask = constraints.get_mutable_mask()
 
-    iterable = x_initial_scaled
+    iterable = x_initial
     if config["verbose"] > 0:
         iterable = tqdm(iterable, total=len(x_initial_scaled))
 
-    x_attack_scaled = np.array(
-        [
-            apply_random_perturbation(
-                x_init, config["n_repetition"], mask, l2_max, "inf"
-            )
-            for x_init in iterable
-        ]
+    objective_calc = ObjectiveCalculator(
+        classifier,
+        constraints,
+        minimize_class=1,
+        thresholds=config["thresholds"],
+        min_max_scaler=scaler,
+        ml_scaler=scaler,
     )
-    shape = x_attack_scaled.shape
-    x_attack_scaled = x_attack_scaled.reshape(-1, shape[2])
-    x_attack = scaler.inverse_transform(x_attack_scaled)
-    mask_int = constraints.get_feature_type() != "real"
-    x_attack[:, mask_int] = np.floor(x_attack[:, mask_int] + 0.5)
 
-    x_attack = x_attack.reshape(shape)
-    print(x_attack.shape)
-    np.save(config["paths"]["attack_results"], x_attack)
+    mask_int = constraints.get_feature_type() != "real"
+
+    def apply_one(x_init):
+        x_perturbed = apply_random_perturbation(
+            scaler.transform(x_init.reshape(1, -1)).reshape(-1),
+            config["n_repetition"],
+            mask,
+            eps,
+            norm,
+            0,
+            1,
+            mask_int,
+        )
+        x_perturbed[:, mask_int] = np.round(x_perturbed[:, mask_int])
+
+        return objective_calc.at_least_one(
+            x_init,
+            scaler.inverse_transform(x_perturbed),
+        )
+
+    if config["n_jobs"] == 1:
+        at_least_one = np.array([apply_one(x_init) for x_init in iterable])
+    else:
+        # Parallel run
+        at_least_one = Parallel(n_jobs=config["n_jobs"])(
+            delayed(apply_one)(x_init) for x_init in iterable
+        )
+
+    print(at_least_one)
+
+    success_rates = at_least_one.mean(axis=0)
+
+    columns = ["o{}".format(i + 1) for i in range(success_rates.shape[0])]
+    success_rate_df = pd.DataFrame(
+        success_rates.reshape([1, -1]),
+        columns=columns,
+    )
+    success_rate_df.to_csv(config["paths"]["objectives"], index=False)
+    print(success_rate_df)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from src.attacks.coeva2.constraints import Constraints
+from src.attacks.moeva2.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
 import logging
@@ -11,14 +11,12 @@ import logging
 class LcldConstraints(Constraints):
     def __init__(
         self,
-        amount_feature_index: int,
         feature_path: str,
         constraints_path: str,
     ):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
-        self._amount_feature_index = amount_feature_index
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))

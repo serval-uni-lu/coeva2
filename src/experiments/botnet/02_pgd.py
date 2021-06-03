@@ -35,7 +35,6 @@ def run():
     )
 
     X_initial_states = np.load(config["paths"]["x_candidates"])
-    X_initial_states = np.delete(X_initial_states, [165, 166], 0)
     X_initial_states = filter_initial_states(
         X_initial_states, config["initial_state_offset"], config["n_initial_state"]
     )
@@ -56,13 +55,19 @@ def run():
 
     kc_classifier = kc(
         model,
-        # clip_values=(0.0, 1.0),
+        clip_values=(0.0, 1.0),
     )
-    pgd = PGD(kc_classifier, eps=0.1, targeted=True, verbose=True)
+    pgd = PGD(
+        kc_classifier,
+        eps=config["thresholds"]["f2"]-0.000001,
+        eps_step=config["thresholds"]["f2"] / 3,
+        norm=np.inf,
+        verbose=True,
+    )
     X_initial_states = scaler.transform(X_initial_states)
     attacks = pgd.generate(
         x=X_initial_states,
-        y=np.zeros(X_initial_states.shape[0]),
+        # y=np.zeros(X_initial_states.shape[0]),
         mask=constraints.get_mutable_mask(),
     )
 

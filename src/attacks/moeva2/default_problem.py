@@ -1,5 +1,6 @@
 from pymoo.model.problem import Problem
 import numpy as np
+from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from sklearn.preprocessing import MinMaxScaler
 
 from .constraints import Constraints
@@ -41,6 +42,12 @@ class DefaultProblem(Problem):
         self._ml_scaler = ml_scaler
 
         self._history = []
+
+        self.last_pareto = {
+            "X": np.empty((0, self.encoder.get_genetic_v_length())),
+            "F": np.empty((0, self.get_nb_objectives())),
+        }
+        self.nds = NonDominatedSorting()
 
         super().__init__(
             n_var=self.encoder.get_genetic_v_length(),
@@ -84,15 +91,15 @@ class DefaultProblem(Problem):
         f2 = np.count_nonzero(f2 > 0.001, axis=1)
         # print(f2.min())
         if self.scale_objectives:
-            f2 = f2/self.x_initial_f_mm.shape[0]
+            f2 = f2 / self.x_initial_f_mm.shape[0]
         return f2
 
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
 
-        f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, axis=1)
+        f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, ord=np.inf, axis=1)
         # print(np.mean(f2))
-        if self.scale_objectives:
-            f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
+        # if self.scale_objectives:
+        #     f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
         return f2
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -124,9 +131,7 @@ class DefaultProblem(Problem):
         if self.scale_objectives:
             G = self._constraints.normalise(G)
 
-        CV = Problem.calc_constraint_violation(
-            G
-        ).reshape(-1)
+        CV = Problem.calc_constraint_violation(G).reshape(-1)
 
         if self.scale_objectives:
             CV = CV / G.shape[1]
@@ -141,6 +146,18 @@ class DefaultProblem(Problem):
 
         if self._save_history:
             self._history.append(out)
+
+        self._update_pareto(x, out["F"])
+
+    def _update_pareto(self, x, F):
+
+        all_F = np.concatenate((self.last_pareto["F"], F))
+        all_x = np.concatenate((self.last_pareto["X"], x))
+        # print(all_x.shape)
+        front_i = self.nds.do(all_F)[0]
+        self.last_pareto["F"] = all_F[front_i]
+        self.last_pareto["X"] = all_x[front_i]
+
 
     def _evaluate_additional_objectives(self, x, x_f, x_f_mm, x_ml):
         return []

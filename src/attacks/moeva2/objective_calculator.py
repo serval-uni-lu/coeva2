@@ -25,6 +25,7 @@ class ObjectiveCalculator:
         minimize_class: int,
         thresholds: dict,
         min_max_scaler,
+        norm=np.inf,
         ml_scaler=None,
         problem_class=None,
     ):
@@ -36,6 +37,7 @@ class ObjectiveCalculator:
         self._minimize_class = minimize_class
         self._encoder = get_encoder_from_constraints(self._constraints)
         self._min_max_scaler = min_max_scaler
+        self.norm = norm
 
     def _objective_array(self, x_initial, x_f):
 
@@ -59,20 +61,20 @@ class ObjectiveCalculator:
         x_i_scaled = self._min_max_scaler.transform(x_initial.reshape(1, -1))
         x_scaled = self._min_max_scaler.transform(x_f)
         tol = 0.0001
-        assert np.all(x_i_scaled >= 0-tol)
-        assert np.all(x_i_scaled <= 1+tol)
-        assert np.all(x_scaled >= 0-tol)
-        assert np.all(x_scaled <= 1+tol)
+        assert np.all(x_i_scaled >= 0 - tol)
+        assert np.all(x_i_scaled <= 1 + tol)
+        assert np.all(x_scaled >= 0 - tol)
+        assert np.all(x_scaled <= 1 + tol)
 
         l2 = np.linalg.norm(
-            x_i_scaled
-            - x_scaled,
+            x_i_scaled - x_scaled,
+            ord=self.norm,
             axis=1,
         )
-        # print(l2)
+        # print(np.min(l2[(constraints_respected * misclassified)]))
 
-        l2_in_ball = l2 < self._thresholds["f2"]
-
+        l2_in_ball = l2 <= self._thresholds["f2"]
+        # print(np.max(l2))
         # Additional
         # to implement
 
@@ -82,18 +84,27 @@ class ObjectiveCalculator:
                 misclassified,
                 l2_in_ball,
                 constraints_respected * misclassified,
+                constraints_respected * l2_in_ball,
+                misclassified * l2_in_ball,
                 constraints_respected * misclassified * l2_in_ball,
             ]
         )
 
     def success_rate_bis(self, x_initial, x_f):
+        print(x_f.shape)
         return self._objective_array(x_initial, x_f).mean(axis=0)
+
+    def at_least_one(self, x_initial, x_f):
+        return np.array(self.success_rate_bis(x_initial, x_f) > 0)
 
     def success_rate_genetic(self, results: List[EfficientResult]):
 
         initial_states = [result.initial_state for result in results]
+        # pops_x = [
+        #     result.X.astype(np.float64) for result in results
+        # ]
         pops_x = [
-            np.array([e.X for e in result.pop]).astype(np.float64) for result in results
+            result.pareto.astype(np.float64) for result in results
         ]
         pops_x_f = [
             self._encoder.genetic_to_ml(pops_x[i], initial_states[i])
@@ -117,7 +128,7 @@ class ObjectiveCalculator:
         return at_leat_one.mean(axis=0)
 
     def _objective_per_individual(self, result: EfficientResult) -> np.ndarray:
-        x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
+        x = np.array(list(map(lambda e: e.X, result.X))).astype(np.float64)
         x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
 
         respectsConstraints = (

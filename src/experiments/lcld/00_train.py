@@ -1,11 +1,12 @@
 import numpy as np
-from imblearn.combine import SMOTEENN
 
-np.random.seed(3105)
+np.random.seed(205)
 import tensorflow as tf
+
+tf.random.set_seed(206)
+
 import joblib
 
-tf.random.set_seed(3205)
 from sklearn.model_selection import train_test_split
 
 from imblearn.under_sampling import (
@@ -13,6 +14,8 @@ from imblearn.under_sampling import (
     TomekLinks,
     EditedNearestNeighbours,
 )
+from tensorflow.python.keras import Sequential
+
 
 from sklearn.metrics import (
     accuracy_score,
@@ -23,8 +26,6 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dropout
 
 from tensorflow.keras.layers import Dense
 from sklearn.model_selection import StratifiedKFold
@@ -209,13 +210,15 @@ model.fit(
 )
 
 y_proba = model.predict_proba(scaler.transform(x_test)).reshape(-1)
-y_pred = (y_proba >= 0.2).astype(int)
+mccs = [matthews_corrcoef(y_test, (y_proba >= t / 100).astype(int)) for t in range(100)]
+
+threshold = np.argmax(mccs) / 100
+print(threshold)
+y_pred = (y_proba >= threshold).astype(int)
 
 print_score(y_test, y_pred)
 
-candidates_index = (
-    (y_test == 1) * (y_test == y_pred)
-)
+candidates_index = (y_test == 1) * (y_test == y_pred)
 print(candidates_index.shape)
 print(candidates_index.sum())
 X_candidate = x_test[candidates_index, :]

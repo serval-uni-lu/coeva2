@@ -1,5 +1,5 @@
 import numpy as np
-
+import warnings
 
 class Classifier:
 
@@ -21,7 +21,9 @@ class Classifier:
         self.set_verbose(verbose)
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
-        proba = self._classifier.predict_proba(x)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            proba = self._classifier.predict_proba(x)
         if proba.shape[1] == 1:
             proba = np.concatenate((1-proba, proba), axis=1)
         return proba
