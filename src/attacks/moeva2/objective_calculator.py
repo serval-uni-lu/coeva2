@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 from pymoo.model.problem import Problem
 
 import numpy as np
@@ -75,7 +75,7 @@ class ObjectiveCalculator:
 
         l2_in_ball = l2 <= self._thresholds["f2"]
         # print(l2)
-        # print(np.max(l2))
+        # print(np.min(l2))
         # Additional
         # to implement
 
@@ -103,9 +103,7 @@ class ObjectiveCalculator:
         # pops_x = [
         #     result.X.astype(np.float64) for result in results
         # ]
-        pops_x = [
-            result.pareto.astype(np.float64) for result in results
-        ]
+        pops_x = [result.pareto.astype(np.float64) for result in results]
         pops_x_f = [
             self._encoder.genetic_to_ml(pops_x[i], initial_states[i])
             for i in range(len(results))
@@ -123,96 +121,28 @@ class ObjectiveCalculator:
 
     def success_rate_3d(self, x_initial, x):
         at_leat_one = np.array(
-            [self.success_rate_bis(x_initial[i], e) > 0 for i, e in tqdm(enumerate(x), total=len(x))]
+            [
+                self.success_rate_bis(x_initial[i], e) > 0
+                for i, e in tqdm(enumerate(x), total=len(x))
+            ]
         )
         return at_leat_one.mean(axis=0)
 
-    def _objective_per_individual(self, result: EfficientResult) -> np.ndarray:
-        x = np.array(list(map(lambda e: e.X, result.X))).astype(np.float64)
-        x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
+    def genetic_to_array(self, results: List[EfficientResult]):
+        initial_states = [result.initial_state for result in results]
+        pareto_x = [result.pareto.astype(np.float64) for result in results]
+        pareto_x_x_f = [
+            self._encoder.genetic_to_ml(pareto_x[i], initial_states[i])
+            for i in range(len(results))
+        ]
+        return pareto_x
 
-        respectsConstraints = (
-            (self._constraints.evaluate(x_ml)).sum(axis=1) <= 0
-        ).astype(np.int64)
-        # print(self._constraints.evaluate(x_ml))
+    def get_success(self, x_initial, x_f):
+        pass
 
-        if self._ml_scaler is not None:
-            f1 = self._classifier.predict_proba(self._ml_scaler.transform(x_ml))
-            f1 = np.array(f1).flatten()
-        else:
-            f1 = self._classifier.predict_proba(x_ml)[:, 1]
+    def get_success_3d(self, results: Union[np.ndarray, List[EfficientResult]]):
 
-        # f1 = self._classifier.predict_proba(x_ml)
-        # f1 = np.array(f1).flatten()
-        isMisclassified = np.array(f1 < self._thresholds["f1"]).astype(np.int64)
+        if isinstance(results, List):
+            results = self.genetic_to_array(results)
 
-        # isHighAmount = (x_ml[:, self._amount_index] >= self._high_amount).astype(
-        # np.int64
-        # )
 
-        o1 = respectsConstraints
-        o2 = isMisclassified
-        o3 = o1 * o2
-        # o4 = o3 * isHighAmount
-        return np.array([respectsConstraints, isMisclassified, o3])
-
-    def _objective_per_initial_sample(self, result: EfficientResult):
-        objectives = self._objective_per_individual(result)
-        objectives = objectives.sum(axis=1)
-        objectives = (objectives > 0).astype(np.int64)
-        return objectives
-
-    def success_rate(self, results: List[EfficientResult]):
-        objectives = np.array(
-            [self._objective_per_initial_sample(result) for result in tqdm(results)]
-        )
-        success_rates = np.apply_along_axis(
-            lambda x: x.sum() / x.shape[0], 0, objectives
-        )
-        return success_rates
-
-    def get_successful_attacks(self, results: List[EfficientResult]) -> np.ndarray:
-        training = []
-
-        for result in results:
-            adv_filter = self._objective_per_individual(result)[2].astype(np.bool)
-            x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
-            x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
-            training.append(x_ml[adv_filter])
-
-        return np.concatenate(training)
-
-    def get_generated(
-        self, results: List[EfficientResult]
-    ) -> List[Dict[str, np.ndarray]]:
-        generated = []
-
-        for result in results:
-            adv_filter = self._objective_per_individual(result)[2].astype(np.bool)
-            x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
-            x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
-            x_adv_success = x_ml[adv_filter]
-            x_adv_failure = x_ml[~adv_filter]
-            generated.append(
-                {
-                    "x_initial_state": result.initial_state,
-                    "x_adv_success": x_adv_success,
-                    "x_adv_fail": x_adv_failure,
-                }
-            )
-
-        return generated
-
-    def get_single_successful_attack(
-        self, results: List[EfficientResult]
-    ) -> np.ndarray:
-        training = []
-        for result in results:
-            adv_filter = self._objective_per_individual(result)[2].astype(np.bool)
-            x = np.array(list(map(lambda e: e.X, result.pop))).astype(np.float64)
-            x_ml = self._encoder.genetic_to_ml(x, result.initial_state)
-            successful = x_ml[adv_filter]
-            if successful.shape[0] > 0:
-                rnd_idx = np.random.choice(successful.shape[0], size=1, replace=False)
-                training.append(successful[rnd_idx, :])
-        return np.concatenate(training)
