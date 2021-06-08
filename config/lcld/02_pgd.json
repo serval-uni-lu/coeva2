@@ -4,8 +4,8 @@
     "features": "./data/lcld/features.csv",
     "constraints": "./data/lcld/constraints.csv",
     "x_candidates": "./data/lcld/x_attack_candidate.npy",
-    "attack_results": "./out/attacks/lcld/pgd/results.npy",
-    "objectives": "./out/attacks/lcld/pgd/objectives.csv",
+    "attack_results": "./out/attacks/lcld/pgd/results_eps_01.npy",
+    "objectives": "./out/attacks/lcld/pgd/objectives_eps_01.csv",
     "min_max_scaler": "./models/lcld/scaler.joblib",
     "ml_scaler": "./models/lcld/scaler.joblib"
   },
@@ -14,7 +14,7 @@
     "f2": 0.1
   },
   "norm": "inf",
-  "n_initial_state": 100,
+  "n_initial_state": 1000,
   "seed": 2020,
   "n_repetition": 1,
   "initial_state_offset": 0,
