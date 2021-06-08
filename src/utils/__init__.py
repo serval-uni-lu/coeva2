@@ -25,7 +25,6 @@ def sample_in_norm(n_samples, d, eps, norm):
         x_perturbation = random_sample_hyperball(n_samples, d) * eps
 
     elif norm in ["inf", np.inf]:
-        print(eps)
         x_perturbation = np.random.random((n_samples, d)) * 2 - 1
         x_perturbation = x_perturbation * eps
 

@@ -1,4 +1,5 @@
 import numpy as np
+from joblib import Parallel, delayed
 from tqdm import tqdm
 import gurobipy as gp
 from gurobipy import GRB, QuadExpr, LinExpr
@@ -26,6 +27,7 @@ class SatAttack:
         norm,
         n_sample=1,
         verbose=1,
+        n_jobs=1
     ):
         self.constraints = constraints
         self.sat_constraints = sat_constraints
@@ -35,6 +37,7 @@ class SatAttack:
         self.n_sample = n_sample
         self.verbose = verbose
         self.encoder = get_encoder_from_constraints(self.constraints)
+        self.n_jobs = n_jobs
 
     def create_variable(self, m, x_init, type_mask, lb, ub):
 
@@ -118,6 +121,7 @@ class SatAttack:
             m.setParam(GRB.Param.NonConvex, 2)
             m.setParam(GRB.Param.NumericFocus, 3)
             m.setParam(GRB.Param.StartNodeLimit, 1000)
+            m.setParam(GRB.Param.Threads, 1)
             m.optimize()
             nSolutions = m.SolCount
 
@@ -154,6 +158,23 @@ class SatAttack:
         if self.verbose > 0:
             iterable = tqdm(iterable, total=len(x_initial))
 
-        return np.array(
-            [self._one_generate(x_init, x_hot_start_local[i]) for i, x_init in iterable]
-        )
+        # return np.array(
+        #     [self._one_generate(x_init, x_hot_start_local[i]) for i, x_init in iterable]
+        # )
+
+        # Sequential Run
+        if self.n_jobs == 1:
+            return np.array(
+                [self._one_generate(x_init, x_hot_start_local[i]) for i, x_init in iterable]
+            )
+
+        # Parallel run
+        else:
+
+            return np.array(
+                Parallel(n_jobs=self.n_jobs)(
+                    delayed(self._one_generate)(x_init, x_hot_start_local[i])
+                    for i, x_init in iterable
+                )
+            )
+

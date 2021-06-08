@@ -34,6 +34,7 @@ def run():
         np.inf,
         n_sample=config["n_repetition"],
         verbose=1,
+        n_jobs=config["n_jobs"]
     )
 
     x_attacks = attack.generate(x_initial)

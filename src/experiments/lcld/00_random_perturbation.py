@@ -87,11 +87,12 @@ def run():
             1,
             mask_int,
         )
+        x_perturbed = scaler.inverse_transform(x_perturbed)
         x_perturbed[:, mask_int] = np.round(x_perturbed[:, mask_int])
 
         return objective_calc.at_least_one(
             x_init,
-            scaler.inverse_transform(x_perturbed),
+            x_perturbed,
         )
 
     if config["n_jobs"] == 1:
@@ -102,7 +103,7 @@ def run():
             delayed(apply_one)(x_init) for x_init in iterable
         )
 
-    print(at_least_one)
+    # print(at_least_one)
 
     success_rates = at_least_one.mean(axis=0)
 
