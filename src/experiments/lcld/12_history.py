@@ -5,6 +5,7 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from src.attacks.moeva2.classifier import Classifier
 from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
@@ -16,6 +17,7 @@ warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 config = in_out.get_parameters()
 from src.utils.in_out import load_model
+AVOID_ZERO = 0.00000001
 
 
 def run():
@@ -27,11 +29,29 @@ def run():
 
     histories = [[g["F"].tolist() for i, g in enumerate(r.history) if i > 0] for r in efficient_results]
     histories = np.array(histories)
-    working = np.min(histories, axis=2)
-    working = np.mean(working, axis=0)
+
+    # Objective scalers (Compute only once)
+    f1_scaler = MinMaxScaler(feature_range=(0, 1))
+    f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
+
+    f2_scaler = MinMaxScaler(feature_range=(0, 1))
+    f2_scaler.fit([[0], [1]])
+
+    shape = histories[..., 0].shape
+    print(histories[0][0][0][0])
+    histories[..., 0] = np.exp(f1_scaler.inverse_transform(histories[..., 0].reshape(-1, 1))).reshape(shape)
+    # histories[..., 1] = f2_scaler.inverse_transform(histories[..., 1].reshape(-1, 1)).reshape(shape)
+    print(histories[0][0][0][0])
+
+    working = np.mean(histories, axis=2)
+    working = np.min(working, axis=0)
     print(working.shape)
     for i in range(working.shape[1]):
         plt.plot(working[:, i], label=f"{i}")
+
+    # plot thresholds
+    for key in config["thresholds"]:
+        plt.plot(np.full(working.shape[0], config["thresholds"][key]), label=f"Threshold {key}")
 
     plt.yscale("log")
     plt.legend()
