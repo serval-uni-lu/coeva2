@@ -36,6 +36,7 @@ class Moeva2:
         ml_scaler=None,
         problem_class=None,
         l2_ball_size=0.1,
+        norm=np.inf,
         n_gen=625,
         n_pop=640,
         n_offsprings=320,
@@ -61,6 +62,7 @@ class Moeva2:
         self._encoder = get_encoder_from_constraints(self._constraints)
         self._alg_class = UNSGA3
         self.l2_ball_size = l2_ball_size
+        self.norm = norm
 
         if problem_class is None:
             self._problem_class = DefaultProblem
@@ -145,6 +147,7 @@ class Moeva2:
             scale_objectives=self._scale_objectives,
             save_history=self._save_history,
             ml_scaler=self._ml_scaler,
+            norm=self.norm,
         )
 
         algorithm = self._create_algorithm(n_obj=problem.get_nb_objectives())
