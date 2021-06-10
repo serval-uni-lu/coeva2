@@ -72,7 +72,7 @@ class DefaultProblem(Problem):
         self._f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
 
         self._f2_scaler = MinMaxScaler(feature_range=(0, 1))
-        self._f2_scaler.fit([[0], [np.sqrt(self.x_initial_f_mm.shape[0])]])
+        self._f2_scaler.fit([[0], [1]])
 
     def _obj_misclassify(self, x_ml: np.ndarray) -> np.ndarray:
         f1 = self.classifier.predict_proba(x_ml)[:, self.minimize_class]
