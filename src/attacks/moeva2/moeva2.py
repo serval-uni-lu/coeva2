@@ -1,40 +1,30 @@
-from pymoo.algorithms.nsga3 import NSGA3
-from pymoo.algorithms.rnsga3 import RNSGA3
+import os
+import warnings
+from copy import deepcopy
+
+import numpy as np
+from joblib import Parallel, delayed
+from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
 from pymoo.algorithms.unsga3 import UNSGA3
-from pymoo.operators.integer_from_float_operator import IntegerFromFloatSampling
+from pymoo.factory import (
+    get_termination,
+    get_mutation,
+    get_crossover,
+    get_reference_directions,
+)
+from pymoo.operators.mixed_variable_operator import (
+    MixedVariableCrossover,
+    MixedVariableMutation,
+)
+from pymoo.optimize import minimize
+from tqdm import tqdm
 
 from .classifier import Classifier
 from .constraints import Constraints
 from .default_problem import DefaultProblem
 from .feature_encoder import get_encoder_from_constraints
-
-from joblib import Parallel, delayed
-from tqdm import tqdm
-from copy import deepcopy
-import numpy as np
-import os
-
 from .random_sampling import FloatRandomSamplingL2
 from .result_process import HistoryResult, EfficientResult
-
-from pymoo.factory import (
-    get_termination,
-    get_mutation,
-    get_crossover,
-    get_sampling,
-    get_reference_directions,
-)
-from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
-from pymoo.algorithms.nsga2 import NSGA2
-from pymoo.optimize import minimize
-from pymoo.operators.mixed_variable_operator import (
-    MixedVariableSampling,
-    MixedVariableCrossover,
-    MixedVariableMutation,
-)
-
-import warnings
-
 from ...utils.in_out import load_model
 
 
@@ -158,7 +148,6 @@ class Moeva2:
         )
 
         algorithm = self._create_algorithm(n_obj=problem.get_nb_objectives())
-
 
         result = minimize(
             problem,
