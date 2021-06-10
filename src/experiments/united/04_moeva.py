@@ -55,6 +55,7 @@ def run():
         constraints,
         problem_class=None,
         l2_ball_size=config["l2_ball_size"],
+        norm=config["norm"],
         n_gen=config["n_gen"],
         n_pop=config["n_pop"],
         n_offsprings=config["n_offsprings"],
