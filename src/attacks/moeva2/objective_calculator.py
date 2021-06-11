@@ -75,7 +75,7 @@ class ObjectiveCalculator:
         # print(np.min(l2[(constraints_respected * misclassified)]))
 
         l2_in_ball = l2 <= self._thresholds["f2"]
-        print(l2)
+        # print(l2)
         # print(np.min(l2))
         # Additional
         # to implement

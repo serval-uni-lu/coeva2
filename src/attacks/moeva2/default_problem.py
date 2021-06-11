@@ -78,7 +78,7 @@ class DefaultProblem(Problem):
         if self.norm in ["inf", np.inf]:
             self._f2_scaler.fit([[0], [1]])
         elif self.norm in ["2", 2]:
-            self._f2_scaler.fit([[0], np.sqrt(self.x_initial_f_mm.shape[0])])
+            self._f2_scaler.fit([[0], [np.sqrt(self.x_initial_f_mm.shape[0])]])
         else:
             raise NotImplementedError
 

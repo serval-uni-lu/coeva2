@@ -8,12 +8,13 @@ from src.attacks.moeva2.classifier import Classifier
 from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 from src.experiments.united.utils import get_constraints_from_str
 from src.utils import Pickler, in_out
+from src.utils.in_out import load_model
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 config = in_out.get_parameters()
-from src.utils.in_out import load_model
+
 
 def run():
     Path(config["paths"]["objectives"]).parent.mkdir(parents=True, exist_ok=True)
