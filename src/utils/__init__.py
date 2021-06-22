@@ -9,7 +9,10 @@ def get_data_by_month(data, a_month):
 
 
 def filter_initial_states(x, start, size):
-    return x[start : start + size]
+    if size > - 1:
+        return x[start : start + size]
+    else:
+        return x
 
 
 def random_sample_hyperball(n, d):

@@ -113,7 +113,7 @@ x_max = x_max.astype(np.float).to_numpy().reshape(1, -1)
 x_min = np.min(np.concatenate((x_min, x_all)), axis=0).reshape(1, -1)
 x_max = np.max(np.concatenate((x_max, x_all)), axis=0).reshape(1, -1)
 scaler.fit(np.concatenate((np.floor(x_min), np.ceil(x_max))))
-joblib.dump(scaler, "../models/malware/scaler_small.pickle")
+joblib.dump(scaler, "../models/malware/scaler_small.joblib")
 
 ### From the features, print information for constraints.
 
@@ -172,9 +172,10 @@ for e in man_col:
 
 def build_model(units, lr_param):
     network = Sequential()
-    network.add(Dense(units=units[0], activation="relu"))
-    network.add(Dropout(0.1))
-    network.add(Dense(units=units[1], activation="relu"))
+    network.add(Dense(units=64, activation="relu"))
+    network.add(Dense(units=64, activation="relu"))
+    # network.add(Dropout(0.1))
+    network.add(Dense(units=32, activation="relu"))
     network.add(Dense(units=1, activation="sigmoid"))
     sgd = Adam(lr=lr_param)
     network.compile(loss="binary_crossentropy", optimizer=sgd)
@@ -184,7 +185,7 @@ def build_model(units, lr_param):
 # ----- Model Training
 
 x_train_surrogate = scaler.transform(x_train[:, index_to_keep])
-y_train_surrogate = (model.predict_proba(x_train_surrogate)[:, 1] >= 0.5).astype(int)
+y_train_surrogate = y_train
 
 
 # surrogate = Sequential()
@@ -208,7 +209,7 @@ y_train_surrogate = (model.predict_proba(x_train_surrogate)[:, 1] >= 0.5).astype
 #     callbacks=[es],
 # )
 
-es = EarlyStopping(monitor="val_loss", mode="min", verbose=1)
+# es = EarlyStopping(monitor="val_loss", mode="min", verbose=1)
 
 surrogate = build_model([128, 64], lr_param=0.001)
 surrogate.fit(
@@ -217,7 +218,7 @@ surrogate.fit(
     verbose=1,
     epochs=10,
     batch_size=64,
-    callbacks=[es],
+    callbacks=[],
     shuffle=True,
     validation_split=0.1,
 )
@@ -233,9 +234,17 @@ print("Absolute score")
 print_score(y_test, y_pred_surrogate)
 
 # X_candidates
+#
+mccs = [matthews_corrcoef(y_test, (y_proba_surrogate >= t / 100).astype(int)) for t in range(100)]
+#
+threshold = np.argmax(mccs) / 100
+print(threshold)
+y_pred_surrogate = (y_proba_surrogate >= threshold).astype(int).reshape(-1)
+print_score(y_test, y_pred_surrogate)
+
 
 candidates_index = (
-    (y_test == predictions) * (y_test == 1) * (y_test == y_pred_surrogate)
+    (y_test == 1) * (y_test == y_pred_surrogate)
 )
 print(candidates_index.shape)
 print(candidates_index.sum())
@@ -245,7 +254,7 @@ print(X_candidate.shape)
 # Save
 tf.keras.models.save_model(
     surrogate,
-    "../models/malware/surrogate_small.model",
+    "../models/malware/nn_small.model",
     overwrite=True,
     include_optimizer=True,
     save_format=None,

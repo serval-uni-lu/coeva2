@@ -1,17 +1,18 @@
 {
+  "project_name": "lcld",
   "paths": {
     "model": "./models/lcld/nn.model",
     "features": "./data/lcld/features.csv",
     "constraints": "./data/lcld/constraints.csv",
     "x_candidates": "./data/lcld/x_attack_candidate.npy",
-    "attack_results": "./out/attacks/lcld/random/results_eps_000001.npy",
-    "objectives": "./out/attacks/lcld/random/objectives_eps_000001.csv",
+    "attack_results": "./out/attacks/lcld/random/results_eps_0031.npy",
+    "objectives": "./out/attacks/lcld/random/objectives_eps_0031.csv",
     "min_max_scaler": "./models/lcld/scaler.joblib",
     "ml_scaler": "./models/lcld/scaler.joblib"
   },
   "thresholds": {
     "f1": 0.25,
-    "f2": 0.00001
+    "f2": 0.031
   },
   "norm": "inf",
   "n_initial_state": 1000,

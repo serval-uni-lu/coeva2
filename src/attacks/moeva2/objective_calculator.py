@@ -61,6 +61,7 @@ class ObjectiveCalculator:
         x_i_scaled = self._min_max_scaler.transform(x_initial.reshape(1, -1))
         x_scaled = self._min_max_scaler.transform(x_f)
         tol = 0.0001
+        # x_scaled = np.clip(x_scaled, 0, 1)
         assert np.all(x_i_scaled >= 0 - tol)
         assert np.all(x_i_scaled <= 1 + tol)
         assert np.all(x_scaled >= 0 - tol)

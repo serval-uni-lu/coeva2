@@ -1,4 +1,0 @@
-outs:
-- md5: 8a4bbc0e1251ebf756ed84ff61d9e13a
-  size: 2340704
-  path: x_attack_candidates.npy

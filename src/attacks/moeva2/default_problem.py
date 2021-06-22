@@ -22,6 +22,7 @@ class DefaultProblem(Problem):
         scale_objectives: True,
         save_history=False,
         ml_scaler=None,
+        norm=np.inf,
     ):
         # Essential passed parameters
         self.x_initial_ml = x_initial_state
@@ -33,6 +34,7 @@ class DefaultProblem(Problem):
         # Optional parameters
         self.scale_objectives = scale_objectives
         self._save_history = save_history
+        self.norm = norm
 
         # Computed attributes
         self.x_initial_f_mm = encoder.normalise(x_initial_state)
@@ -72,7 +74,13 @@ class DefaultProblem(Problem):
         self._f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
 
         self._f2_scaler = MinMaxScaler(feature_range=(0, 1))
-        self._f2_scaler.fit([[0], [np.sqrt(self.x_initial_f_mm.shape[0])]])
+
+        if self.norm in ["inf", np.inf]:
+            self._f2_scaler.fit([[0], [1]])
+        elif self.norm in ["2", 2]:
+            self._f2_scaler.fit([[0], [np.sqrt(self.x_initial_f_mm.shape[0])]])
+        else:
+            raise NotImplementedError
 
     def _obj_misclassify(self, x_ml: np.ndarray) -> np.ndarray:
         f1 = self.classifier.predict_proba(x_ml)[:, self.minimize_class]
@@ -96,10 +104,15 @@ class DefaultProblem(Problem):
 
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
 
-        f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, ord=np.inf, axis=1)
-        # print(np.mean(f2))
-        # if self.scale_objectives:
-        #     f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
+        if self.norm in ["inf", np.inf]:
+            f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, ord=np.inf, axis=1)
+        elif self.norm in ["2", 2]:
+            f2 = np.linalg.norm(x_f_mm - self.x_initial_f_mm, ord=2, axis=1)
+        else:
+            raise NotImplementedError
+
+        if self.scale_objectives:
+            f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
         return f2
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -157,7 +170,6 @@ class DefaultProblem(Problem):
         front_i = self.nds.do(all_F)[0]
         self.last_pareto["F"] = all_F[front_i]
         self.last_pareto["X"] = all_x[front_i]
-
 
     def _evaluate_additional_objectives(self, x, x_f, x_f_mm, x_ml):
         return []

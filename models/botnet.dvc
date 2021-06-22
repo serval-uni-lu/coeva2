@@ -1,0 +1,5 @@
+outs:
+- md5: 2807bd342d414baa1ff2d899b0677043.dir
+  size: 850583
+  nfiles: 5
+  path: botnet
