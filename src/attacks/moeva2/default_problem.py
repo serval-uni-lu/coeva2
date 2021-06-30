@@ -50,6 +50,7 @@ class DefaultProblem(Problem):
             "F": np.empty((0, self.get_nb_objectives())),
         }
         self.nds = NonDominatedSorting()
+        self.nb_eval = 0
 
         super().__init__(
             n_var=self.encoder.get_genetic_v_length(),
@@ -93,15 +94,6 @@ class DefaultProblem(Problem):
 
         return f1
 
-    def _obj_distance_l0(self, x_f: np.ndarray) -> np.ndarray:
-
-        f2 = np.abs(x_f - self.x_initial_ml)
-        f2 = np.count_nonzero(f2 > 0.001, axis=1)
-        # print(f2.min())
-        if self.scale_objectives:
-            f2 = f2 / self.x_initial_f_mm.shape[0]
-        return f2
-
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
 
         if self.norm in ["inf", np.inf]:
@@ -116,6 +108,9 @@ class DefaultProblem(Problem):
         return f2
 
     def _evaluate(self, x, out, *args, **kwargs):
+
+        # print(f"Evaluation #{self.nb_eval}")
+        # self.nb_eval += 1
 
         # --- Prepare necessary representation of the samples
 
@@ -162,14 +157,66 @@ class DefaultProblem(Problem):
 
         self._update_pareto(x, out["F"])
 
+    def _delta_pareto(self, new_F, old_F):
+        domination_matrix = self.calc_domination_matrix(new_F, old_F)
+
+        keep_new_F = np.where(np.logical_not(np.any(domination_matrix < 0, axis=1)))[0]
+        keep_old_F = np.where(np.logical_not(np.any(domination_matrix > 0, axis=0)))[0]
+
+        return keep_new_F, keep_old_F
+
+
     def _update_pareto(self, x, F):
 
-        all_F = np.concatenate((self.last_pareto["F"], F))
-        all_x = np.concatenate((self.last_pareto["X"], x))
-        # print(all_x.shape)
-        front_i = self.nds.do(all_F)[0]
-        self.last_pareto["F"] = all_F[front_i]
-        self.last_pareto["X"] = all_x[front_i]
+        print(F.shape)
+        # Pareto on the new guys
+        x = x.astype(np.float)
+
+        # Remove duplicate of new guys
+        unique_i = np.unique(x, axis=0, return_index=True)[1]
+        x = x[unique_i]
+        F = F[unique_i]
+
+        # Calculate pareto of new guys
+        pareto_i = self.nds.do(F)[0]
+        # print(pareto_i.shape)
+        pareto_F = F[pareto_i]
+        pareto_x = x[pareto_i]
+
+        new_pareto_i, old_pareto_i = self._delta_pareto(pareto_F, self.last_pareto["F"])
+
+        out_pareto_X = np.concatenate((pareto_x[new_pareto_i], self.last_pareto["X"][old_pareto_i]))
+        out_pareto_F = np.concatenate((pareto_F[new_pareto_i], self.last_pareto["F"][old_pareto_i]))
+
+        unique_i = np.unique(x, axis=0, return_index=True)[1]
+
+        self.last_pareto["X"] = out_pareto_X
+        self.last_pareto["F"] = out_pareto_F
+
+        # print(f"pareto_shape {self.last_pareto['X'].shape}")
+
+
+    @staticmethod
+    def calc_domination_matrix(F_new, F_old, epsilon=0.0):
+
+
+        # look at the obj for dom
+        n = F_new.shape[0]
+        m = F_old.shape[0]
+
+        L = np.repeat(F_new, m, axis=0)
+        R = np.tile(F_old, (n, 1))
+
+        smaller = np.reshape(np.any(L + epsilon < R, axis=1), (n, m))
+        larger = np.reshape(np.any(L > R + epsilon, axis=1), (n, m))
+
+        M = np.logical_and(smaller, np.logical_not(larger)) * 1 \
+            + np.logical_and(larger, np.logical_not(smaller)) * -1
+
+        # if cv equal then look at dom
+        # M = constr + (constr == 0) * dom
+
+        return M
 
     def _evaluate_additional_objectives(self, x, x_f, x_f_mm, x_ml):
         return []
