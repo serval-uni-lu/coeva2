@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import matthews_corrcoef
 
 
 def get_data_by_month(data, a_month):
@@ -9,7 +10,7 @@ def get_data_by_month(data, a_month):
 
 
 def filter_initial_states(x, start, size):
-    if size > - 1:
+    if size > -1:
         return x[start : start + size]
     else:
         return x
@@ -35,3 +36,15 @@ def sample_in_norm(n_samples, d, eps, norm):
         raise NotImplementedError
 
     return x_perturbation
+
+
+def find_best_threshold(y_test, y_proba, metric=matthews_corrcoef, step=0.01):
+    nb_steps = int(1 / step)
+    metric_values = [
+        metric(y_test, (y_proba >= t / nb_steps).astype(int)) for t in range(nb_steps)
+    ]
+    best_i = np.argmax(metric_values)
+    best_t = best_i / nb_steps
+    best_metric = metric_values[best_i]
+
+    return best_t, best_metric
