@@ -1,22 +1,16 @@
 # coeva2
 
-## Create the environment on HPC
+## Create the environment
 
-
+We recommend to use [miniconda](https://docs.conda.io/en/latest/miniconda.html) and python 3.8.8
 ```
-module purge
-module load swenv/default-env/v1.1-20180716-production lang/Python/3.6.4-foss-2018a math/Gurobi/8.1.1-intel-2018a-Python-3.6.4
-virtualenv adv
-chmod +x adv/bin/activate
-. ./adv/bin/activate
-pip install --update -r requirements.txt
+conda create -n moeva2 python=3.8.8
+conda activate moeva2
+pip install -r requirements-min.txt
 ```
 
-## On macOS
-
-Run before installing the other requirements
-
+## Download data files with dvc
 ```
-pip3 install xgboost
+dvc pull
 ```
 

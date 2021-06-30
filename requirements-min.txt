@@ -8,3 +8,4 @@ scikit-learn==0.23.1
 gurobipy==9.1.0
 tqdm==4.54.1
 adversarial-robustness-toolbox[all]==1.7.0
+dvc[all]==2.4.3
