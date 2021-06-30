@@ -5,26 +5,26 @@
     "features": "./data/botnet/features.csv",
     "constraints": "./data/botnet/constraints.csv",
     "x_candidates": "./data/botnet/x_attack_candidate.npy",
-    "attack_results": "./out/attacks/botnet/moeva_init/results.npy",
+    "attack_results": "./out/attacks/botnet/moeva_init/results_new_new.npy",
     "objectives": "./out/attacks/botnet/moeva_init/objectives_eps_01.csv",
     "min_max_scaler": "./models/botnet/scaler.joblib",
     "ml_scaler": "./models/botnet/scaler.joblib"
   },
   "thresholds": {
-    "f1": 0.9,
-    "f2": 0.5
+    "f1": 0.5,
+    "f2": 1
   },
   "norm": "inf",
-  "n_initial_state": -1,
+  "n_initial_state": 10,
   "seed": 2020,
   "n_repetition": 1,
   "initial_state_offset": 0,
-  "n_jobs": 14,
+  "n_jobs": 10,
   "verbose": 1,
   "save_history": true,
   "l2_ball_size": 0.00,
-  "n_gen": 100,
-  "n_pop": 100,
-  "n_offsprings": 50
+  "n_gen": 600,
+  "n_pop": 600,
+  "n_offsprings": 300
 
 }
