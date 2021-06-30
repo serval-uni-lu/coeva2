@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
-from src.attacks.moeva2 import get_scaler_from_norm
+from src.attacks.moeva2.utils import get_scaler_from_norm
 from src.attacks.moeva2.classifier import Classifier
 from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 from src.examples.lcld.lcld_constraints import LcldConstraints
