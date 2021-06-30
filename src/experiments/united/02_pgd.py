@@ -61,7 +61,7 @@ def run():
         kc_classifier,
         eps=config["thresholds"]["f2"]-0.000001,
         eps_step=config["thresholds"]["f2"] / 3,
-        norm=np.inf,
+        norm=config["norm"],
         verbose=True,
     )
     X_initial_states = scaler.transform(X_initial_states)
