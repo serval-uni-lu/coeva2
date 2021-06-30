@@ -23,7 +23,7 @@ from .classifier import Classifier
 from .constraints import Constraints
 from .default_problem import DefaultProblem
 from .feature_encoder import get_encoder_from_constraints
-from .random_sampling import FloatRandomSamplingL2
+from .sampling import MixedSamplingLp
 from .result_process import HistoryResult, EfficientResult
 from ...utils.in_out import load_model
 
@@ -77,16 +77,8 @@ class Moeva2:
     def _create_algorithm(self, n_obj) -> GeneticAlgorithm:
 
         type_mask = self._encoder.get_type_mask_genetic()
-        # sampling = MixedVariableSampling(
-        #     type_mask,
-        #     {
-        #         "real": FloatRandomSamplingL2(l2_max=0.1),
-        #         "int": IntegerFromFloatSampling(
-        #             clazz=FloatRandomSamplingL2, l2_max=0.1
-        #         ),
-        #     },
-        # )
-        sampling = FloatRandomSamplingL2(l2_max=self.l2_ball_size, type_mask=type_mask)
+        
+        sampling = MixedSamplingLp(ratio_perturbed=0.0, eps=self.l2_ball_size, norm = self.norm, type_mask=type_mask)
 
         # Default parameters for crossover (prob=0.9, eta=30)
         crossover = MixedVariableCrossover(
