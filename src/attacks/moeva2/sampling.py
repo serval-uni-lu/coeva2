@@ -10,7 +10,9 @@ class MixedSamplingLp(Sampling):
     Randomly sample points in the real space by considering the lower and upper bounds of the problem.
     """
 
-    def __init__(self, var_type=float, ratio_perturbed=0.5, eps=0.1, norm=2, type_mask=None) -> None:
+    def __init__(
+        self, var_type=float, ratio_perturbed=0.5, eps=0.1, norm=2, type_mask=None
+    ) -> None:
         super().__init__()
         self.var_type = var_type
         self.eps = eps
@@ -31,7 +33,9 @@ class MixedSamplingLp(Sampling):
         nb_perturbed_sample = int(np.rint(self.ratio_perturbed * n_samples))
         nb_not_perturbed_sample = n_samples - nb_perturbed_sample
 
-        x_perturbation = sample_in_norm(nb_perturbed_sample, problem.n_var, self.eps, self.norm)
+        x_perturbation = sample_in_norm(
+            nb_perturbed_sample, problem.n_var, self.eps, self.norm
+        )
         x_perturbed = x_initial_gen_normalised + x_perturbation
         x_perturbed = np.clip(x_perturbed, 0, 1)
 
@@ -41,6 +45,30 @@ class MixedSamplingLp(Sampling):
         mask_int = self.type_mask != "real"
         x_perturbed[:, mask_int] = np.rint(x_perturbed[:, mask_int])
 
-        out = np.concatenate((np.tile(x_initial_gen, (nb_not_perturbed_sample, 1)), x_perturbed))
+        out = np.concatenate(
+            (np.tile(x_initial_gen, (nb_not_perturbed_sample, 1)), x_perturbed)
+        )
+
+        return out
+
+
+class InitialStateSampling(Sampling):
+    """
+    Randomly sample points in the real space by considering the lower and upper bounds of the problem.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _do(self, problem, n_samples, **kwargs):
+
+        # Retrieve original
+        x_initial_f = problem.x_initial_ml
+
+        # Encode to genetic
+        x_initial_gen = problem.encoder.ml_to_genetic(x_initial_f.reshape(1, -1))[0]
+
+        # Repeat n_sample times
+        out = np.tile(x_initial_gen, (n_samples, 1))
 
         return out

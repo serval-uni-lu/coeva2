@@ -23,7 +23,7 @@ from .classifier import Classifier
 from .constraints import Constraints
 from .default_problem import DefaultProblem
 from .feature_encoder import get_encoder_from_constraints
-from .sampling import MixedSamplingLp
+from .sampling import MixedSamplingLp, InitialStateSampling
 from .result_process import HistoryResult, EfficientResult
 from ...utils.in_out import load_model
 
@@ -78,7 +78,7 @@ class Moeva2:
 
         type_mask = self._encoder.get_type_mask_genetic()
         
-        sampling = MixedSamplingLp(ratio_perturbed=0.0, eps=self.l2_ball_size, norm = self.norm, type_mask=type_mask)
+        sampling = InitialStateSampling()
 
         # Default parameters for crossover (prob=0.9, eta=30)
         crossover = MixedVariableCrossover(
