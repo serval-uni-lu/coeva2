@@ -57,8 +57,7 @@ class ConstraintsOnlyProblem(Problem):
 
         # --- Prepare necessary representation of the samples
 
-        # Genetic representation
-        x = x
+        # Genetic representation is in x
 
         # Machine learning representation
         x_f = self._encoder.genetic_to_ml(x, self.x_initial_ml)
