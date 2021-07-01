@@ -6,6 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 from .constraints import Constraints
 from .feature_encoder import FeatureEncoder
 from .classifier import Classifier
+from .utils import get_scaler_from_norm
 
 AVOID_ZERO = 0.00000001
 NB_OBJECTIVES = 3
@@ -71,18 +72,10 @@ class DefaultProblem(Problem):
 
     def _create_default_scaler(self):
         # Objective scalers (Compute only once)
-        self._f2_scaler = MinMaxScaler(feature_range=(0, 1))
-
-        if self.norm in ["inf", np.inf]:
-            self._f2_scaler.fit([[0], [1]])
-        elif self.norm in ["2", 2]:
-            self._f2_scaler.fit([[0], [np.sqrt(self.x_initial_f_mm.shape[0])]])
-        else:
-            raise NotImplementedError
+        self._f2_scaler = get_scaler_from_norm(self.norm, self.x_initial_f_mm.shape[0])
 
     def _obj_misclassify(self, x_ml: np.ndarray) -> np.ndarray:
         f1 = self.classifier.predict_proba(x_ml)[:, self.minimize_class]
-
         return f1
 
     def _obj_distance(self, x_f_mm: np.ndarray) -> np.ndarray:
