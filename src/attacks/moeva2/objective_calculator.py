@@ -140,7 +140,7 @@ class ObjectiveCalculator:
         return pareto_x
 
     def get_success(self, x_initial, x_f):
-        pass
+        raise NotImplementedError
 
     def get_success_3d(self, results: Union[np.ndarray, List[EfficientResult]]):
 
