@@ -155,7 +155,6 @@ class DefaultProblem(Problem):
 
         return keep_new_F, keep_old_F
 
-
     def _update_pareto(self, x, F):
 
         print(F.shape)
@@ -175,8 +174,12 @@ class DefaultProblem(Problem):
 
         new_pareto_i, old_pareto_i = self._delta_pareto(pareto_F, self.last_pareto["F"])
 
-        out_pareto_X = np.concatenate((pareto_x[new_pareto_i], self.last_pareto["X"][old_pareto_i]))
-        out_pareto_F = np.concatenate((pareto_F[new_pareto_i], self.last_pareto["F"][old_pareto_i]))
+        out_pareto_X = np.concatenate(
+            (pareto_x[new_pareto_i], self.last_pareto["X"][old_pareto_i])
+        )
+        out_pareto_F = np.concatenate(
+            (pareto_F[new_pareto_i], self.last_pareto["F"][old_pareto_i])
+        )
 
         unique_i = np.unique(x, axis=0, return_index=True)[1]
 
@@ -185,10 +188,8 @@ class DefaultProblem(Problem):
 
         # print(f"pareto_shape {self.last_pareto['X'].shape}")
 
-
     @staticmethod
     def calc_domination_matrix(F_new, F_old, epsilon=0.0):
-
 
         # look at the obj for dom
         n = F_new.shape[0]
@@ -200,8 +201,10 @@ class DefaultProblem(Problem):
         smaller = np.reshape(np.any(L + epsilon < R, axis=1), (n, m))
         larger = np.reshape(np.any(L > R + epsilon, axis=1), (n, m))
 
-        M = np.logical_and(smaller, np.logical_not(larger)) * 1 \
+        M = (
+            np.logical_and(smaller, np.logical_not(larger)) * 1
             + np.logical_and(larger, np.logical_not(smaller)) * -1
+        )
 
         # if cv equal then look at dom
         # M = constr + (constr == 0) * dom
