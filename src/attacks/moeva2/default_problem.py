@@ -71,9 +71,6 @@ class DefaultProblem(Problem):
 
     def _create_default_scaler(self):
         # Objective scalers (Compute only once)
-        self._f1_scaler = MinMaxScaler(feature_range=(0, 1))
-        self._f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
-
         self._f2_scaler = MinMaxScaler(feature_range=(0, 1))
 
         if self.norm in ["inf", np.inf]:
@@ -85,12 +82,6 @@ class DefaultProblem(Problem):
 
     def _obj_misclassify(self, x_ml: np.ndarray) -> np.ndarray:
         f1 = self.classifier.predict_proba(x_ml)[:, self.minimize_class]
-        # print(np.mean(f1))
-        f1[f1 < AVOID_ZERO] = AVOID_ZERO
-        f1 = np.log(f1)
-
-        if self.scale_objectives:
-            f1 = self._f1_scaler.transform(f1.reshape(-1, 1))[:, 0]
 
         return f1
 
