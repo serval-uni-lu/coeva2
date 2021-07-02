@@ -108,8 +108,8 @@ class BotnetConstraints(Constraints):
     def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
 
         # By default min and max are the extreme values
-        feature_min = np.array([np.finfo(np.float32).min] * self._feature_min.shape[0])
-        feature_max = np.array([np.finfo(np.float32).max] * self._feature_max.shape[0])
+        feature_min = np.array([np.finfo(np.float).min] * self._feature_min.shape[0])
+        feature_max = np.array([np.finfo(np.float).max] * self._feature_max.shape[0])
 
         # Creating the mask of value that should be provided by input
         min_dynamic = self._feature_min.astype(str) == "dynamic"
