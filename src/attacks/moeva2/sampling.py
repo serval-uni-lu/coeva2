@@ -57,7 +57,8 @@ class InitialStateSampling(Sampling):
     Randomly sample points in the real space by considering the lower and upper bounds of the problem.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, type_mask) -> None:
+        self.type_mask = type_mask
         super().__init__()
 
     def _do(self, problem, n_samples, **kwargs):
@@ -68,7 +69,10 @@ class InitialStateSampling(Sampling):
         # Encode to genetic
         x_initial_gen = problem.encoder.ml_to_genetic(x_initial_f.reshape(1, -1))[0]
 
-        # Repeat n_sample times
-        out = np.tile(x_initial_gen, (n_samples, 1))
+        x_generated = np.tile(x_initial_gen, (n_samples, 1))
 
-        return out
+        mask_int = self.type_mask != "real"
+
+        x_generated[:, mask_int] = np.rint(x_generated[:, mask_int]).astype(int)
+
+        return x_generated
