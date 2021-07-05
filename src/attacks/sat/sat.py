@@ -27,7 +27,7 @@ class SatAttack:
         norm,
         n_sample=1,
         verbose=1,
-        n_jobs=1
+        n_jobs=1,
     ):
         self.constraints = constraints
         self.sat_constraints = sat_constraints
@@ -61,7 +61,6 @@ class SatAttack:
 
         x_init_scaled = self.min_max_scaler.transform(x_init.reshape(1, -1))[0]
 
-        expr = LinExpr()
         for i, e in enumerate(vars):
             if lb[i] != ub[i]:
                 scaled = (vars[i] - lb[i]) / (ub[i] - lb[i])
@@ -147,7 +146,7 @@ class SatAttack:
 
     def generate(self, x_initial, x_hot_start=None):
 
-        x_hot_start_local = [None for i in range(x_initial.shape[0])]
+        x_hot_start_local = [None for _ in range(x_initial.shape[0])]
         if x_hot_start is not None:
             if x_initial.shape != x_hot_start.shape:
                 raise ValueError
@@ -165,7 +164,10 @@ class SatAttack:
         # Sequential Run
         if self.n_jobs == 1:
             return np.array(
-                [self._one_generate(x_init, x_hot_start_local[i]) for i, x_init in iterable]
+                [
+                    self._one_generate(x_init, x_hot_start_local[i])
+                    for i, x_init in iterable
+                ]
             )
 
         # Parallel run
@@ -177,4 +179,3 @@ class SatAttack:
                     for i, x_init in iterable
                 )
             )
-
