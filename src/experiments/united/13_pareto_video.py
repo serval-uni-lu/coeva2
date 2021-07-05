@@ -15,7 +15,7 @@ from src.utils import Pickler, in_out
 from pyrecorder.recorders.file import File
 from pyrecorder.video import Video
 
-fname = "video2.mp4"
+fname = "video_new-1.mp4"
 vid = Video(File(fname))
 
 
@@ -41,31 +41,25 @@ def run():
     ]
     histories = np.array(histories)
 
-    # Objective scalers (Compute only once)
-    f1_scaler = MinMaxScaler(feature_range=(0, 1))
-    f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
-
     f2_scaler = get_scaler_from_norm(
         config["norm"], efficient_results[0].initial_state.shape[0]
     )
 
     shape = histories[..., 0].shape
     print(histories[0][0][0][0])
-    histories[..., 0] = np.exp(
-        f1_scaler.inverse_transform(histories[..., 0].reshape(-1, 1))
-    ).reshape(shape)
     histories[..., 1] = f2_scaler.inverse_transform(histories[..., 1].reshape(-1, 1)).reshape(shape)
     print(histories[0][0][0][0])
 
 
 
-    for i, generation in tqdm(enumerate(histories[0])):
+    for i, generation in tqdm(enumerate(histories[0][:50])):
 
         fig, ax = plt.subplots(figsize=(12, 12))
         plt.xlim([0, 1])
         plt.ylim([0, 1])
 
-        ax.scatter(generation[: , 0],generation[: , 2], color="red")
+        ax.scatter(generation[generation[:, 2] <= 0, 0], generation[generation[:, 2] <= 0, 1], color="blue")
+        ax.scatter(generation[generation[:, 2] > 0, 0], generation[generation[:, 2] > 0, 1], color="red")
 
         nb_satisfy_constraints = (generation[:, 2] <= 0).sum()
         plt.title(f"Generation {i}, Satisfy constraints {nb_satisfy_constraints}")

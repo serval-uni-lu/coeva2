@@ -36,8 +36,6 @@ def run():
     histories = np.array(histories)
 
     # Objective scalers (Compute only once)
-    f1_scaler = MinMaxScaler(feature_range=(0, 1))
-    f1_scaler.fit([[np.log(AVOID_ZERO)], [np.log(1)]])
 
     f2_scaler = get_scaler_from_norm(
         config["norm"], efficient_results[0].initial_state.shape[0]
@@ -45,13 +43,10 @@ def run():
 
     shape = histories[..., 0].shape
     print(histories[0][0][0][0])
-    histories[..., 0] = np.exp(
-        f1_scaler.inverse_transform(histories[..., 0].reshape(-1, 1))
-    ).reshape(shape)
     histories[..., 1] = f2_scaler.inverse_transform(histories[..., 1].reshape(-1, 1)).reshape(shape)
     print(histories[0][0][0][0])
 
-    working = np.max(histories, axis=2)
+    working = np.mean(histories, axis=2)
     working = np.min(working, axis=0)
     print(working.shape)
     for i in range(working.shape[1]):
