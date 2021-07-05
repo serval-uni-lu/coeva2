@@ -12,9 +12,6 @@ from .classifier import Classifier
 from .constraints import Constraints
 
 numpy.set_printoptions(threshold=sys.maxsize)
-# from utils import in_out
-
-# config = in_out.get_parameters()
 
 
 class ObjectiveCalculator:
@@ -61,7 +58,6 @@ class ObjectiveCalculator:
         x_i_scaled = self._min_max_scaler.transform(x_initial.reshape(1, -1))
         x_scaled = self._min_max_scaler.transform(x_f)
         tol = 0.0001
-        # x_scaled = np.clip(x_scaled, 0, 1)
         assert np.all(x_i_scaled >= 0 - tol)
         assert np.all(x_i_scaled <= 1 + tol)
         assert np.all(x_scaled >= 0 - tol)
@@ -102,9 +98,7 @@ class ObjectiveCalculator:
 
         initial_states = [result.initial_state for result in results]
         # Use last pop or all gen pareto front to compute objectives.
-        pops_x = [
-            result.X.astype(np.float64) for result in results
-        ]
+        pops_x = [result.X.astype(np.float64) for result in results]
         # pops_x = [result.pareto.astype(np.float64) for result in results]
         pops_x_f = [
             self._encoder.genetic_to_ml(pops_x[i], initial_states[i])
@@ -130,21 +124,5 @@ class ObjectiveCalculator:
         )
         return at_leat_one.mean(axis=0)
 
-    def genetic_to_array(self, results: List[EfficientResult]):
-        initial_states = [result.initial_state for result in results]
-        pareto_x = [result.pareto.astype(np.float64) for result in results]
-        pareto_x_x_f = [
-            self._encoder.genetic_to_ml(pareto_x[i], initial_states[i])
-            for i in range(len(results))
-        ]
-        return pareto_x
-
     def get_success(self, x_initial, x_f):
         raise NotImplementedError
-
-    def get_success_3d(self, results: Union[np.ndarray, List[EfficientResult]]):
-
-        if isinstance(results, List):
-            results = self.genetic_to_array(results)
-
-
