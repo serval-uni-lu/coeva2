@@ -78,7 +78,7 @@ class Moeva2:
 
         type_mask = self._encoder.get_type_mask_genetic()
         
-        sampling = InitialStateSampling()
+        sampling = InitialStateSampling(type_mask=type_mask)
 
         # Default parameters for crossover (prob=0.9, eta=30)
         crossover = MixedVariableCrossover(
@@ -126,7 +126,6 @@ class Moeva2:
         else:
             classifier = None
 
-        # self._encoder = get_encoder_from_constraints(con)
         constraints = deepcopy(self._constraints)
         encoder = get_encoder_from_constraints(self._constraints, x)
 

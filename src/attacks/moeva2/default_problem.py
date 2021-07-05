@@ -91,10 +91,24 @@ class DefaultProblem(Problem):
             f2 = self._f2_scaler.transform(f2.reshape(-1, 1))[:, 0]
         return f2
 
+    def _calculate_constraints(self, x_f):
+        G = self._constraints.evaluate(x_f)
+        G = G * (G > 0).astype(float)
+        if self.scale_objectives:
+            G = ((1 / (1 + np.exp(-G))) - 0.5) * 2
+            G = G / G.shape[1]
+
+        G = G.sum(axis=1)
+        return G
+
     def _evaluate(self, x, out, *args, **kwargs):
 
-        # print(f"Evaluation #{self.nb_eval}")
-        # self.nb_eval += 1
+        # Sanity check
+        if (x - self.xl < 0).sum() > 0:
+            print("Lower than lower bound.")
+
+        if (x - self.xu > 0).sum() > 0:
+            print("Lower than lower bound.")
 
         # --- Prepare necessary representation of the samples
 
@@ -115,94 +129,17 @@ class DefaultProblem(Problem):
         f1 = self._obj_misclassify(x_ml)
         f2 = self._obj_distance(x_f_mm)
 
-        # F = [f1, f2] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
-
         # --- Domain constraints
-        G = self._constraints.evaluate(x_f)
-        if self.scale_objectives:
-            G = self._constraints.normalise(G)
+        G = self._calculate_constraints(x_f)
 
-        CV = Problem.calc_constraint_violation(G).reshape(-1)
+        F = [f1, f2, G] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 
-        if self.scale_objectives:
-            CV = CV / G.shape[1]
-
-        # print(CV.min())
-
-        F = [f1, f2, CV] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
-
-        # --- Out and History
+        # --- Output
         out["F"] = np.column_stack(F)
-        # out["G"] = G
 
+        # Save output
         if self._save_history:
             self._history.append(out)
-
-        self._update_pareto(x, out["F"])
-
-    def _delta_pareto(self, new_F, old_F):
-        domination_matrix = self.calc_domination_matrix(new_F, old_F)
-
-        keep_new_F = np.where(np.logical_not(np.any(domination_matrix < 0, axis=1)))[0]
-        keep_old_F = np.where(np.logical_not(np.any(domination_matrix > 0, axis=0)))[0]
-
-        return keep_new_F, keep_old_F
-
-    def _update_pareto(self, x, F):
-
-        print(F.shape)
-        # Pareto on the new guys
-        x = x.astype(np.float)
-
-        # Remove duplicate of new guys
-        unique_i = np.unique(x, axis=0, return_index=True)[1]
-        x = x[unique_i]
-        F = F[unique_i]
-
-        # Calculate pareto of new guys
-        pareto_i = self.nds.do(F)[0]
-        # print(pareto_i.shape)
-        pareto_F = F[pareto_i]
-        pareto_x = x[pareto_i]
-
-        new_pareto_i, old_pareto_i = self._delta_pareto(pareto_F, self.last_pareto["F"])
-
-        out_pareto_X = np.concatenate(
-            (pareto_x[new_pareto_i], self.last_pareto["X"][old_pareto_i])
-        )
-        out_pareto_F = np.concatenate(
-            (pareto_F[new_pareto_i], self.last_pareto["F"][old_pareto_i])
-        )
-
-        unique_i = np.unique(x, axis=0, return_index=True)[1]
-
-        self.last_pareto["X"] = out_pareto_X
-        self.last_pareto["F"] = out_pareto_F
-
-        # print(f"pareto_shape {self.last_pareto['X'].shape}")
-
-    @staticmethod
-    def calc_domination_matrix(F_new, F_old, epsilon=0.0):
-
-        # look at the obj for dom
-        n = F_new.shape[0]
-        m = F_old.shape[0]
-
-        L = np.repeat(F_new, m, axis=0)
-        R = np.tile(F_old, (n, 1))
-
-        smaller = np.reshape(np.any(L + epsilon < R, axis=1), (n, m))
-        larger = np.reshape(np.any(L > R + epsilon, axis=1), (n, m))
-
-        M = (
-            np.logical_and(smaller, np.logical_not(larger)) * 1
-            + np.logical_and(larger, np.logical_not(smaller)) * -1
-        )
-
-        # if cv equal then look at dom
-        # M = constr + (constr == 0) * dom
-
-        return M
 
     def _evaluate_additional_objectives(self, x, x_f, x_f_mm, x_ml):
         return []
