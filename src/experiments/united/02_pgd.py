@@ -23,10 +23,6 @@ def run():
     tf.compat.v1.disable_eager_execution()
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 
-    save_history = True
-    if "save_history" in config:
-        save_history = config["save_history"]
-
     # ----- Load and create necessary objects
 
     constraints = get_constraints_from_str(config["project_name"])(
@@ -67,7 +63,6 @@ def run():
     X_initial_states = scaler.transform(X_initial_states)
     attacks = pgd.generate(
         x=X_initial_states,
-        # y=np.zeros(X_initial_states.shape[0]),
         mask=constraints.get_mutable_mask(),
     )
 
