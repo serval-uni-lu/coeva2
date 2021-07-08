@@ -5,7 +5,7 @@ from copy import deepcopy
 import numpy as np
 from joblib import Parallel, delayed
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
-from pymoo.algorithms.unsga3 import UNSGA3
+from pymoo.algorithms.rnsga3 import RNSGA3
 from pymoo.factory import (
     get_termination,
     get_mutation,
@@ -62,7 +62,7 @@ class Moeva2:
         self._n_jobs = n_jobs
         self._verbose = verbose
         self._encoder = get_encoder_from_constraints(self._constraints)
-        self._alg_class = UNSGA3
+        self._alg_class = RNSGA3
         self.l2_ball_size = l2_ball_size
         self.norm = norm
 
@@ -107,8 +107,8 @@ class Moeva2:
         ref_points = get_reference_directions("energy", n_obj, self._n_pop, seed=1)
 
         algorithm = self._alg_class(
-            pop_size=self._n_pop,
-            ref_dirs=ref_points,
+            pop_per_ref_point=1,
+            ref_points=ref_points,
             n_offsprings=self._n_offsprings,
             sampling=sampling,
             crossover=crossover,
