@@ -5,7 +5,7 @@
     "features": "./data/lcld/features.csv",
     "constraints": "./data/lcld/constraints.csv",
     "x_candidates": "./data/lcld/x_attack_candidate.npy",
-    "attack_results": "./out/attacks/lcld/moeva_init/results_eps_01.npy",
+    "attack_results": "./out/attacks/lcld/moeva_init/results_new.npy",
     "objectives": "./out/attacks/lcld/moeva_init/objectives_eps_0031.csv",
     "min_max_scaler": "./models/lcld/scaler.joblib",
     "ml_scaler": "./models/lcld/scaler.joblib"
@@ -23,8 +23,8 @@
   "verbose": 1,
   "save_history": true,
   "l2_ball_size": 0.00,
-  "n_gen": 100,
-  "n_pop": 100,
-  "n_offsprings": 50
+  "n_gen": 1000,
+  "n_pop": 200,
+  "n_offsprings": 100
 
 }

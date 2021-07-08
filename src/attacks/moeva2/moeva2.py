@@ -11,10 +11,12 @@ from pymoo.factory import (
     get_mutation,
     get_crossover,
     get_reference_directions,
+    get_sampling,
 )
 from pymoo.operators.mixed_variable_operator import (
     MixedVariableCrossover,
     MixedVariableMutation,
+    MixedVariableSampling,
 )
 from pymoo.optimize import minimize
 from tqdm import tqdm
@@ -77,15 +79,19 @@ class Moeva2:
     def _create_algorithm(self, n_obj) -> GeneticAlgorithm:
 
         type_mask = self._encoder.get_type_mask_genetic()
-        
+
         sampling = InitialStateSampling(type_mask=type_mask)
 
         # Default parameters for crossover (prob=0.9, eta=30)
         crossover = MixedVariableCrossover(
             type_mask,
             {
-                "real": get_crossover("real_sbx", prob=0.9, eta=30),
-                "int": get_crossover("int_sbx", prob=0.9, eta=30),
+                "real": get_crossover(
+                    "real_two_point",
+                ),
+                "int": get_crossover(
+                    "int_two_point",
+                ),
             },
         )
 
@@ -98,7 +104,7 @@ class Moeva2:
             },
         )
 
-        ref_points = get_reference_directions("das-dennis", n_obj, n_partitions=12)
+        ref_points = get_reference_directions("energy", n_obj, self._n_pop, seed=1)
 
         algorithm = self._alg_class(
             pop_size=self._n_pop,

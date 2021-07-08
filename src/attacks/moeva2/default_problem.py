@@ -8,8 +8,7 @@ from .feature_encoder import FeatureEncoder
 from .classifier import Classifier
 from .utils import get_scaler_from_norm
 
-AVOID_ZERO = 0.00000001
-NB_OBJECTIVES = 3
+NB_OBJECTIVES = 2
 
 
 class DefaultProblem(Problem):
@@ -68,7 +67,7 @@ class DefaultProblem(Problem):
         return self._history
 
     def get_nb_objectives(self):
-        return NB_OBJECTIVES
+        return NB_OBJECTIVES + self._constraints.get_nb_constraints()
 
     def _create_default_scaler(self):
         # Objective scalers (Compute only once)
@@ -93,12 +92,8 @@ class DefaultProblem(Problem):
 
     def _calculate_constraints(self, x_f):
         G = self._constraints.evaluate(x_f)
-        G = G * (G > 0).astype(float)
-        if self.scale_objectives:
-            G = ((1 / (1 + np.exp(-G))) - 0.5) * 2
-            G = G / G.shape[1]
+        G = G * (G > 0).astype(np.float)
 
-        G = G.sum(axis=1)
         return G
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -132,7 +127,9 @@ class DefaultProblem(Problem):
         # --- Domain constraints
         G = self._calculate_constraints(x_f)
 
-        F = [f1, f2, G] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
+        F = [f1, f2] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
+
+        F = np.concatenate((np.array(F), np.column_stack(G)), axis=0)
 
         # --- Output
         out["F"] = np.column_stack(F)
