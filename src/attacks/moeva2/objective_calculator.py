@@ -98,8 +98,9 @@ class ObjectiveCalculator:
 
         initial_states = [result.initial_state for result in results]
         # Use last pop or all gen pareto front to compute objectives.
-        pops_x = [result.X.astype(np.float64) for result in results]
+        # pops_x = [result.X.astype(np.float64) for result in results]
         # pops_x = [result.pareto.astype(np.float64) for result in results]
+        pops_x = [np.array([ind.X.astype(np.float64) for ind in result.pop]) for result in results]
         pops_x_f = [
             self._encoder.genetic_to_ml(pops_x[i], initial_states[i])
             for i in range(len(results))
