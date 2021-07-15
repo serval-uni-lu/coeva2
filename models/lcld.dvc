@@ -1,0 +1,5 @@
+outs:
+- md5: adc4df5e2362144fe2eb1cf12dee3abb.dir
+  size: 233886
+  nfiles: 5
+  path: lcld
