@@ -1,9 +1,0 @@
-vars:
-  - ./config/00_common.yaml
-stages:
-  test:
-    foreach: ${common.thresholds.f2s}
-    do:
-      foreach: ${common.thresholds.f2s}
-        do:
-          cmd: echo ${item}
