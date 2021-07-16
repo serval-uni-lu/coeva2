@@ -6,7 +6,7 @@ import tensorflow as tf
 from src.examples.botnet.botnet_constraints import BotnetConstraints
 from src.examples.lcld.lcld_constraints import LcldConstraints
 from src.examples.malware.malware_constraints import MalwareConstraints
-
+from sklearn.preprocessing import MinMaxScaler
 
 class TF2Classifier(TensorFlowV2Classifier):
     def __init__(
@@ -16,6 +16,7 @@ class TF2Classifier(TensorFlowV2Classifier):
             input_shape: Tuple[int, ...],
             loss_object: Optional["tf.keras.losses.Loss"] = None,
             constraints:Union[BotnetConstraints, LcldConstraints, MalwareConstraints] = None,
+            scaler:MinMaxScaler=None,
             train_step: Optional[Callable] = None,
             channels_first: bool = False,
             clip_values: Optional["CLIP_VALUES_TYPE"] = None,
@@ -32,6 +33,8 @@ class TF2Classifier(TensorFlowV2Classifier):
         :param loss_object: The loss function for which to compute gradients. This parameter is applied for training
             the model and computing gradients of the loss w.r.t. the input.
         :type loss_object: `tf.keras.losses`
+        :param constraints: The use case specific constraint object
+        :param scaler the Scaler used for the Model features
         :param train_step: A function that applies a gradient update to the trainable variables with signature
                            train_step(model, images, labels).
         :param channels_first: Set channels first or last.
@@ -58,10 +61,13 @@ class TF2Classifier(TensorFlowV2Classifier):
         preprocessing)
 
         self._constraints = constraints
+        self._scaler = scaler
 
     def constraint_loss(self,inputs):
         violations = []
-        violations = self._constraints.evaluate(inputs, use_tensors=True)
+
+        scaled_inputs = self._scaler.inverse_transform(inputs).astype('float32')
+        violations = self._constraints.evaluate(scaled_inputs, use_tensors=True)
 
         return violations
 

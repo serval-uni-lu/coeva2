@@ -6,6 +6,8 @@ constraints.get_feature_min_max(dynamic_input=dynamic_input)
 
 """
 
+from comet_ml import Experiment
+
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -68,7 +70,8 @@ def run():
         input_shape=initial_shape,
         loss_object=tf.keras.losses.binary_crossentropy,
         nb_classes=2,
-        constraints = constraints
+        constraints = constraints,
+        scaler = scaler
     )
     pgd = PGD(
         kc_classifier,
