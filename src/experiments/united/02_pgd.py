@@ -55,10 +55,12 @@ def run():
     )
     pgd = PGD(
         kc_classifier,
-        eps=config["thresholds"]["f2"]-0.000001,
+        eps=config["thresholds"]["f2"] - 0.000001,
         eps_step=config["thresholds"]["f2"] / 3,
         norm=config["norm"],
         verbose=True,
+        max_iter=config["n_repetition"],
+        batch_size=X_initial_states.shape[0],
     )
     X_initial_states = scaler.transform(X_initial_states)
     attacks = pgd.generate(
