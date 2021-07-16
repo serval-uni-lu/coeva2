@@ -130,9 +130,12 @@ class SatAttack:
                 #     print(v)
                 return [v.X for v in m.getVars()]
 
-            solutions = np.array([get_vars(e) for e in range(nSolutions)])[
-                :, : x_init.shape[0]
-            ]
+            if nSolutions > 0:
+                solutions = np.array([get_vars(e) for e in range(nSolutions)])[
+                    :, : x_init.shape[0]
+                ]
+            else:
+                solutions = np.array([x_init]*int(self.n_sample))
 
             # print(solutions.shape)
 
