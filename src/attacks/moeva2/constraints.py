@@ -6,12 +6,13 @@ import numpy as np
 
 class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def evaluate(self, x: np.ndarray) -> np.ndarray:
+    def evaluate(self, x: np.ndarray, use_tensors:bool=False) -> np.ndarray:
         """
         Evaluate the distance to constraints satisfaction of x. This method should be overridden by the attacker.
 
         Args:
             x (np.ndarray): An array of shape (n_samples, n_features) containing the sample to evaluate.
+            use_tensors (bool): Wether to use tensor operations.
 
         Returns:
             np.ndarray: An array of shape (n_samples, n_constraints) representing the distance to constraints

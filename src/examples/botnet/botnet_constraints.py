@@ -30,7 +30,7 @@ class BotnetConstraints(Constraints):
     def _date_feature_to_month(feature):
         return np.floor(feature / 100) * 12 + (feature % 100)
 
-    def evaluate(self, x: np.ndarray) -> np.ndarray:
+    def evaluate(self, x: np.ndarray, use_tensors:bool=False) -> np.ndarray:
         # ----- PARAMETERS
 
         tol = 1e-3
