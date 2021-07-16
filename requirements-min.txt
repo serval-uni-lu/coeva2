@@ -11,3 +11,4 @@ adversarial-robustness-toolbox[tensorflow]==1.7.0
 dvc[all]==2.4.3
 Pillow==8.3.0
 pyrecorder==0.1.8
+pytest
