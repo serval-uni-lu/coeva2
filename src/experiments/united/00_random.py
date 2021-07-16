@@ -15,14 +15,6 @@ from src.utils.in_out import load_model
 config = in_out.get_parameters()
 
 
-def random_sample_hyperball(n, d):
-    u = np.random.normal(0, 1, (d + 2) * n).reshape(n, d + 2)
-    norm = np.linalg.norm(u, axis=1)
-    u = u / norm.reshape(-1, 1)
-    x = u[:, 0:d]
-    return x
-
-
 def apply_random_perturbation(
     x_init, n_repetition, mask, eps, norm, a_min, a_max, mask_int
 ):
@@ -89,7 +81,7 @@ def run():
             mask_int,
         )
         x_perturbed = scaler.inverse_transform(x_perturbed)
-        x_perturbed[:, mask_int] = np.round(x_perturbed[:, mask_int])
+        x_perturbed[:, mask_int] = np.rint(x_perturbed[:, mask_int])
 
         return objective_calc.at_least_one(
             x_init,
