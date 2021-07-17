@@ -6,7 +6,7 @@ We recommend to use [miniconda](https://docs.conda.io/en/latest/miniconda.html) 
 ```
 conda create -n moeva2 python=3.8.8
 conda activate moeva2
-pip install -r requirements-min.txt
+pip install -r requirements.txt
 ```
 
 ## Download data files with dvc
