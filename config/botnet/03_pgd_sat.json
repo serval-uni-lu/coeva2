@@ -1,18 +1,18 @@
 {
-   "project_name": "lcld",
+   "project_name": "botnet",
    "paths": {
-    "model": "./models/lcld/nn.model",
-    "features": "./data/lcld/features.csv",
-    "constraints": "./data/lcld/constraints.csv",
-    "x_candidates": "./data/lcld/x_attack_candidates.npy",
-    "attack_results": "./out/attacks/lcld/pgd_sat/results_0031.npy",
-    "objectives": "./out/attacks/lcld/pgd_sat/objectives_0031.csv",
-    "min_max_scaler": "./models/lcld/scaler.joblib",
-    "ml_scaler": "./models/lcld/scaler.joblib"
+     "model": "./models/botnet/nn.model",
+    "features": "./data/botnet/features.csv",
+    "constraints": "./data/botnet/constraints.csv",
+    "x_candidates": "./data/botnet/x_attack_candidates.npy",
+    "attack_results": "./out/attacks/botnet/pgd_sat/results_01.npy",
+    "objectives": "./out/attacks/botnet/pgd_sat/objectives_01.csv",
+    "min_max_scaler": "./models/botnet/scaler.joblib",
+    "ml_scaler": "./models/botnet/scaler.joblib"
   },
   "thresholds": {
-    "f1": 0.25,
-    "f2": 0.031
+    "f1": 0.5,
+    "f2": 0.1
   },
   "norm": "inf",
   "n_initial_state": 1000,
