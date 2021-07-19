@@ -7,6 +7,8 @@ constraints.get_feature_min_max(dynamic_input=dynamic_input)
 """
 
 from comet_ml import Experiment
+from src.utils.comet import init_comet
+
 
 import warnings
 from datetime import datetime
@@ -31,6 +33,11 @@ config = in_out.get_parameters()
 
 
 def run():
+    experiment, params = None, None
+    enable_comet = config.get("comet",True)
+    if enable_comet:
+        params = {"approach":"pgd","constraints_optim":True}
+        experiment = init_comet(params)
 
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 

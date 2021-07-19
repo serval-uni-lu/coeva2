@@ -16,3 +16,4 @@ src/playground.py
 .cenv
 
 .vscode/
+data/config.py
