@@ -14,10 +14,8 @@ from src.utils import in_out, filter_initial_states
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
-config = in_out.get_parameters()
 
-
-def run():
+def run(config):
     Path(config["paths"]["objectives"]).parent.mkdir(parents=True, exist_ok=True)
 
     # ----- Load and create necessary objects
@@ -60,4 +58,5 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    config = in_out.get_parameters()
+    run(config)
