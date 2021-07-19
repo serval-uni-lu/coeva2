@@ -27,7 +27,78 @@ class LcldConstraints(Constraints):
     def _date_feature_to_month(feature):
         return np.floor(feature / 100) * 12 + (feature % 100)
 
-    def evaluate(self, x: np.ndarray) -> np.ndarray:
+    def evaluate_tf2(self, x):
+        # ----- PARAMETERS
+
+        import tensorflow as tf
+        tol = 1e-3
+        alpha = 1e-5
+
+        # installment = loan_amount * int_rate (1 + int_rate) ^ term / ((1+int_rate) ^ term - 1)
+        calculated_installment = (
+                tf.math.ceil(
+                    100
+                    * (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
+                    / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1+alpha)
+                )
+                / 100
+        )
+        g41 = tf.math.abs(x[:, 3] - calculated_installment)
+
+        # open_acc <= total_acc
+        g42 = alpha + x[:, 10] - x[:, 14]
+        g42 = tf.clip_by_value(g42,0,tf.constant(np.inf))
+
+        # pub_rec_bankruptcies <= pub_rec
+        g43 = tf.clip_by_value(alpha + x[:, 16] - x[:, 11],0,tf.constant(np.inf))
+
+        # term = 36 or term = 60
+        g44 = tf.math.minimum(tf.math.abs(36 - x[:, 1]), tf.math.abs(60 - x[:, 1]))
+
+        # ratio_loan_amnt_annual_inc
+        g45 = tf.math.abs(x[:, 20] - x[:, 0] / x[:, 6])
+
+        # ratio_open_acc_total_acc
+        g46 = tf.math.abs(x[:, 21] - x[:, 10] / x[:, 14])
+
+        # diff_issue_d_earliest_cr_line
+        g47 = tf.math.abs(
+            x[:, 22]
+            - (
+                    self._date_feature_to_month(x[:, 7])
+                    - self._date_feature_to_month(x[:, 9])
+            )
+        )
+
+        # ratio_pub_rec_diff_issue_d_earliest_cr_line
+        g48 = tf.math.abs(x[:, 23] - x[:, 11] / x[:, 22])
+
+        # ratio_pub_rec_bankruptcies_pub_rec
+        g49 = tf.math.abs(x[:, 24] - x[:, 16] / x[:, 22])
+
+        # ratio_pub_rec_bankruptcies_pub_rec
+        # ratio_mask = x[:, 11] == 0
+        # ratio = torch.empty(x.shape[0])
+        # ratio = np.ma.masked_array(ratio, mask=ratio_mask, fill_value=-1).filled()
+        # ratio[~ratio_mask] = x[~ratio_mask, 16] / x[~ratio_mask, 11]
+        # ratio[ratio == np.inf] = -1
+        # ratio[np.isnan(ratio)] = -1
+
+        g410 = tf.math.abs(x[:, 25] - x[:, 16] / (x[:, 11] + tol))
+
+        constraints = tf.stack([g41,g42,g43,g44,g45,g46,g47,g48,g49,g410],1)
+
+        return constraints
+        # print(max_constraints.cpu().detach())
+        #return max_constraints.mean()
+
+    def evaluate(self, x: np.ndarray, use_tensors:bool=False) -> np.ndarray:
+        if use_tensors:
+            return self.evaluate_tf2(x)
+        else:
+            return self.evaluate_numpy(x)
+
+    def evaluate_numpy(self, x: np.ndarray) -> np.ndarray:
         # ----- PARAMETERS
 
         tol = 1e-3
