@@ -1,15 +1,15 @@
-from typing import List, Dict, Union
-from pymoo.model.problem import Problem
-
-import numpy as np
-
-from .feature_encoder import get_encoder_from_constraints
-from .result_process import EfficientResult
 import sys
+from typing import List
+
 import numpy
+import numpy as np
+from pymoo.model.problem import Problem
 from tqdm import tqdm
+
 from .classifier import Classifier
 from .constraints import Constraints
+from .feature_encoder import get_encoder_from_constraints
+from .result_process import EfficientResult
 
 numpy.set_printoptions(threshold=sys.maxsize)
 
@@ -97,13 +97,13 @@ class ObjectiveCalculator:
         return np.array(self.success_rate(x_initial, x_f) > 0)
 
     def success_rate_3d(self, x_initial, x):
-        at_leat_one = np.array(
+        at_least_one = np.array(
             [
                 self.success_rate(x_initial[i], e) > 0
                 for i, e in tqdm(enumerate(x), total=len(x))
             ]
         )
-        return at_leat_one.mean(axis=0)
+        return at_least_one.mean(axis=0)
 
     def success_rate_genetic(self, results: List[EfficientResult]):
 
@@ -126,14 +126,87 @@ class ObjectiveCalculator:
     def get_success(self, x_initial, x_f):
         raise NotImplementedError
 
-    def get_success_full_inputs(
-        self, prefered_metrics="distance", order="asc", max_inputs=-1
+    def _get_one_successful(
+        self,
+        x_initial,
+        x_generated,
+        preferred_metrics="distance",
+        order="asc",
+        max_inputs=-1,
     ):
 
-        at_leat_one = np.array(
-            [
-                self.success_rate(x_initial[i], e) > 0
-                for i, e in tqdm(enumerate(x), total=len(x))
-            ]
+        metrics_to_index = {"misclassification": 1, "distance": 2}
+
+        # Calculate objective and respected values
+        objective_values = self._calculate_objective(x_initial, x_generated)
+        objective_respected = self._objective_respected(objective_values)
+
+        # Sort by the preferred_metrics parameter
+        sorted_index = np.argsort(
+            objective_values[:, metrics_to_index[preferred_metrics]]
         )
-        return at_leat_one.mean(axis=0)
+
+        # Reverse order if parameter set
+        if order == "desc":
+            sorted_index = sorted_index[::-1]
+
+        # Cross the sorting with the successful attacks
+        sorted_index_success = sorted_index[objective_respected[:, -1]]
+
+        # Bound the number of input to return
+        if max_inputs > -1:
+            sorted_index_success = sorted_index_success[:1]
+
+        success_full_attacks = x_generated[sorted_index_success]
+
+        return success_full_attacks
+
+    def get_successful_attacks(
+        self,
+        x_initials,
+        x_generated,
+        preferred_metrics="distance",
+        order="asc",
+        max_inputs=-1,
+    ):
+
+        successful_attacks = []
+
+        for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials)):
+            successful_attacks.append(
+                self._get_one_successful(
+                    x_initial, x_generated[i], preferred_metrics, order, max_inputs
+                )
+            )
+
+        successful_attacks = np.array(successful_attacks)
+
+        return successful_attacks
+
+    def get_successful_attacks_results(
+        self,
+        results: List[EfficientResult],
+        preferred_metrics="distance",
+        order="asc",
+        max_inputs=-1,
+    ):
+
+        initial_states = [result.initial_state for result in results]
+        pops_x = [
+            np.array([ind.X.astype(np.float64) for ind in result.pop])
+            for result in results
+        ]
+        pops_x_f = [
+            self._encoder.genetic_to_ml(pops_x[i], initial_states[i])
+            for i in range(len(results))
+        ]
+
+        successful_attacks = self.get_successful_attacks(
+            initial_states,
+            pops_x_f,
+            preferred_metrics,
+            order,
+            max_inputs,
+        )
+
+        return successful_attacks
