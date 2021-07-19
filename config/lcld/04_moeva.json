@@ -4,9 +4,9 @@
     "model": "./models/lcld/nn.model",
     "features": "./data/lcld/features.csv",
     "constraints": "./data/lcld/constraints.csv",
-    "x_candidates": "./data/lcld/x_attack_candidate.npy",
-    "attack_results": "./out/attacks/lcld/moeva_init/results_rnsga3_energy.npy",
-    "objectives": "./out/attacks/lcld/moeva_init/objectives_0031.csv",
+    "x_candidates": "./data/lcld/x_attack_candidates.npy",
+    "attack_results": "./out/attacks/lcld/moeva/results.npy",
+    "objectives": "./out/attacks/lcld/moeva/objectives_0031.csv",
     "min_max_scaler": "./models/lcld/scaler.joblib",
     "ml_scaler": "./models/lcld/scaler.joblib"
   },
