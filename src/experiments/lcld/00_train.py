@@ -224,7 +224,7 @@ print(candidates_index.sum())
 X_candidate = x_test[candidates_index, :]
 print(X_candidate.shape)
 
-np.save("./data/lcld/x_attack_candidate.npy", X_candidate)
+np.save("./data/lcld/x_attack_candidates.npy", X_candidate)
 
 tf.keras.models.save_model(
     model,
