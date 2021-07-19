@@ -7,6 +7,8 @@ from src.examples.botnet.botnet_constraints import BotnetConstraints
 from src.examples.lcld.lcld_constraints import LcldConstraints
 from src.examples.malware.malware_constraints import MalwareConstraints
 from sklearn.preprocessing import MinMaxScaler
+from comet_ml import Experiment
+
 
 class TF2Classifier(TensorFlowV2Classifier):
     def __init__(
@@ -17,6 +19,7 @@ class TF2Classifier(TensorFlowV2Classifier):
             loss_object: Optional["tf.keras.losses.Loss"] = None,
             constraints:Union[BotnetConstraints, LcldConstraints, MalwareConstraints] = None,
             scaler:MinMaxScaler=None,
+            experiment:Experiment=None,
             train_step: Optional[Callable] = None,
             channels_first: bool = False,
             clip_values: Optional["CLIP_VALUES_TYPE"] = None,
@@ -62,6 +65,7 @@ class TF2Classifier(TensorFlowV2Classifier):
 
         self._constraints = constraints
         self._scaler = scaler
+        self._experiment = experiment
 
     def constraint_loss(self,inputs):
         violations = []
@@ -117,6 +121,13 @@ class TF2Classifier(TensorFlowV2Classifier):
 
                 loss_constraints = self.constraint_loss(x)
                 loss_constraints_reduced = tf.reduce_sum(loss_constraints,1)
+
+                if self._experiment:
+                    self._experiment.log_metric("loss_constraints_max",loss_constraints_reduced.numpy().max())
+                    self._experiment.log_metric("loss_flip_max", loss_class.numpy().max())
+
+                    self._experiment.log_metric("loss_constraints_mean", loss_constraints_reduced.numpy().mean())
+                    self._experiment.log_metric("loss_flip_mean", loss_class.numpy().mean())
 
                 loss = loss_class + loss_constraints_reduced
 

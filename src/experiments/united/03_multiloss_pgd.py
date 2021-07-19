@@ -78,7 +78,8 @@ def run():
         loss_object=tf.keras.losses.binary_crossentropy,
         nb_classes=2,
         constraints = constraints,
-        scaler = scaler
+        scaler = scaler,
+        experiment=experiment
     )
     pgd = PGD(
         kc_classifier,
