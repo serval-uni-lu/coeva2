@@ -155,7 +155,7 @@ class TF2Classifier(TensorFlowV2Classifier):
                     self._experiment.log_metric("loss_flip_mean", loss_class.numpy().mean(), step=iter_i,epoch=batch_id)
 
                     for i in range(loss_constraints.shape[1]):
-                        constraint_loss = loss_constraints[:,0].numpy().mean()
+                        constraint_loss = loss_constraints[:,i].numpy().mean()
                         self._experiment.log_metric("ctr_{}".format(i),constraint_loss, step=iter_i,epoch=batch_id)
 
 
