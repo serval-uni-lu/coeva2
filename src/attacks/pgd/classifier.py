@@ -8,7 +8,7 @@ from src.examples.lcld.lcld_constraints import LcldConstraints
 from src.examples.malware.malware_constraints import MalwareConstraints
 from sklearn.preprocessing import MinMaxScaler
 from comet_ml import Experiment
-
+from art.config import ART_NUMPY_DTYPE
 
 class TF2Classifier(TensorFlowV2Classifier):
     def __init__(
@@ -70,8 +70,12 @@ class TF2Classifier(TensorFlowV2Classifier):
     def constraint_loss(self,inputs):
         violations = []
 
-        scaled_inputs = self._scaler.inverse_transform(inputs).astype('float32')
-        violations = self._constraints.evaluate(scaled_inputs, use_tensors=True)
+        #scaled_inputs = self._scaler.inverse_transform(inputs).astype('float32')
+
+        inputs -= self._scaler.min_
+        inputs /= self._scaler.scale_
+
+        violations = self._constraints.evaluate(inputs, use_tensors=True)
 
         return violations
 
@@ -80,6 +84,9 @@ class TF2Classifier(TensorFlowV2Classifier):
         x: Union[np.ndarray, "tf.Tensor"],
         y: Union[np.ndarray, "tf.Tensor"],
         training_mode: bool = False,
+        targeted:bool=False,
+        batch_id:int=0,
+        iter_i :int = 0,
         **kwargs
     ) -> Union[np.ndarray, "tf.Tensor"]:
         """
@@ -119,17 +126,34 @@ class TF2Classifier(TensorFlowV2Classifier):
                 else:
                     loss_class = self._loss_object(y_input, predictions)
 
-                loss_constraints = self.constraint_loss(x)
-                loss_constraints_reduced = tf.reduce_sum(loss_constraints,1)
+                loss_constraints = self.constraint_loss(x_input)
+                loss_constraints_reduced = -tf.reduce_sum(loss_constraints,1)
+
+                loss_class = loss_class * tf.constant(
+                    1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
+                )
 
                 if self._experiment:
-                    self._experiment.log_metric("loss_constraints_max",loss_constraints_reduced.numpy().max())
-                    self._experiment.log_metric("loss_flip_max", loss_class.numpy().max())
+                    self._experiment.log_metric("loss_constraints_max",loss_constraints_reduced.numpy().max(),
+                                                step=iter_i,epoch=batch_id)
+                    self._experiment.log_metric("loss_flip_max", loss_class.numpy().max(), step=iter_i,epoch=batch_id)
 
-                    self._experiment.log_metric("loss_constraints_mean", loss_constraints_reduced.numpy().mean())
-                    self._experiment.log_metric("loss_flip_mean", loss_class.numpy().mean())
+                    self._experiment.log_metric("loss_constraints_mean", loss_constraints_reduced.numpy().mean(),
+                                                step=iter_i,epoch=batch_id)
+                    self._experiment.log_metric("loss_flip_mean", loss_class.numpy().mean(), step=iter_i,epoch=batch_id)
 
-                loss = loss_class + loss_constraints_reduced
+                    for i in range(loss_constraints.shape[1]):
+                        constraint_loss = loss_constraints[:,0].numpy().mean()
+                        self._experiment.log_metric("ctr_{}".format(i),constraint_loss, step=iter_i,epoch=batch_id)
+
+
+
+                if self._experiment.params.get("constraints_optim")=="constraints+flip":
+                    loss = loss_class + loss_constraints_reduced
+                elif self._experiment.params.get("constraints_optim") == "constraints":
+                        loss = loss_constraints_reduced
+                else:
+                    loss = loss_class
 
             gradients = tape.gradient(loss, x_grad)
 
