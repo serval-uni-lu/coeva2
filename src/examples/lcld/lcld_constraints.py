@@ -36,14 +36,12 @@ class LcldConstraints(Constraints):
 
         # installment = loan_amount * int_rate (1 + int_rate) ^ term / ((1+int_rate) ^ term - 1)
         calculated_installment = (
-                tf.math.ceil(
-                    100
-                    * (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
+                (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
                     / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1+alpha)
-                )
-                / 100
+
         )
-        g41 = tf.math.abs(x[:, 3] - calculated_installment)
+
+        g41 = tf.math.abs(x[:, 3] - calculated_installment)- 0.099999
 
         # open_acc <= total_acc
         g42 = alpha + x[:, 10] - x[:, 14]
@@ -84,7 +82,11 @@ class LcldConstraints(Constraints):
         # ratio[ratio == np.inf] = -1
         # ratio[np.isnan(ratio)] = -1
 
-        g410 = tf.math.abs(x[:, 25] - x[:, 16] / (x[:, 11] + tol))
+        broken = x[:, 16] / x[:, 11]
+        ratio = x[:, 16] / (x[:, 11]+ alpha)
+        #g410 = tf.math.abs(x[:, 25] - x[:, 16] / (x[:, 11] + alpha))
+        clean_ratio = tf.where(tf.math.is_nan(broken), -1 * tf.ones_like(ratio), ratio)
+        g410 = tf.math.abs(x[:, 25] - clean_ratio)
 
         constraints = tf.stack([g41,g42,g43,g44,g45,g46,g47,g48,g49,g410],1)
 
