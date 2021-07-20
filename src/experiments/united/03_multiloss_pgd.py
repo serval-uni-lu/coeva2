@@ -17,26 +17,31 @@ from pathlib import Path
 import joblib
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import backend as K
+import pandas as pd
 
-from art.attacks.evasion import ProjectedGradientDescent as PGD
+from src.attacks.pgd.atk import PGDTF2 as PGD
 from src.attacks.pgd.classifier import TF2Classifier as kc
 
 from src.experiments.united.utils import get_constraints_from_str
 from src.utils import in_out, filter_initial_states
 from src.utils.in_out import load_model
 
+
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 config = in_out.get_parameters()
 
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 
-def run():
-    experiment, params = None, None
+
+def run(params={}):
+    experiment = None
     enable_comet = config.get("comet",True)
     if enable_comet:
-        params = {"approach":"pgd","constraints_optim":True}
+        p = {"approach":"pgd","constraints_optim":"constraints"}
+        params = {**params, **p}
         experiment = init_comet(params)
 
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +92,7 @@ def run():
         eps_step=config["thresholds"]["f2"] / 3,
         norm=config["norm"],
         verbose=True,
+        max_iter=1000,
     )
     X_initial_states = scaler.transform(X_initial_states)
     attacks = pgd.generate(
@@ -102,5 +108,43 @@ def run():
     print("Current Time =", current_time)
 
 
+    if experiment:
+        results = np.load(config["paths"]["attack_results"])
+
+        x_initial = np.load(config["paths"]["x_candidates"])
+        x_initial = filter_initial_states(
+            x_initial, config["initial_state_offset"], config["n_initial_state"]
+        )
+
+        classifier = Classifier(load_model(config["paths"]["model"]))
+        objective_calc = ObjectiveCalculator(
+            classifier,
+            constraints,
+            minimize_class=1,
+            thresholds=config["thresholds"],
+            min_max_scaler=scaler,
+            ml_scaler=scaler,
+        )
+
+        if len(results.shape) == 2:
+            results = results[:, np.newaxis, :]
+
+        success_rates = objective_calc.success_rate_3d(x_initial, results)
+
+        columns = ["o{}".format(i + 1) for i in range(success_rates.shape[0])]
+        success_rate_df = pd.DataFrame(
+            success_rates.reshape([1, -1]),
+            columns=columns,
+        )
+        success_rate_df.to_csv(config["paths"]["objectives"], index=False)
+        print(success_rate_df)
+
+        for c, v in zip(success_rate_df.columns, success_rate_df.values[0]):
+            experiment.log_metric(c, v)
+
+
 if __name__ == "__main__":
-    run()
+
+    for ctr in range(10):
+        print("ctr",ctr)
+        run({"ctr_id":ctr})
