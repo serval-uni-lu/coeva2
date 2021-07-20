@@ -66,6 +66,7 @@ class TF2Classifier(TensorFlowV2Classifier):
         self._constraints = constraints
         self._scaler = scaler
         self._experiment = experiment
+        self._randomindex = np.random.randint(constraints.get_nb_constraints())
 
     def constraint_loss(self,inputs):
         violations = []
@@ -127,7 +128,18 @@ class TF2Classifier(TensorFlowV2Classifier):
                     loss_class = self._loss_object(y_input, predictions)
 
                 loss_constraints = self.constraint_loss(x_input)
-                loss_constraints_reduced = -tf.reduce_sum(loss_constraints,1)
+
+                loss_evaluation = self._experiment.params.get("constraints_optim")
+                if "alt_constraints" in loss_evaluation:
+                    nb_constraints = loss_constraints.shape[1]
+                    loss_constraints_reduced = loss_constraints[:,iter_i%nb_constraints]
+
+                elif "single_constraints" in loss_evaluation:
+                    ctr_id = self._experiment.params.get("ctr_id")
+                    loss_constraints_reduced = loss_constraints[:,ctr_id]
+
+                else:
+                    loss_constraints_reduced = -tf.reduce_sum(loss_constraints,1)
 
                 loss_class = loss_class * tf.constant(
                     1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
@@ -148,9 +160,9 @@ class TF2Classifier(TensorFlowV2Classifier):
 
 
 
-                if self._experiment.params.get("constraints_optim")=="constraints+flip":
+                if "constraints+flip" in loss_evaluation:
                     loss = loss_class + loss_constraints_reduced
-                elif self._experiment.params.get("constraints_optim") == "constraints":
+                elif "constraints" in loss_evaluation:
                         loss = loss_constraints_reduced
                 else:
                     loss = loss_class

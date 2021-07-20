@@ -2,6 +2,10 @@ from art.attacks.evasion import ProjectedGradientDescentTensorFlowV2
 from typing import Optional, Union, TYPE_CHECKING
 import numpy as np
 
+
+import logging
+logger = logging.getLogger(__name__)
+
 class PGDTF2(ProjectedGradientDescentTensorFlowV2):
 
     def __init__(
