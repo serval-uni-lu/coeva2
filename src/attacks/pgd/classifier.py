@@ -20,6 +20,8 @@ class TF2Classifier(TensorFlowV2Classifier):
             constraints:Union[BotnetConstraints, LcldConstraints, MalwareConstraints] = None,
             scaler:MinMaxScaler=None,
             experiment:Experiment=None,
+            experiment_batch_skip:int=8,
+            parameters:dict=None,
             train_step: Optional[Callable] = None,
             channels_first: bool = False,
             clip_values: Optional["CLIP_VALUES_TYPE"] = None,
@@ -65,16 +67,28 @@ class TF2Classifier(TensorFlowV2Classifier):
 
         self._constraints = constraints
         self._scaler = scaler
+        self._parameters = parameters
         self._experiment = experiment
         self._randomindex = np.random.randint(constraints.get_nb_constraints())
+        self._experiment_batch_skip = experiment_batch_skip
 
+    def unscale_features(self, inputs):
+        inputs -= self._scaler.min_
+        inputs /= self._scaler.scale_
+
+        return inputs
+
+    def scale_features(self, inputs):
+        inputs *= self._scaler.scale_
+        inputs += self._scaler.min_
+
+        return inputs
     def constraint_loss(self,inputs):
         violations = []
 
         #scaled_inputs = self._scaler.inverse_transform(inputs).astype('float32')
 
-        inputs -= self._scaler.min_
-        inputs /= self._scaler.scale_
+        inputs = self.unscale_features(inputs)
 
         violations = self._constraints.evaluate(inputs, use_tensors=True)
 
@@ -133,23 +147,21 @@ class TF2Classifier(TensorFlowV2Classifier):
 
                 loss_constraints = self.constraint_loss(x_input)
 
-                loss_evaluation = self._experiment.params.get("constraints_optim")
+                loss_evaluation = self._parameters.get("constraints_optim")
                 if "alt_constraints" in loss_evaluation:
                     nb_constraints = loss_constraints.shape[1]
                     loss_constraints_reduced = loss_constraints[:,iter_i%nb_constraints]
 
                 elif "single_constraints" in loss_evaluation:
-                    ctr_id = self._experiment.params.get("ctr_id")
+                    ctr_id = self._parameters.get("ctr_id")
                     loss_constraints_reduced = loss_constraints[:,ctr_id]
 
                 else:
-                    loss_constraints_reduced = -tf.reduce_sum(loss_constraints,1)
+                    loss_constraints_reduced = tf.reduce_sum(loss_constraints,1)
 
-                loss_class = loss_class * tf.constant(
-                    1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
-                )
 
-                if self._experiment:
+
+                if self._experiment and batch_id%self._experiment_batch_skip==0:
                     self._experiment.log_metric("loss_constraints_max",loss_constraints_reduced.numpy().max(),
                                                 step=iter_i,epoch=batch_id)
                     self._experiment.log_metric("loss_flip_max", loss_class.numpy().max(), step=iter_i,epoch=batch_id)
@@ -162,8 +174,21 @@ class TF2Classifier(TensorFlowV2Classifier):
                         constraint_loss = loss_constraints[:,i].numpy().mean()
                         self._experiment.log_metric("ctr_{}".format(i),constraint_loss, step=iter_i,epoch=batch_id)
 
+                loss_class = loss_class * tf.constant(
+                    1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
+                )
+                # we want to minimize the loss not increased it
+                loss_constraints_reduced = loss_constraints_reduced * tf.constant(
+                    -1, dtype=ART_NUMPY_DTYPE
+                )
 
-                if "constraints+flip+alternate" in loss_evaluation:
+                if "constraints+flip+constraints" in loss_evaluation:
+                    total_iterations = self._parameters.get("nb_iter",100)
+                    if iter_i<total_iterations/2:
+                        loss = loss_class
+                    else:
+                        loss = loss_constraints_reduced
+                elif "constraints+flip+alternate" in loss_evaluation:
                     loss = loss_class if iter_i%2 else loss_constraints_reduced
                 elif "constraints+flip" in loss_evaluation:
                     loss = wc * loss_class + loss_constraints_reduced
@@ -184,6 +209,13 @@ class TF2Classifier(TensorFlowV2Classifier):
         if not self.all_framework_preprocessing:
             gradients = self._apply_preprocessing_gradient(x, gradients)
 
+        if self._experiment and batch_id % self._experiment_batch_skip == 0:
+            self._experiment.log_metric("grad_max", gradients.numpy().max(),
+                                        step=iter_i, epoch=batch_id)
+            self._experiment.log_metric("grad_mean", gradients.numpy().mean(),
+                                        step=iter_i, epoch=batch_id)
+            self._experiment.log_metric("grad_min", gradients.numpy().min(),
+                                        step=iter_i, epoch=batch_id)
         return gradients
 
 
