@@ -159,8 +159,9 @@ class TF2Classifier(TensorFlowV2Classifier):
                         self._experiment.log_metric("ctr_{}".format(i),constraint_loss, step=iter_i,epoch=batch_id)
 
 
-
-                if "constraints+flip" in loss_evaluation:
+                if "constraints+flip+alternate" in loss_evaluation:
+                    loss = loss_class if iter_i%2 else loss_constraints_reduced
+                elif "constraints+flip" in loss_evaluation:
                     loss = loss_class + loss_constraints_reduced
                 elif "constraints" in loss_evaluation:
                         loss = loss_constraints_reduced
