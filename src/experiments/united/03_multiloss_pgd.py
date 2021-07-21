@@ -18,6 +18,7 @@ import joblib
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+import time
 
 from src.attacks.pgd.atk import PGDTF2 as PGD
 from src.attacks.pgd.classifier import TF2Classifier as kc
@@ -40,8 +41,8 @@ def run(params={}):
     experiment = None
     enable_comet = config.get("comet",True)
     if enable_comet:
-        p = {"approach":"pgd","constraints_optim":"constraints"}
-        params = {**params, **p}
+        p = {"approach":"pgd","nb_iter":1000 }
+        params = {**p, **config , **params}
         experiment = init_comet(params)
 
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
@@ -53,18 +54,20 @@ def run(params={}):
         config["paths"]["constraints"],
     )
 
-    X_initial_states = np.load(config["paths"]["x_candidates"])
-    X_initial_states = filter_initial_states(
-        X_initial_states, config["initial_state_offset"], config["n_initial_state"]
+    x_initial = np.load(config["paths"]["x_candidates"])
+
+    x_initial = filter_initial_states(
+        x_initial, config["initial_state_offset"], params["n_initial_state"]
     )
-    initial_shape = X_initial_states.shape[1:]
+
+    initial_shape = x_initial.shape[1:]
 
     model_base = load_model(config["paths"]["model"])
     scaler = joblib.load(config["paths"]["ml_scaler"])
 
     # ----- Check constraints
 
-    constraints.check_constraints_error(X_initial_states)
+    constraints.check_constraints_error(x_initial)
 
     # ----- Copy the initial states n_repetition times
     # X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
@@ -84,17 +87,19 @@ def run(params={}):
         nb_classes=2,
         constraints = constraints,
         scaler = scaler,
-        experiment=experiment
+        experiment=experiment,
+        parameters = params
     )
     pgd = PGD(
         kc_classifier,
         eps=config["thresholds"]["f2"]-0.000001,
-        eps_step=config["thresholds"]["f2"] / 3,
-        norm=config["norm"],
+        eps_step=config["thresholds"]["f2"] / 300,
+        norm=params.get("norm"),
         verbose=True,
-        max_iter=1000,
+        max_iter=params.get("nb_iter"),
+        num_random_init=params.get("nb_random",0)
     )
-    X_initial_states = scaler.transform(X_initial_states)
+    X_initial_states = scaler.transform(x_initial)
     attacks = pgd.generate(
         x=X_initial_states,
         mask=constraints.get_mutable_mask(),
@@ -102,6 +107,7 @@ def run(params={}):
 
     attacks = scaler.inverse_transform(attacks)
     np.save(config["paths"]["attack_results"], attacks)
+    experiment.log_asset(config["paths"]["attack_results"])
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -111,12 +117,7 @@ def run(params={}):
     if experiment:
         results = np.load(config["paths"]["attack_results"])
 
-        x_initial = np.load(config["paths"]["x_candidates"])
-        x_initial = filter_initial_states(
-            x_initial, config["initial_state_offset"], config["n_initial_state"]
-        )
-
-        classifier = Classifier(load_model(config["paths"]["model"]))
+        classifier = Classifier(model_base)
         objective_calc = ObjectiveCalculator(
             classifier,
             constraints,
@@ -144,7 +145,14 @@ def run(params={}):
 
 
 if __name__ == "__main__":
+    run({"constraints_optim":"constraints+flip", "nb_iter":1000, "nb_random":1, "n_initial_state":100})
 
-    for ctr in range(10):
-        print("ctr",ctr)
-        run({"ctr_id":ctr})
+    #To allow the metrics to be uploaded
+    time.sleep(30)
+    exit()
+    strategies= ["single_constraints+flip","constraints+flip","single_constraints"]
+    for str in strategies:
+        nb_ctr = 10 if "single" in str else 1
+        for ctr in range(nb_ctr):
+            print("ctr",ctr)
+            run({"ctr_id":ctr,"constraints_optim":str, "nb_iter":100})
