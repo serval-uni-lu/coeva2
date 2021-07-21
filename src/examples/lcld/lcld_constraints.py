@@ -35,13 +35,39 @@ class LcldConstraints(Constraints):
         alpha = 1e-5
 
         # installment = loan_amount * int_rate (1 + int_rate) ^ term / ((1+int_rate) ^ term - 1)
+        x0 = x[:, 0]
+        x1 = x[:, 1]
+        x2 = x[:, 2] / 1200
+        x3  = x[:, 3]
+
         calculated_installment = (
                 (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
-                    / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1+alpha)
+                / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1 + alpha)
 
         )
 
-        g41 = tf.math.abs(x[:, 3] - calculated_installment)- 0.099999
+        g41 = tf.math.abs(x[:, 3] - calculated_installment) - 0.099999
+
+
+        calculated_installment_36 = (
+                (x0 * x2 * (1 + x2) ** 36)
+                    / ((1 + x2) ** 36 - 1)
+
+        )
+
+        calculated_installment_60 = (
+                (x0 * x2 * (1 + x2) ** 60)
+                / ((1 + x2) ** 36 - 1)
+
+        )
+
+        term_constraint = tf.minimum(tf.math.abs(x3-36)/36,tf.math.abs(x3-60)/60)
+
+
+        g41_36 = tf.math.abs(x3 - calculated_installment_36)
+        g41_60 = tf.math.abs(x3 - calculated_installment_60)
+
+        g41_ = tf.minimum(g41_36*tf.math.abs(x3-36)/36,g41_60*tf.math.abs(x3-60)/60)# - 0.099999
 
         # open_acc <= total_acc
         g42 = alpha + x[:, 10] - x[:, 14]
@@ -90,6 +116,7 @@ class LcldConstraints(Constraints):
 
         constraints = tf.stack([g41,g42,g43,g44,g45,g46,g47,g48,g49,g410],1)
 
+        constraints = tf.clip_by_value(constraints - tol, 0, tf.constant(np.inf))
         return constraints
         # print(max_constraints.cpu().detach())
         #return max_constraints.mean()
