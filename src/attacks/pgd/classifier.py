@@ -88,6 +88,7 @@ class TF2Classifier(TensorFlowV2Classifier):
         targeted:bool=False,
         batch_id:int=0,
         iter_i :int = 0,
+        wc:int=0.1,
         **kwargs
     ) -> Union[np.ndarray, "tf.Tensor"]:
         """
@@ -95,6 +96,9 @@ class TF2Classifier(TensorFlowV2Classifier):
 
         :param x: Sample input with shape as expected by the model.
         :param y: Correct labels, one-vs-rest encoding.
+        :param batch_id: Identifier of the current batch.
+        :param iter_i: Identifier of the current multistep attack iteration.
+        :param wc: weight of the flip loss.
         :param training_mode: `True` for model set to training mode and `'False` for model set to evaluation mode.
         :return: Array of gradients of the same shape as `x`.
         """
@@ -162,7 +166,7 @@ class TF2Classifier(TensorFlowV2Classifier):
                 if "constraints+flip+alternate" in loss_evaluation:
                     loss = loss_class if iter_i%2 else loss_constraints_reduced
                 elif "constraints+flip" in loss_evaluation:
-                    loss = loss_class + loss_constraints_reduced
+                    loss = wc * loss_class + loss_constraints_reduced
                 elif "constraints" in loss_evaluation:
                         loss = loss_constraints_reduced
                 else:
