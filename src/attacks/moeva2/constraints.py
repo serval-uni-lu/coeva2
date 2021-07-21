@@ -1,8 +1,8 @@
 import abc
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
-
+import tensorflow as tf
 
 class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -59,6 +59,10 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def fix_features_types(self, x) -> Union[np.ndarray, tf.Tensor]:
         raise NotImplementedError
 
     @abc.abstractmethod
