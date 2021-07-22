@@ -27,6 +27,8 @@ from .default_problem import DefaultProblem
 from .feature_encoder import get_encoder_from_constraints
 from .sampling import MixedSamplingLp, InitialStateSampling
 from .result_process import HistoryResult, EfficientResult
+from .softmax_crossover import SoftmaxPointCrossover
+from .softmax_mutation import SoftmaxPolynomialMutation
 from ...utils.in_out import load_model
 
 
@@ -83,8 +85,10 @@ class Moeva2:
         sampling = InitialStateSampling(type_mask=type_mask)
 
         # Default parameters for crossover (prob=0.9, eta=30)
+        modify_mask = type_mask.copy()
+        modify_mask[-256:] = ["softmax"] * 256
         crossover = MixedVariableCrossover(
-            type_mask,
+            modify_mask,
             {
                 "real": get_crossover(
                     "real_two_point",
@@ -92,15 +96,17 @@ class Moeva2:
                 "int": get_crossover(
                     "int_two_point",
                 ),
+                "softmax": SoftmaxPointCrossover(n_points=2)
             },
         )
 
         # Default parameters for mutation (eta=20)
         mutation = MixedVariableMutation(
-            type_mask,
+            modify_mask,
             {
                 "real": get_mutation("real_pm", eta=20),
                 "int": get_mutation("int_pm", eta=20),
+                "softmax": SoftmaxPolynomialMutation(eta=20)
             },
         )
 
