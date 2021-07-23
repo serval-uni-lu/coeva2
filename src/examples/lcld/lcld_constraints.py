@@ -28,6 +28,9 @@ class LcldConstraints(Constraints):
     def _date_feature_to_month(feature):
         return np.floor(feature / 100) * 12 + (feature % 100)
 
+    @staticmethod
+    def _date_feature_to_month_tf(feature):
+        return tf.math.floor(feature / 100) * 12 + tf.math.floormod(feature,100)
 
     def fix_features_types(self, x):
 
@@ -101,8 +104,8 @@ class LcldConstraints(Constraints):
         g47 = tf.math.abs(
             x[:, 22]
             - (
-                    self._date_feature_to_month(x[:, 7])
-                    - self._date_feature_to_month(x[:, 9])
+                    self._date_feature_to_month_tf(x[:, 7])
+                    - self._date_feature_to_month_tf(x[:, 9])
             )
         )
 

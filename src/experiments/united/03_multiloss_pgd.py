@@ -145,12 +145,14 @@ def run(params={}):
 
 
 if __name__ == "__main__":
-    run({"constraints_optim":"constraints+flip", "nb_iter":1000, "nb_random":1, "n_initial_state":100})
+    run({"constraints_optim":"constraints+flip+alternate", "nb_iter":1000, "nb_random":1,
+         "n_initial_state":100, "alternate_frequency":5})
 
     #To allow the metrics to be uploaded
     time.sleep(30)
     exit()
-    strategies= ["single_constraints+flip","constraints+flip","single_constraints"]
+    strategies= ["single_constraints+flip","constraints+flip","single_constraints", "constraints+flip+alternate",
+                 "constraints+flip+constraints"]
     for str in strategies:
         nb_ctr = 10 if "single" in str else 1
         for ctr in range(nb_ctr):
