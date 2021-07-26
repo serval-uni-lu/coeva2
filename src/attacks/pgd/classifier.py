@@ -189,7 +189,8 @@ class TF2Classifier(TensorFlowV2Classifier):
                     else:
                         loss = loss_constraints_reduced
                 elif "constraints+flip+alternate" in loss_evaluation:
-                    loss = loss_class if iter_i%2 else loss_constraints_reduced
+                    alternate_frequency = self._parameters.get("alternate_frequency", 5)
+                    loss = loss_class if (iter_i//alternate_frequency)%2 else loss_constraints_reduced
                 elif "constraints+flip" in loss_evaluation:
                     loss = wc * loss_class + loss_constraints_reduced
                 elif "constraints" in loss_evaluation:
