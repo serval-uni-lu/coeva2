@@ -102,7 +102,7 @@ class TF2Classifier(TensorFlowV2Classifier):
         targeted:bool=False,
         batch_id:int=0,
         iter_i :int = 0,
-        wc:int=0.1,
+        wc:float=0.1,
         **kwargs
     ) -> Union[np.ndarray, "tf.Tensor"]:
         """

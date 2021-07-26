@@ -155,4 +155,6 @@ if __name__ == "__main__":
         nb_ctr = 10 if "single" in str else 1
         for ctr in range(nb_ctr):
             print("ctr",ctr)
+            # constraints_optim: how to optimise constraints:
+            #
             run({"ctr_id":ctr,"constraints_optim":str, "nb_iter":100})
