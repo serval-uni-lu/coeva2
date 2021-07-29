@@ -5,6 +5,7 @@ from sklearn.preprocessing import MinMaxScaler
 from src.attacks.moeva2.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
+import tensorflow as tf
 import logging
 
 
@@ -27,23 +28,61 @@ class LcldConstraints(Constraints):
     def _date_feature_to_month(feature):
         return np.floor(feature / 100) * 12 + (feature % 100)
 
+    @staticmethod
+    def _date_feature_to_month_tf(feature):
+        return tf.math.floor(feature / 100) * 12 + tf.math.floormod(feature,100)
+
+    def fix_features_types(self, x):
+
+        #
+        new_tensor_v = tf.Variable(x)
+
+        #enforcing 2 possibles values
+        x1 = tf.where(x[:, 1]<(60+36)/2, 36 * tf.ones_like(x[:, 1]), 60)
+        new_tensor_v = new_tensor_v[:, 1].assign(x1)
+
+        x0 = x[:, 0]
+        x2 = x[:, 2] / 1200
+
+        #enforcing the power formula
+        x3 = (
+                x0 * x2 * tf.math.pow(1 + x2, x1)
+                / (tf.math.pow(1 + x2, x1) - 1)
+        )
+        new_tensor_v = new_tensor_v[:, 3].assign(x3)
+
+        return tf.convert_to_tensor(new_tensor_v)
+
     def evaluate_tf2(self, x):
         # ----- PARAMETERS
 
-        import tensorflow as tf
+
         tol = 1e-3
         alpha = 1e-5
 
         # installment = loan_amount * int_rate (1 + int_rate) ^ term / ((1+int_rate) ^ term - 1)
+        x0 = x[:, 0]
+        x1 = x[:, 1]
+        x2 = x[:, 2] / 1200
+        x3  = x[:, 3]
+
         calculated_installment = (
-                tf.math.ceil(
-                    100
-                    * (x[:, 0] * (x[:, 2] / 1200) * (1 + x[:, 2] / 1200) ** x[:, 1])
-                    / ((1 + x[:, 2] / 1200) ** x[:, 1] - 1+alpha)
-                )
-                / 100
+            x0 * x2 * tf.math.pow(1 + x2,x1)
+                / (tf.math.pow(1 + x2, x1) - 1 )
         )
-        g41 = tf.math.abs(x[:, 3] - calculated_installment)
+
+        calculated_installment_36 = (
+                x0 * x2 * tf.math.pow(1 + x2, 36)
+                / (tf.math.pow(1 + x2, 36) - 1)
+        )
+
+        calculated_installment_60 = (
+                x0 * x2 * tf.math.pow(1 + x2, 60)
+                / (tf.math.pow(1 + x2, 60) - 1)
+        )
+
+        g41 = tf.minimum(tf.math.abs(x3 - calculated_installment_36),tf.math.abs(x3 - calculated_installment_60)) - 0.099999
+        g41_ = tf.math.abs(x3 - calculated_installment) - 0.099999
 
         # open_acc <= total_acc
         g42 = alpha + x[:, 10] - x[:, 14]
@@ -65,8 +104,8 @@ class LcldConstraints(Constraints):
         g47 = tf.math.abs(
             x[:, 22]
             - (
-                    self._date_feature_to_month(x[:, 7])
-                    - self._date_feature_to_month(x[:, 9])
+                    self._date_feature_to_month_tf(x[:, 7])
+                    - self._date_feature_to_month_tf(x[:, 9])
             )
         )
 
@@ -84,11 +123,18 @@ class LcldConstraints(Constraints):
         # ratio[ratio == np.inf] = -1
         # ratio[np.isnan(ratio)] = -1
 
-        g410 = tf.math.abs(x[:, 25] - x[:, 16] / (x[:, 11] + tol))
+        broken = x[:, 16] / x[:, 11]
+        ratio = x[:, 16] / (x[:, 11]+ alpha)
+        #g410 = tf.math.abs(x[:, 25] - x[:, 16] / (x[:, 11] + alpha))
+        clean_ratio = tf.where(tf.math.is_nan(broken), -1 * tf.ones_like(ratio), ratio)
+        g410 = tf.math.abs(x[:, 25] - clean_ratio)
 
         constraints = tf.stack([g41,g42,g43,g44,g45,g46,g47,g48,g49,g410],1)
 
+        constraints = tf.clip_by_value(constraints - tol, 0, tf.constant(np.inf))
+
         return constraints
+        return tf.nn.softmax(constraints)*tf.reduce_max(constraints)
         # print(max_constraints.cpu().detach())
         #return max_constraints.mean()
 
