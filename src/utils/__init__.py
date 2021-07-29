@@ -1,3 +1,6 @@
+from functools import wraps
+from time import time
+
 import numpy as np
 from sklearn.metrics import matthews_corrcoef
 
@@ -48,3 +51,15 @@ def find_best_threshold(y_test, y_proba, metric=matthews_corrcoef, step=0.01):
     best_metric = metric_values[best_i]
 
     return best_t, best_metric
+
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time()
+        result = f(*args, **kw)
+        te = time()
+        print(f"func:{f.__name__!r} args:[{args!r}, {kw!r}] took: {te - ts:2.4f} sec")
+        return result
+
+    return wrap
