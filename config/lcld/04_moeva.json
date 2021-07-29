@@ -7,6 +7,8 @@
     "x_candidates": "./data/lcld/x_attack_candidates.npy",
     "attack_results": "./out/attacks/lcld/moeva/results.npy",
     "objectives": "./out/attacks/lcld/moeva/objectives_0031.csv",
+    "x_retrain": "./data/lcld/x_retrain_moeva.npy",
+    "y_retrain": "./data/lcld/y_retrain_moeva.npy",
     "min_max_scaler": "./models/lcld/scaler.joblib",
     "ml_scaler": "./models/lcld/scaler.joblib"
   },
