@@ -98,6 +98,7 @@ def run(params={}):
         verbose=True,
         max_iter=params.get("nb_iter"),
         num_random_init=params.get("nb_random", 0),
+        batch_size=x_initial.shape[0],
     )
     X_initial_states = scaler.transform(x_initial)
     attacks = pgd.generate(
