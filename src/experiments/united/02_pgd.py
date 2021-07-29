@@ -6,7 +6,7 @@ import joblib
 import numpy as np
 import tensorflow as tf
 from art.attacks.evasion import ProjectedGradientDescent as PGD
-from art.classifiers import KerasClassifier as kc
+from art.classifiers import TensorFlowV2Classifier as kc
 
 from src.experiments.united.utils import get_constraints_from_str
 from src.utils import in_out, filter_initial_states
@@ -20,7 +20,7 @@ config = in_out.get_parameters()
 
 def run():
 
-    tf.compat.v1.disable_eager_execution()
+    # tf.compat.v1.disable_eager_execution()
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
 
     # ----- Load and create necessary objects
@@ -49,14 +49,20 @@ def run():
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
 
+    new_input = tf.keras.layers.Input(shape=X_initial_states.shape[1:])
+    model = tf.keras.models.Model(inputs=[new_input], outputs=[model(new_input)])
+
     kc_classifier = kc(
         model,
         clip_values=(0.0, 1.0),
+        nb_classes=2,
+        input_shape=X_initial_states.shape[1:],
+        loss_object=tf.keras.losses.binary_crossentropy,
     )
     pgd = PGD(
         kc_classifier,
         eps=config["thresholds"]["f2"] - 0.000001,
-        eps_step=config["thresholds"]["f2"] / 3,
+        eps_step=config["thresholds"]["f2"] / 50,
         norm=config["norm"],
         verbose=True,
         max_iter=config["n_repetition"],
