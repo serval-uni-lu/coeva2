@@ -1,0 +1,5 @@
+outs:
+- md5: 50001016fa55311db7249e73c10947c6.dir
+  size: 7442283408
+  nfiles: 22
+  path: lcld
