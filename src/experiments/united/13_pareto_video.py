@@ -15,7 +15,7 @@ from src.utils import Pickler, in_out
 from pyrecorder.recorders.file import File
 from pyrecorder.video import Video
 
-fname = "video_new-1.mp4"
+fname = "video_malware.mp4"
 vid = Video(File(fname))
 
 
@@ -52,7 +52,7 @@ def run():
 
 
 
-    for i, generation in tqdm(enumerate(histories[0][:50])):
+    for i, generation in tqdm(enumerate(histories[0])):
 
         fig, ax = plt.subplots(figsize=(12, 12))
         plt.xlim([0, 1])

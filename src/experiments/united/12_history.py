@@ -42,16 +42,16 @@ def run():
     )
 
     shape = histories[..., 0].shape
-    print(histories[0][0][0][0])
     histories[..., 1] = f2_scaler.inverse_transform(histories[..., 1].reshape(-1, 1)).reshape(shape)
-    print(histories[0][0][0][0])
+    # histories[...,2] = histories[...,2] * 255
 
-    working = np.mean(histories, axis=2)
+    working = np.min(histories, axis=2)
     working = np.min(working, axis=0)
     print(working.shape)
-    for i in range(working.shape[1]):
+    for i in range(working.shape[1])[:1]:
         plt.plot(working[:, i], label=f"{i}")
 
+    # plt.ylim(bottom=-1.0)
     # plt.plot(working[:, 0], label=f"{0}")
 
     # plot thresholds
@@ -63,7 +63,7 @@ def run():
 
     plt.yscale("linear")
     plt.legend()
-    plt.savefig("last_plot.pdf")
+    plt.savefig("plot_malware_softmax.pdf")
     # constraints = LcldConstraints(
     #     config["paths"]["features"],
     #     config["paths"]["constraints"],
