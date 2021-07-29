@@ -7,7 +7,7 @@ import numpy as np
 
 from src.attacks.moeva2.moeva2 import Moeva2
 from src.experiments.united.utils import get_constraints_from_str
-from src.utils import Pickler, in_out, filter_initial_states
+from src.utils import Pickler, in_out, filter_initial_states, timing
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
@@ -15,6 +15,7 @@ warnings.simplefilter(action="ignore", category=RuntimeWarning)
 config = in_out.get_parameters()
 
 
+@timing
 def run():
 
     Path(config["paths"]["attack_results"]).parent.mkdir(parents=True, exist_ok=True)
