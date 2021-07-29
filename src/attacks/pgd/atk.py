@@ -6,23 +6,24 @@ from art.config import ART_NUMPY_DTYPE
 
 
 import logging
+
 logger = logging.getLogger(__name__)
 
-class PGDTF2(ProjectedGradientDescentTensorFlowV2):
 
+class PGDTF2(ProjectedGradientDescentTensorFlowV2):
     def __init__(
-            self,
-            estimator: "TensorFlowV2Classifier",
-            norm: Union[int, float, str] = np.inf,
-            eps: Union[int, float, np.ndarray] = 0.3,
-            eps_step: Union[int, float, np.ndarray] = 0.1,
-            max_iter: int = 100,
-            targeted: bool = False,
-            num_random_init: int = 0,
-            batch_size: int = 32,
-            random_eps: bool = False,
-            tensor_board: Union[str, bool] = False,
-            verbose: bool = True,
+        self,
+        estimator: "TensorFlowV2Classifier",
+        norm: Union[int, float, str] = np.inf,
+        eps: Union[int, float, np.ndarray] = 0.3,
+        eps_step: Union[int, float, np.ndarray] = 0.1,
+        max_iter: int = 100,
+        targeted: bool = False,
+        num_random_init: int = 0,
+        batch_size: int = 32,
+        random_eps: bool = False,
+        tensor_board: Union[str, bool] = False,
+        verbose: bool = True,
     ):
         super().__init__(
             estimator=estimator,
@@ -38,14 +39,15 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
             verbose=verbose,
         )
 
-
-    def _compute_multi_objectives(self,x: "tf.Tensor",x_init: "tf.Tensor" ):
+    def _compute_multi_objectives(self, x: "tf.Tensor", x_init: "tf.Tensor"):
 
         from src.utils.in_out import load_model
         from src.attacks.moeva2.classifier import Classifier
         from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 
-        classifier = Classifier(load_model(self.estimator._parameters["paths"]["model"]))
+        classifier = Classifier(
+            load_model(self.estimator._parameters["paths"]["model"])
+        )
         scaler = self.estimator._scaler
         objective_calc = ObjectiveCalculator(
             classifier,
@@ -65,7 +67,6 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         success_rates = objective_calc.success_rate_3d(x_init_np, x_np)
 
         print(success_rates)
-
 
     def _compute_tf(
         self,
@@ -101,7 +102,11 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
             n = x.shape[0]
             m = np.prod(x.shape[1:]).item()
 
-            random_perturbation = random_sphere(n, m, eps, self.norm).reshape(x.shape).astype(ART_NUMPY_DTYPE)
+            random_perturbation = (
+                random_sphere(n, m, eps, self.norm)
+                .reshape(x.shape)
+                .astype(ART_NUMPY_DTYPE)
+            )
             random_perturbation = tf.convert_to_tensor(random_perturbation)
             if mask is not None:
                 random_perturbation = random_perturbation * mask
@@ -127,14 +132,12 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         # Recompute x_adv
         x_adv = tf.add(perturbation, x_init)
 
-
         # Update the features of x according to the constraints
         x_adv = self.fix_features_type(x_adv)
 
-        #evaluate success rate with constraints
+        # evaluate success rate with constraints
 
-
-        #if self._i_max_iter%10==0 and self._batch_id==0:
+        # if self._i_max_iter%10==0 and self._batch_id==0:
         #    self._compute_multi_objectives(x_adv, x_init)
 
         return x_adv
@@ -169,11 +172,10 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         # Pick a small scalar to avoid division by 0
         tol = 10e-8
 
-
         # Get gradient wrt loss; invert it if attack is targeted
-        grad: tf.Tensor = self.estimator.loss_gradient(x, y, iter_i=self._i_max_iter, batch_id=self._batch_id)
-
-
+        grad: tf.Tensor = self.estimator.loss_gradient(
+            x, y, iter_i=self._i_max_iter, batch_id=self._batch_id
+        )
 
         # Write summary
         if self.summary_writer is not None:
@@ -205,7 +207,9 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
 
         # Check for NaN before normalisation an replace with 0
         if tf.reduce_any(tf.math.is_nan(grad)):
-            logger.warning("Elements of the loss gradient are NaN and have been replaced with 0.0.")
+            logger.warning(
+                "Elements of the loss gradient are NaN and have been replaced with 0.0."
+            )
             grad = tf.where(tf.math.is_nan(grad), tf.zeros_like(grad), grad)
 
         # Apply mask
@@ -218,12 +222,22 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
 
         elif self.norm == 1:
             ind = tuple(range(1, len(x.shape)))
-            grad = tf.divide(grad, (tf.math.reduce_sum(tf.abs(grad), axis=ind, keepdims=True) + tol))
+            grad = tf.divide(
+                grad, (tf.math.reduce_sum(tf.abs(grad), axis=ind, keepdims=True) + tol)
+            )
 
         elif self.norm == 2:
             ind = tuple(range(1, len(x.shape)))
             grad = tf.divide(
-                grad, (tf.math.sqrt(tf.math.reduce_sum(tf.math.square(grad), axis=ind, keepdims=True)) + tol)
+                grad,
+                (
+                    tf.math.sqrt(
+                        tf.math.reduce_sum(
+                            tf.math.square(grad), axis=ind, keepdims=True
+                        )
+                    )
+                    + tol
+                ),
             )
 
         assert x.shape == grad.shape

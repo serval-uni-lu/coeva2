@@ -10,24 +10,31 @@ from sklearn.preprocessing import MinMaxScaler
 from comet_ml import Experiment
 from art.config import ART_NUMPY_DTYPE
 
+
 class TF2Classifier(TensorFlowV2Classifier):
     def __init__(
-            self,
-            model: Callable,
-            nb_classes: int,
-            input_shape: Tuple[int, ...],
-            loss_object: Optional["tf.keras.losses.Loss"] = None,
-            constraints:Union[BotnetConstraints, LcldConstraints, MalwareConstraints] = None,
-            scaler:MinMaxScaler=None,
-            experiment:Experiment=None,
-            experiment_batch_skip:int=8,
-            parameters:dict=None,
-            train_step: Optional[Callable] = None,
-            channels_first: bool = False,
-            clip_values: Optional["CLIP_VALUES_TYPE"] = None,
-            preprocessing_defences: Union["Preprocessor", List["Preprocessor"], None] = None,
-            postprocessing_defences: Union["Postprocessor", List["Postprocessor"], None] = None,
-            preprocessing: "PREPROCESSING_TYPE" = (0.0, 1.0),
+        self,
+        model: Callable,
+        nb_classes: int,
+        input_shape: Tuple[int, ...],
+        loss_object: Optional["tf.keras.losses.Loss"] = None,
+        constraints: Union[
+            BotnetConstraints, LcldConstraints, MalwareConstraints
+        ] = None,
+        scaler: MinMaxScaler = None,
+        experiment: Experiment = None,
+        experiment_batch_skip: int = 8,
+        parameters: dict = None,
+        train_step: Optional[Callable] = None,
+        channels_first: bool = False,
+        clip_values: Optional["CLIP_VALUES_TYPE"] = None,
+        preprocessing_defences: Union[
+            "Preprocessor", List["Preprocessor"], None
+        ] = None,
+        postprocessing_defences: Union[
+            "Postprocessor", List["Postprocessor"], None
+        ] = None,
+        preprocessing: "PREPROCESSING_TYPE" = (0.0, 1.0),
     ) -> None:
         """
         Initialization specific to TensorFlow v2 models.
@@ -54,16 +61,18 @@ class TF2Classifier(TensorFlowV2Classifier):
                be divided by the second one.
         """
 
-        super().__init__(model,
-        nb_classes,
-        input_shape,
-        loss_object,
-        train_step,
-        channels_first,
-        clip_values,
-        preprocessing_defences,
-        postprocessing_defences,
-        preprocessing)
+        super().__init__(
+            model,
+            nb_classes,
+            input_shape,
+            loss_object,
+            train_step,
+            channels_first,
+            clip_values,
+            preprocessing_defences,
+            postprocessing_defences,
+            preprocessing,
+        )
 
         self._constraints = constraints
         self._scaler = scaler
@@ -83,10 +92,11 @@ class TF2Classifier(TensorFlowV2Classifier):
         inputs += self._scaler.min_
 
         return inputs
-    def constraint_loss(self,inputs):
+
+    def constraint_loss(self, inputs):
         violations = []
 
-        #scaled_inputs = self._scaler.inverse_transform(inputs).astype('float32')
+        # scaled_inputs = self._scaler.inverse_transform(inputs).astype('float32')
 
         inputs = self.unscale_features(inputs)
 
@@ -99,10 +109,10 @@ class TF2Classifier(TensorFlowV2Classifier):
         x: Union[np.ndarray, "tf.Tensor"],
         y: Union[np.ndarray, "tf.Tensor"],
         training_mode: bool = False,
-        targeted:bool=False,
-        batch_id:int=0,
-        iter_i :int = 0,
-        wc:float=0.1,
+        targeted: bool = False,
+        batch_id: int = 0,
+        iter_i: int = 0,
+        wc: float = 0.1,
         **kwargs
     ) -> Union[np.ndarray, "tf.Tensor"]:
         """
@@ -132,7 +142,9 @@ class TF2Classifier(TensorFlowV2Classifier):
                     tape.watch(x_grad)
                     x_input, y_input = self._apply_preprocessing(x_grad, y=y, fit=False)
                 else:
-                    x_preprocessed, y_preprocessed = self._apply_preprocessing(x, y=y, fit=False)
+                    x_preprocessed, y_preprocessed = self._apply_preprocessing(
+                        x, y=y, fit=False
+                    )
                     x_grad = tf.convert_to_tensor(x_preprocessed)
                     tape.watch(x_grad)
                     x_input = x_grad
@@ -141,7 +153,9 @@ class TF2Classifier(TensorFlowV2Classifier):
                 predictions = self.model(x_input, training=training_mode)
 
                 if self._reduce_labels:
-                    loss_class = self._loss_object(np.argmax(y_input, axis=1), predictions)
+                    loss_class = self._loss_object(
+                        np.argmax(y_input, axis=1), predictions
+                    )
                 else:
                     loss_class = self._loss_object(y_input, predictions)
 
@@ -150,29 +164,52 @@ class TF2Classifier(TensorFlowV2Classifier):
                 loss_evaluation = self._parameters.get("constraints_optim")
                 if "alt_constraints" in loss_evaluation:
                     nb_constraints = loss_constraints.shape[1]
-                    loss_constraints_reduced = loss_constraints[:,iter_i%nb_constraints]
+                    loss_constraints_reduced = loss_constraints[
+                        :, iter_i % nb_constraints
+                    ]
 
                 elif "single_constraints" in loss_evaluation:
                     ctr_id = self._parameters.get("ctr_id")
-                    loss_constraints_reduced = loss_constraints[:,ctr_id]
+                    loss_constraints_reduced = loss_constraints[:, ctr_id]
 
                 else:
-                    loss_constraints_reduced = tf.reduce_sum(loss_constraints,1)
+                    loss_constraints_reduced = tf.reduce_sum(loss_constraints, 1)
 
+                if self._experiment and batch_id % self._experiment_batch_skip == 0:
+                    self._experiment.log_metric(
+                        "loss_constraints_max",
+                        loss_constraints_reduced.numpy().max(),
+                        step=iter_i,
+                        epoch=batch_id,
+                    )
+                    self._experiment.log_metric(
+                        "loss_flip_max",
+                        loss_class.numpy().max(),
+                        step=iter_i,
+                        epoch=batch_id,
+                    )
 
-
-                if self._experiment and batch_id%self._experiment_batch_skip==0:
-                    self._experiment.log_metric("loss_constraints_max",loss_constraints_reduced.numpy().max(),
-                                                step=iter_i,epoch=batch_id)
-                    self._experiment.log_metric("loss_flip_max", loss_class.numpy().max(), step=iter_i,epoch=batch_id)
-
-                    self._experiment.log_metric("loss_constraints_mean", loss_constraints_reduced.numpy().mean(),
-                                                step=iter_i,epoch=batch_id)
-                    self._experiment.log_metric("loss_flip_mean", loss_class.numpy().mean(), step=iter_i,epoch=batch_id)
+                    self._experiment.log_metric(
+                        "loss_constraints_mean",
+                        loss_constraints_reduced.numpy().mean(),
+                        step=iter_i,
+                        epoch=batch_id,
+                    )
+                    self._experiment.log_metric(
+                        "loss_flip_mean",
+                        loss_class.numpy().mean(),
+                        step=iter_i,
+                        epoch=batch_id,
+                    )
 
                     for i in range(loss_constraints.shape[1]):
-                        constraint_loss = loss_constraints[:,i].numpy().mean()
-                        self._experiment.log_metric("ctr_{}".format(i),constraint_loss, step=iter_i,epoch=batch_id)
+                        constraint_loss = loss_constraints[:, i].numpy().mean()
+                        self._experiment.log_metric(
+                            "ctr_{}".format(i),
+                            constraint_loss,
+                            step=iter_i,
+                            epoch=batch_id,
+                        )
 
                 loss_class = loss_class * tf.constant(
                     1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
@@ -183,18 +220,22 @@ class TF2Classifier(TensorFlowV2Classifier):
                 )
 
                 if "constraints+flip+constraints" in loss_evaluation:
-                    total_iterations = self._parameters.get("nb_iter",100)
-                    if iter_i<total_iterations/2:
+                    total_iterations = self._parameters.get("nb_iter", 100)
+                    if iter_i < total_iterations / 2:
                         loss = loss_class
                     else:
                         loss = loss_constraints_reduced
                 elif "constraints+flip+alternate" in loss_evaluation:
                     alternate_frequency = self._parameters.get("alternate_frequency", 5)
-                    loss = loss_class if (iter_i//alternate_frequency)%2 else loss_constraints_reduced
+                    loss = (
+                        loss_class
+                        if (iter_i // alternate_frequency) % 2
+                        else loss_constraints_reduced
+                    )
                 elif "constraints+flip" in loss_evaluation:
                     loss = wc * loss_class + loss_constraints_reduced
                 elif "constraints" in loss_evaluation:
-                        loss = loss_constraints_reduced
+                    loss = loss_constraints_reduced
                 else:
                     loss = loss_class
 
@@ -211,13 +252,13 @@ class TF2Classifier(TensorFlowV2Classifier):
             gradients = self._apply_preprocessing_gradient(x, gradients)
 
         if self._experiment and batch_id % self._experiment_batch_skip == 0:
-            self._experiment.log_metric("grad_max", gradients.numpy().max(),
-                                        step=iter_i, epoch=batch_id)
-            self._experiment.log_metric("grad_mean", gradients.numpy().mean(),
-                                        step=iter_i, epoch=batch_id)
-            self._experiment.log_metric("grad_min", gradients.numpy().min(),
-                                        step=iter_i, epoch=batch_id)
+            self._experiment.log_metric(
+                "grad_max", gradients.numpy().max(), step=iter_i, epoch=batch_id
+            )
+            self._experiment.log_metric(
+                "grad_mean", gradients.numpy().mean(), step=iter_i, epoch=batch_id
+            )
+            self._experiment.log_metric(
+                "grad_min", gradients.numpy().min(), step=iter_i, epoch=batch_id
+            )
         return gradients
-
-
-
