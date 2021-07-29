@@ -7,6 +7,8 @@ constraints.get_feature_min_max(dynamic_input=dynamic_input)
 """
 
 from comet_ml import Experiment
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 from src.utils.comet import init_comet
 
 
