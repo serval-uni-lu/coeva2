@@ -130,7 +130,7 @@ class ObjectiveCalculator:
         self,
         x_initial,
         x_generated,
-        preferred_metrics="distance",
+        preferred_metrics="misclassification",
         order="asc",
         max_inputs=-1,
     ):
@@ -165,7 +165,7 @@ class ObjectiveCalculator:
         self,
         x_initials,
         x_generated,
-        preferred_metrics="distance",
+        preferred_metrics="misclassification",
         order="asc",
         max_inputs=-1,
     ):
@@ -173,7 +173,7 @@ class ObjectiveCalculator:
         successful_attacks = []
 
         for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials)):
-            successful_attacks.append(
+            successful_attacks.extend(
                 self._get_one_successful(
                     x_initial, x_generated[i], preferred_metrics, order, max_inputs
                 )
@@ -186,7 +186,7 @@ class ObjectiveCalculator:
     def get_successful_attacks_results(
         self,
         results: List[EfficientResult],
-        preferred_metrics="distance",
+        preferred_metrics="misclassification",
         order="asc",
         max_inputs=-1,
     ):
