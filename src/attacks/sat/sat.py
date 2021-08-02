@@ -1,6 +1,6 @@
 import gurobipy as gp
 import numpy as np
-from gurobipy import GRB
+from gurobipy import GRB, abs_, max_, LinExpr
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
@@ -60,23 +60,68 @@ class SatAttack:
         for i in indexes:
             m.addConstr(variables[i] == x_init[i], f"mut{i}")
 
-    def create_l_constraints(self, m, variables, x_init, lb, ub):
-
+    def create_l_constraints(self, m, variables, x_init, lb, ub, norm="inf"):
         x_init_scaled = self.min_max_scaler.transform(x_init.reshape(1, -1))[0]
 
-        for i, e in enumerate(variables):
-            if lb[i] != ub[i]:
-                scaled = (variables[i] - lb[i]) / (ub[i] - lb[i])
-                m.addConstr(
-                    scaled <= x_init_scaled[i] + self.eps - SAFETY_DELTA,
-                    f"scaled_{i}",
-                )
-                m.addConstr(
-                    scaled >= x_init_scaled[i] - self.eps + SAFETY_DELTA,
-                    f"scaled_{i}",
-                )
-            else:
-                scaled = 0
+        # Minimise distance
+        # scaleds = [
+        #     (variables[i] - lb[i]) / (ub[i] - lb[i]) for i, _ in enumerate(variables)
+        # ]
+        #
+        # def create_distance_vars(i, scaled):
+        #     distance = m.addVar(vtype=GRB.CONTINUOUS, name=f"distance_{i}")
+        #     distance_abs = m.addVar(vtype=GRB.CONTINUOUS, name=f"distance_abs_{i}")
+        #     m.addConstr(distance == scaled - x_init_scaled[i])
+        #     m.addConstr(distance_abs == abs_(distance))
+        #     return distance_abs
+        #
+        # if norm in ["inf", np.inf]:
+        #     distances = [
+        #         create_distance_vars(i, scaled) for i, scaled in enumerate(scaleds)
+        #     ]
+        #     distance_max = m.addVar(vtype=GRB.CONTINUOUS, name="distance_max")
+        #     m.addConstr(distance_max == max_(distances))
+        #     m.setObjective(distance_max, GRB.MINIMIZE)
+        if norm in ["inf", np.inf]:
+            for i, e in enumerate(variables):
+                if lb[i] != ub[i]:
+                    scaled = (variables[i] - lb[i]) / (ub[i] - lb[i])
+                    m.addConstr(
+                        scaled <= x_init_scaled[i] + self.eps - SAFETY_DELTA,
+                        f"scaled_{i}",
+                    )
+                    m.addConstr(
+                        scaled >= x_init_scaled[i] - self.eps + SAFETY_DELTA,
+                        f"scaled_{i}",
+                    )
+                else:
+                    scaled = 0
+
+        elif norm in ["2", 2]:
+
+            def create_distance_vars(i, scaled):
+                distance_l = m.addVar(vtype=GRB.CONTINUOUS, name=f"distance_{i}")
+                m.addConstr(distance_l == scaled - x_init_scaled[i])
+                return distance_l
+
+            scaleds = [
+                (variables[i] - lb[i]) / (ub[i] - lb[i])
+                for i, _ in enumerate(variables)
+            ]
+
+            distances = [
+                create_distance_vars(i, scaled) for i, scaled in enumerate(scaleds)
+            ]
+
+            sum_squared = LinExpr()
+            for distance in distances:
+                sum_squared.add(distance * distance)
+
+            l2_distance = m.addVar(vtype=GRB.CONTINUOUS, name=f"l2_distance")
+            m.addGenConstrPow(l2_distance, sum_squared, 2, name="l2_distance")
+
+        else:
+            raise NotImplementedError
 
     @staticmethod
     def apply_hot_start(variables, x_hot_start=None):
@@ -128,12 +173,12 @@ class SatAttack:
             m.optimize()
             nSolutions = m.SolCount
 
-            def get_variables(e):
+            def get_vars(e):
                 m.setParam(GRB.Param.SolutionNumber, e)
-                return [v.X for v in m.getvariables()]
+                return [v.X for v in m.getVars()]
 
             if nSolutions > 0:
-                solutions = np.array([get_variables(e) for e in range(nSolutions)])[
+                solutions = np.array([get_vars(e) for e in range(nSolutions)])[
                     :, : x_init.shape[0]
                 ]
             else:
