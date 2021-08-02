@@ -1,5 +1,6 @@
-from typing import Tuple
+from typing import Tuple, Union
 import numpy as np
+import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 
 from src.attacks.moeva2.constraints import Constraints
@@ -10,6 +11,9 @@ import logging
 
 
 class BotnetConstraints(Constraints):
+    def fix_features_types(self, x) -> Union[np.ndarray, tf.Tensor]:
+        raise NotImplementedError
+
     def __init__(
         self,
         # amount_feature_index: int,
