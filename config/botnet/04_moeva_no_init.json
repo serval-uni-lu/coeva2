@@ -2,10 +2,10 @@
   "project_name": "botnet",
   "paths": {
     "model": "./models/botnet/nn.model",
-    "features": "./data/botnet/features.csv",
+    "features": "./data/botnet/features_no_init_constraints.csv",
     "constraints": "./data/botnet/constraints.csv",
     "x_candidates": "./data/botnet/x_attack_candidates.npy",
-    "attack_results": "./out/attacks/botnet/moeva/results_with_init_constraints.npy",
+    "attack_results": "./out/attacks/botnet/moeva/results_without_init_constraints.npy",
     "objectives": "./out/attacks/botnet/moeva/objectives_01.csv",
     "min_max_scaler": "./models/botnet/scaler.joblib",
     "ml_scaler": "./models/botnet/scaler.joblib"
