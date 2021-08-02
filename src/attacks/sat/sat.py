@@ -1,8 +1,9 @@
+import gurobipy as gp
 import numpy as np
+from gurobipy import GRB
 from joblib import Parallel, delayed
 from tqdm import tqdm
-import gurobipy as gp
-from gurobipy import GRB, QuadExpr, LinExpr
+
 from src.attacks.moeva2.constraints import Constraints
 from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
 
@@ -39,7 +40,8 @@ class SatAttack:
         self.encoder = get_encoder_from_constraints(self.constraints)
         self.n_jobs = n_jobs
 
-    def create_variable(self, m, x_init, type_mask, lb, ub):
+    @staticmethod
+    def create_variable(m, x_init, type_mask, lb, ub):
 
         return [
             m.addVar(
@@ -51,19 +53,20 @@ class SatAttack:
             for i, feature in enumerate(x_init)
         ]
 
-    def create_mutable_constraints(self, m, x_init, vars, mutable_mask):
+    @staticmethod
+    def create_mutable_constraints(m, x_init, variables, mutable_mask):
         indexes = np.argwhere(~mutable_mask).reshape(-1)
 
         for i in indexes:
-            m.addConstr(vars[i] == x_init[i], f"mut{i}")
+            m.addConstr(variables[i] == x_init[i], f"mut{i}")
 
-    def create_l_constraints(self, m, vars, x_init, lb, ub):
+    def create_l_constraints(self, m, variables, x_init, lb, ub):
 
         x_init_scaled = self.min_max_scaler.transform(x_init.reshape(1, -1))[0]
 
-        for i, e in enumerate(vars):
+        for i, e in enumerate(variables):
             if lb[i] != ub[i]:
-                scaled = (vars[i] - lb[i]) / (ub[i] - lb[i])
+                scaled = (variables[i] - lb[i]) / (ub[i] - lb[i])
                 m.addConstr(
                     scaled <= x_init_scaled[i] + self.eps - SAFETY_DELTA,
                     f"scaled_{i}",
@@ -75,10 +78,11 @@ class SatAttack:
             else:
                 scaled = 0
 
-    def apply_hot_start(self, vars, x_hot_start=None):
+    @staticmethod
+    def apply_hot_start(variables, x_hot_start=None):
         if x_hot_start is not None:
-            for i in range(len(vars)):
-                vars[i].start = x_hot_start[i]
+            for i in range(len(variables)):
+                variables[i].start = x_hot_start[i]
 
     def create_model(self, x_init, x_hot_start=None):
         # Pre fetch
@@ -89,25 +93,25 @@ class SatAttack:
         m = gp.Model("mip1")
 
         # Create variables
-        vars = self.create_variable(m, x_init, type_mask, lb, ub)
+        variables = self.create_variable(m, x_init, type_mask, lb, ub)
 
         # Mutable constraints
-        self.create_mutable_constraints(m, x_init, vars, mutable_mask)
+        self.create_mutable_constraints(m, x_init, variables, mutable_mask)
 
         # Constraints
-        self.sat_constraints(m, vars)
+        self.sat_constraints(m, variables)
 
         # Distance constraints
         self.create_l_constraints(
             m,
-            vars,
+            variables,
             x_init,
             self.min_max_scaler.data_min_,
             self.min_max_scaler.data_max_,
         )
 
         # Hot start
-        self.apply_hot_start(vars, x_hot_start)
+        self.apply_hot_start(variables, x_hot_start)
 
         return m
 
@@ -124,18 +128,16 @@ class SatAttack:
             m.optimize()
             nSolutions = m.SolCount
 
-            def get_vars(e):
+            def get_variables(e):
                 m.setParam(GRB.Param.SolutionNumber, e)
-                # for v in m.getVars():
-                #     print(v)
-                return [v.X for v in m.getVars()]
+                return [v.X for v in m.getvariables()]
 
             if nSolutions > 0:
-                solutions = np.array([get_vars(e) for e in range(nSolutions)])[
+                solutions = np.array([get_variables(e) for e in range(nSolutions)])[
                     :, : x_init.shape[0]
                 ]
             else:
-                solutions = np.array([x_init]*int(self.n_sample))
+                solutions = np.array([x_init] * int(self.n_sample))
 
             # print(solutions.shape)
 
