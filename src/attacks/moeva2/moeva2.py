@@ -86,7 +86,7 @@ class Moeva2:
 
         # Default parameters for crossover (prob=0.9, eta=30)
         modify_mask = type_mask.copy()
-        modify_mask[-256:] = ["softmax"] * 256
+        # modify_mask[-256:] = ["softmax"] * 256
         crossover = MixedVariableCrossover(
             modify_mask,
             {
