@@ -10,6 +10,7 @@ from .classifier import Classifier
 from .constraints import Constraints
 from .feature_encoder import get_encoder_from_constraints
 from .result_process import EfficientResult
+from .utils import get_one_hot_encoding_constraints
 
 numpy.set_printoptions(threshold=sys.maxsize)
 
@@ -40,7 +41,15 @@ class ObjectiveCalculator:
 
         # Constraints
         constraint_violation = Problem.calc_constraint_violation(
-            self._constraints.evaluate(x_f)
+            np.concatenate(
+                (
+                    self._constraints.evaluate(x_f),
+                    get_one_hot_encoding_constraints(
+                        self._constraints.get_feature_type(), x_f
+                    ).reshape(-1, 1),
+                ),
+                axis=1,
+            )
         ).reshape(-1)
 
         # Misclassify
