@@ -114,6 +114,16 @@ class ObjectiveCalculator:
         )
         return at_least_one.mean(axis=0)
 
+    def success_rate_3d_df(self, x_initial, x):
+        success_rates = self.success_rate_3d(x_initial, x)
+
+        columns = ["o{}".format(i + 1) for i in range(success_rates.shape[0])]
+        success_rate_df = pd.DataFrame(
+            success_rates.reshape([1, -1]),
+            columns=columns,
+        )
+        return success_rate_df
+
     def success_rate_genetic(self, results: List[EfficientResult]):
 
         initial_states = [result.initial_state for result in results]
