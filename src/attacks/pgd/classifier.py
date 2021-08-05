@@ -161,6 +161,10 @@ class TF2Classifier(TensorFlowV2Classifier):
 
                 loss_constraints = self.constraint_loss(x_input)
 
+                # Different options for the value of the constraints loss
+                # - alternate
+                # - single (with ID)
+                # - Else sum
                 loss_evaluation = self._parameters.get("constraints_optim")
                 if "alt_constraints" in loss_evaluation:
                     nb_constraints = loss_constraints.shape[1]
@@ -175,6 +179,7 @@ class TF2Classifier(TensorFlowV2Classifier):
                 else:
                     loss_constraints_reduced = tf.reduce_sum(loss_constraints, 1)
 
+                # Logging experiments metrics
                 if self._experiment and batch_id % self._experiment_batch_skip == 0:
                     self._experiment.log_metric(
                         "loss_constraints_max",
@@ -219,6 +224,12 @@ class TF2Classifier(TensorFlowV2Classifier):
                     -1, dtype=ART_NUMPY_DTYPE
                 )
 
+                # Strategy to combine class loss and constraints loss
+                # Flip half the time then constraints only
+                # Alternate n times constraints n time flip, n = alternate_frequency
+                # Constraints + flip all the time weighted
+                # Only constraints
+                # Only flip
                 if "constraints+flip+constraints" in loss_evaluation:
                     total_iterations = self._parameters.get("nb_iter", 100)
                     if iter_i < total_iterations / 2:
