@@ -133,7 +133,7 @@ class LcldConstraints(Constraints):
         constraints = tf.clip_by_value(constraints - tol, 0, tf.constant(np.inf))
 
         return constraints
-        return tf.nn.softmax(constraints) * tf.reduce_max(constraints)
+        # return tf.nn.softmax(constraints) * tf.reduce_max(constraints)
         # print(max_constraints.cpu().detach())
         # return max_constraints.mean()
 
