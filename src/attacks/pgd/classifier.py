@@ -80,6 +80,7 @@ class TF2Classifier(TensorFlowV2Classifier):
         self._experiment = experiment
         self._randomindex = np.random.randint(constraints.get_nb_constraints())
         self._experiment_batch_skip = experiment_batch_skip
+        self.history = []
 
     def unscale_features(self, inputs):
         inputs -= self._scaler.min_
@@ -165,14 +166,14 @@ class TF2Classifier(TensorFlowV2Classifier):
                 # - alternate
                 # - single (with ID)
                 # - Else sum
-                loss_evaluation = self._parameters.get("constraints_optim")
-                if "alt_constraints" in loss_evaluation:
+                constraints_optim = self._parameters.get("constraints_optim")
+                if "alt_constraints" in constraints_optim:
                     nb_constraints = loss_constraints.shape[1]
                     loss_constraints_reduced = loss_constraints[
                         :, iter_i % nb_constraints
                     ]
 
-                elif "single_constraints" in loss_evaluation:
+                elif "single_constraints" in constraints_optim:
                     ctr_id = self._parameters.get("ctr_id")
                     loss_constraints_reduced = loss_constraints[:, ctr_id]
 
@@ -220,6 +221,7 @@ class TF2Classifier(TensorFlowV2Classifier):
                     1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
                 )
                 # we want to minimize the loss not increased it
+                loss_constraints_reduced_history = loss_constraints_reduced
                 loss_constraints_reduced = loss_constraints_reduced * tf.constant(
                     -1, dtype=ART_NUMPY_DTYPE
                 )
@@ -230,6 +232,7 @@ class TF2Classifier(TensorFlowV2Classifier):
                 # Constraints + flip all the time weighted
                 # Only constraints
                 # Only flip
+                loss_evaluation = self._parameters.get("loss_evaluation")
                 if "constraints+flip+constraints" in loss_evaluation:
                     total_iterations = self._parameters.get("nb_iter", 100)
                     if iter_i < total_iterations / 2:
@@ -249,6 +252,28 @@ class TF2Classifier(TensorFlowV2Classifier):
                     loss = loss_constraints_reduced
                 else:
                     loss = loss_class
+
+            if "full" in self._parameters.get("save_history"):
+                self.history.append(
+                    np.column_stack(
+                        [
+                            loss,
+                            loss_class,
+                            loss_constraints_reduced_history,
+                            loss_constraints,
+                        ]
+                    )
+                )
+            if "reduced" in self._parameters.get("save_history"):
+                self.history.append(
+                    np.column_stack(
+                        [
+                            loss,
+                            loss_class,
+                            loss_constraints_reduced_history,
+                        ]
+                    )
+                )
 
             gradients = tape.gradient(loss, x_grad)
 

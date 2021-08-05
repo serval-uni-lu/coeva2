@@ -4,7 +4,6 @@ from pathlib import Path
 import comet_ml
 import joblib
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 
 from src.attacks.pgd.atk import PGDTF2 as PGD
@@ -25,13 +24,16 @@ from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 
 
 def run():
+    tf.random.set_seed(
+        config["seed"]
+    )
     experiment = None
     enable_comet = config.get("comet", True)
     if enable_comet:
         params = config
         experiment = init_comet(params)
 
-    apply_sat = "sat" in config["strategy"]
+    apply_sat = "sat" in config["loss_evaluation"]
 
     Path(config["dirs"]["results"]).mkdir(parents=True, exist_ok=True)
 
@@ -57,9 +59,10 @@ def run():
 
     constraints.check_constraints_error(x_initial)
 
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
+
+    # ----- Perform the attack
+
+    start_time = time.time()
 
     new_input = tf.keras.layers.Input(shape=initial_shape)
     model = tf.keras.models.Model(inputs=[new_input], outputs=[model_base(new_input)])
@@ -80,13 +83,13 @@ def run():
     pgd = PGD(
         kc_classifier,
         eps=per_attack_eps - 0.000001,
-        eps_step=config["eps"] / 500000,
+        eps_step=config["eps"] / 3,
         norm=config.get("norm"),
-        verbose=True,
-        max_iter=config.get("nb_iter"),
+        verbose=config["system"]["verbose"] == 1,
+        max_iter=int(config.get("budget") / 2),
         num_random_init=config.get("nb_random", 0),
         batch_size=x_initial.shape[0],
-        loss_evaluation=config.get("loss_evaluation")
+        loss_evaluation=config.get("loss_evaluation"),
     )
     x_attacks = scaler.inverse_transform(
         pgd.generate(
@@ -109,9 +112,12 @@ def run():
             np.inf,
             n_sample=1,
             verbose=1,
-            n_jobs=config["n_jobs"],
+            n_jobs=config["system"]["n_jobs"],
         )
         x_attacks = attack.generate(x_initial, x_attacks)
+
+    consumed_time = time.time() - start_time
+    # ----- End attack
 
     if len(x_attacks.shape) == 2:
         x_attacks = x_attacks[:, np.newaxis, :]
@@ -129,8 +135,11 @@ def run():
     success_rate_df = objective_calc.success_rate_3d_df(x_initial, x_attacks)
     print(success_rate_df)
 
-    for c, v in zip(success_rate_df.columns, success_rate_df.values[0]):
-        experiment.log_metric(c, v)
+
+
+
+    # for c, v in zip(success_rate_df.columns, success_rate_df.values[0]):
+    #     experiment.log_metric(c, v)
 
     # Save
     config_hash = get_config_hash()
@@ -140,10 +149,22 @@ def run():
 
     x_attacks_path = f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy"
     np.save(x_attacks_path, x_attacks)
-    experiment.log_asset(x_attacks_path)
+    # experiment.log_asset(x_attacks_path)
+
+    # History
+    if config.get("save_history"):
+        history = np.swapaxes(np.array(kc_classifier.history), 0, 1)
+        history = history[:, :, np.newaxis, :]
+        np.save(f"{out_dir}/x_history_{config_hash}.npy", history)
 
     # Metrics
-
+    metrics = {
+        "objectives": success_rate_df.to_dict(orient="records")[0],
+        "time": consumed_time,
+        "config": config,
+        "config_hash": config_hash,
+    }
+    in_out.json_to_file(metrics, f"{out_dir}/metrics_{mid_fix}_{config_hash}.json")
     success_rate_df.to_csv(
         f"{out_dir}/success_rate_{mid_fix}_{config_hash}.csv", index=False
     )
