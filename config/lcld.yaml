@@ -1,0 +1,20 @@
+---
+project_name: lcld
+paths:
+  model: ./models/lcld/nn.model
+  features: ./data/lcld/features.csv
+  constraints: ./data/lcld/constraints.csv
+  x_candidates: ./data/lcld/x_attack_candidates.npy
+  min_max_scaler: ./models/lcld/scaler.joblib
+  ml_scaler: ./models/lcld/scaler.joblib
+misclassification_threshold: 0.25
+dirs:
+  results: ./out/attacks/lcld/united/
+norm: inf
+n_initial_state: 1000
+initial_state_offset: 0
+system:
+  n_jobs: 10
+  verbose: 1
+save_history: true
+budget: 100000
