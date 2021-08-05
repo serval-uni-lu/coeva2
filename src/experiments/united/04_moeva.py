@@ -1,3 +1,4 @@
+import os
 import warnings
 import time
 from pathlib import Path
@@ -24,11 +25,15 @@ warnings.simplefilter(action="ignore", category=RuntimeWarning)
 @timing
 def run():
 
-    Path(config['dirs']['results']).parent.mkdir(parents=True, exist_ok=True)
+    out_dir = config["dirs"]["results"]
+    config_hash = get_config_hash()
+    mid_fix = f"{config['attack_name']}"
+    metrics_path = f"{out_dir}/metrics_{mid_fix}_{config_hash}.json"
+    if os.path.exists(metrics_path):
+        print(f"Configuration with hash {config_hash} already executed. Skipping")
+        exit(0)
 
-    save_history = True
-    if "save_history" in config:
-        save_history = config["save_history"]
+    Path(config['dirs']['results']).parent.mkdir(parents=True, exist_ok=True)
 
     # ----- Load and create necessary objects
 
@@ -63,7 +68,7 @@ def run():
         n_pop=config["n_pop"],
         n_offsprings=config["n_offsprings"],
         scale_objectives=True,
-        save_history=save_history,
+        save_history=config.get("save_history"),
         seed=config["seed"],
         n_jobs=config["system"]["n_jobs"],
         ml_scaler=scaler,
@@ -72,8 +77,6 @@ def run():
     attacks = moeva.generate(X_initial_states, 1)
     consumed_time = time.time() - start_time
     # Save
-    config_hash = get_config_hash()
-    out_dir = config['dirs']['results']
     # Legacy
     Pickler.save_to_file(attacks, f"{out_dir}/results_{config_hash}.npy")
 
@@ -81,12 +84,12 @@ def run():
     x_attacks = results_to_numpy_results(
         attacks, get_encoder_from_constraints(constraints)
     )
-    np.save(f"{out_dir}/x_attacks_{config_hash}.npy", x_attacks)
+    np.save(f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy", x_attacks)
 
     # History
-    if save_history:
+    if config.get("save_history"):
         x_histories = results_to_history(attacks)
-        np.save(f"{out_dir}/x_history_{config_hash}.npy", x_histories)
+        np.save(f"{out_dir}/x_history_{mid_fix}_{config_hash}.npy", x_histories)
 
 
     objective_lists = []
@@ -110,11 +113,10 @@ def run():
         "config": config,
         "config_hash": config_hash,
     }
-    mid_fix = f"{config['attack_name']}"
-    in_out.json_to_file(metrics, f"{out_dir}/metrics_{mid_fix}_{config_hash}.json")
+    in_out.json_to_file(metrics, metrics_path)
 
     # Config
-    save_config(f"{out_dir}/config_")
+    save_config(f"{out_dir}/config_{mid_fix}_")
 
 
 if __name__ == "__main__":

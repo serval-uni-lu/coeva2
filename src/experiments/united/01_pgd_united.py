@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +25,16 @@ from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 
 
 def run():
+
+    out_dir = config["dirs"]["results"]
+    config_hash = get_config_hash()
+    mid_fix = f"{config['attack_name']}_{config['loss_evaluation']}"
+    metrics_path = f"{out_dir}/metrics_{mid_fix}_{config_hash}.json"
+    if os.path.exists(metrics_path):
+        print(f"Configuration with hash {config_hash} already executed. Skipping")
+        exit(0)
+
+
     tf.random.set_seed(
         config["seed"]
     )
@@ -142,9 +153,6 @@ def run():
     #     experiment.log_metric(c, v)
 
     # Save
-    config_hash = get_config_hash()
-    out_dir = config["dirs"]["results"]
-    mid_fix = f"{config['attack_name']}_{config['loss_evaluation']}"
     # X_attacks
 
     x_attacks_path = f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy"
@@ -164,10 +172,11 @@ def run():
         "config": config,
         "config_hash": config_hash,
     }
-    in_out.json_to_file(metrics, f"{out_dir}/metrics_{mid_fix}_{config_hash}.json")
     success_rate_df.to_csv(
         f"{out_dir}/success_rate_{mid_fix}_{config_hash}.csv", index=False
     )
+
+    in_out.json_to_file(metrics, metrics_path)
 
     # Config
     save_config(f"{out_dir}/config_{mid_fix}_")
