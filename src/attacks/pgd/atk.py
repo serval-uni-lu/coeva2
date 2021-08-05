@@ -24,7 +24,10 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         random_eps: bool = False,
         tensor_board: Union[str, bool] = False,
         verbose: bool = True,
+        loss_evaluation: str = ""
     ):
+        self.iter_counter = 0
+        self.loss_evaluation = loss_evaluation
         super().__init__(
             estimator=estimator,
             norm=norm,
@@ -97,7 +100,7 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         :return: Adversarial examples.
         """
         import tensorflow as tf  # lgtm [py/repeated-import]
-
+        self.iter_counter = self.iter_counter + 1
         if random_init:
             n = x.shape[0]
             m = np.prod(x.shape[1:]).item()
@@ -123,8 +126,16 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         # Get perturbation
         perturbation = self._compute_perturbation(x_adv, y, mask)
 
-        # Apply perturbation and clip
-        x_adv = self._apply_perturbation(x_adv, perturbation, eps_step)
+        if "adaptive_eps_step" in self.loss_evaluation:
+            iteration_per_step = self.max_iter // 10
+            current_power = self.iter_counter // iteration_per_step + 1
+            eps_step_dynamic = eps * (1 / np.power(10, current_power))
+            # print(f"step {eps_step_dynamique} at iteration {self.iter_counter}")
+            # Apply perturbation and clip
+        else:
+            eps_step_dynamic = eps_step
+
+        x_adv = self._apply_perturbation(x_adv, perturbation, eps_step_dynamic)
 
         # Do projection
         perturbation = self._projection(x_adv - x_init, eps, self.norm)
