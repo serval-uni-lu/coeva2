@@ -16,5 +16,4 @@ initial_state_offset: 0
 system:
   n_jobs: 10
   verbose: 1
-save_history: true
-budget: 100000
+save_history: "full"
