@@ -1,5 +1,6 @@
 import abc
 import argparse
+import hashlib
 import json
 import os
 import yaml
@@ -96,3 +97,20 @@ def get_config():
                 merge_parameters(current_parameters, parser_action.do(value))
 
     return current_parameters
+
+
+def get_config_hash():
+    return get_dict_hash(get_config())
+
+
+def get_dict_hash(dictionary):
+    dictionary_str = json.dumps(dictionary, sort_keys=True)
+    dictionary_hash = hashlib.md5(
+        dictionary_str.encode("utf-8")
+    ).hexdigest()
+    return dictionary_hash
+
+
+def save_config(pre_path):
+    with open(f"{pre_path}{get_config_hash()}.yaml", "w") as f:
+        yaml.dump(get_config(), f)
