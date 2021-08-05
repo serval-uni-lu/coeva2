@@ -29,13 +29,13 @@ def run():
                     logger.info(f"{TABULATOR * 4} Running MoEvA ...")
                     eps_list = {"eps_list": config['eps_list']}
                     eps_list_str = json.dumps(eps_list, separators=(',', ':')).replace("\"", "\\\"")
-                    launch_script(
-                        f"python -m src.experiments.united.04_moeva "
-                        f"-c {config_dir}/moeva.yaml "
-                        f"-c {config_dir}/{project}.yaml "
-                        f"-p seed={seed} "
-                        f"-p budget={budget} "
-                        f"-j {eps_list_str} "
+                    launch_script([
+                        "python", "-m", "src.experiments.united.04_moeva",
+                        "-c", f"{config_dir}/moeva.yaml",
+                        "-c", f"{config_dir}/{project}.yaml",
+                        "-p", f"seed={seed}",
+                        "-p", f"budget={budget}",
+                        "-j", eps_list_str]
                     )
 
                 # Run the rest
@@ -48,14 +48,14 @@ def run():
                             logger.info(
                                 f"{TABULATOR * 6} Running loss_evaluation {loss_evaluation} ..."
                             )
-                            launch_script(
-                                f"python -m src.experiments.united.01_pgd_united "
-                                f"-c {config_dir}/pgd.yaml "
-                                f"-c {config_dir}/{project}.yaml "
-                                f"-p seed={seed} "
-                                f"-p budget={budget} "
-                                f"-p eps={eps} "
-                                f"-p loss_evaluation={loss_evaluation} "
+                            launch_script([
+                                "python", f"-m", f"src.experiments.united.01_pgd_united",
+                                "-c", f"{config_dir}/pgd.yaml",
+                                "-c", f"{config_dir}/{project}.yaml",
+                                "-p", f"seed={seed}",
+                                "-p", f"budget={budget}",
+                                "-p", f"eps={eps}",
+                                "-p", f"loss_evaluation={loss_evaluation}"]
                             )
 
 
