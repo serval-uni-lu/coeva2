@@ -28,7 +28,7 @@ def run():
                 if "moeva" in config["attacks"]:
                     logger.info(f"{TABULATOR * 4} Running MoEvA ...")
                     eps_list = {"eps_list": config['eps_list']}
-                    eps_list_str = json.dumps(eps_list, separators=(',', ':')).replace("\"", "\\\"")
+                    eps_list_str = json.dumps(eps_list, separators=(',', ':'))
                     launch_script([
                         "python", "-m", "src.experiments.united.04_moeva",
                         "-c", f"{config_dir}/moeva.yaml",
