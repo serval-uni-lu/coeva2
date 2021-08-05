@@ -1,5 +1,9 @@
+from typing import List
+
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+
+from src.attacks.result_process import EfficientResult, HistoryResult
 
 ONE_HOT_ENCODE_KEY = "ohe"
 
@@ -42,9 +46,31 @@ def get_one_hot_encoding_constraints(type_mask, x):
     if len(one_hot_masks) == 0:
         return np.zeros(x.shape[0])
 
-    one_hot_values = np.column_stack([np.sum(x[:, one_hot_mask], axis=1) for one_hot_mask in one_hot_masks])
-    one_hot_distance = np.abs(1-one_hot_values)
+    one_hot_values = np.column_stack(
+        [np.sum(x[:, one_hot_mask], axis=1) for one_hot_mask in one_hot_masks]
+    )
+    one_hot_distance = np.abs(1 - one_hot_values)
     one_hot_distance = np.sum(one_hot_distance, axis=1)
     return one_hot_distance
 
 
+def results_to_numpy_results(results: List[EfficientResult], encoder):
+
+    initial_states = [result.initial_state for result in results]
+    pops_x = [
+        np.array([ind.X.astype(np.float64) for ind in result.pop]) for result in results
+    ]
+    # Convert to ML representation
+    pops_x_f = [
+        encoder.genetic_to_ml(pops_x[i], initial_states[i]) for i in range(len(results))
+    ]
+    return pops_x_f
+
+
+def results_to_history(results: List[HistoryResult]):
+
+    histories = [
+        [g["F"].tolist() for i, g in enumerate(r.history) if i > 0] for r in results
+    ]
+    histories = np.array(histories)
+    return histories
