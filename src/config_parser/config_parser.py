@@ -105,9 +105,7 @@ def get_config_hash():
 
 def get_dict_hash(dictionary):
     dictionary_str = json.dumps(dictionary, sort_keys=True)
-    dictionary_hash = hashlib.md5(
-        dictionary_str.encode("utf-8")
-    ).hexdigest()
+    dictionary_hash = hashlib.md5(dictionary_str.encode("utf-8")).hexdigest()
     return dictionary_hash
 
 
