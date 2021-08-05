@@ -9,7 +9,7 @@ import re
 
 def value_parser(value):
     SPECIAL_KEY = "SPECIAL_KEY"
-    if re.match(r"^-?\d+(?:\.\d+)$", value) is None:
+    if re.match("^[-+]?[0-9]*\\.?[0-9]+(e[-+]?[0-9]+)?$", value) is None:
         return str(value)
     else:
         return yaml.safe_load(f"{SPECIAL_KEY}: {value}")[SPECIAL_KEY]
