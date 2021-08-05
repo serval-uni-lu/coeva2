@@ -3,6 +3,7 @@ from typing import List
 
 import numpy
 import numpy as np
+import pandas as pd
 from pymoo.model.problem import Problem
 from tqdm import tqdm
 
