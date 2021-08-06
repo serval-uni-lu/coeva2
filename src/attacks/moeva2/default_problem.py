@@ -94,7 +94,6 @@ class DefaultProblem(Problem):
         G = self._constraints.evaluate(x_f)
         G = G * (G > 0).astype(np.float)
 
-        G = G.sum(axis=1)
         return G
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -126,7 +125,8 @@ class DefaultProblem(Problem):
         f2 = self._obj_distance(x_f_mm)
 
         # --- Domain constraints
-        G = self._calculate_constraints(x_f)
+        G_all = self._calculate_constraints(x_f)
+        G = G_all.sum(axis=1)
 
         F = [f1, f2, G] + self._evaluate_additional_objectives(x, x_f, x_f_mm, x_ml)
 
@@ -134,8 +134,10 @@ class DefaultProblem(Problem):
         out["F"] = np.column_stack(F)
 
         # Save output
-        if self._save_history:
-            self._history.append(out)
+        if "reduced" in self._save_history:
+            self._history.append(out["F"])
+        elif "full" in self._save_history:
+            self._history.append(np.concatenate((out["F"], G_all), axis=1))
 
     def _evaluate_additional_objectives(self, x, x_f, x_f_mm, x_ml):
         return []

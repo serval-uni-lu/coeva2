@@ -70,7 +70,7 @@ def results_to_numpy_results(results: List[EfficientResult], encoder):
 def results_to_history(results: List[HistoryResult]):
 
     histories = [
-        [g["F"].tolist() for i, g in enumerate(r.history) if i > 0] for r in results
+        [g.tolist() for i, g in enumerate(r.history) if i > 0] for r in results
     ]
     histories = np.array(histories)
     return histories
