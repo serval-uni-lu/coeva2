@@ -1,5 +1,5 @@
 ---
-project_name: lcld
+project_name: botnet
 paths:
   model: ./models/botnet/nn.model
   features: ./data/botnet/features.csv
@@ -8,13 +8,13 @@ paths:
   min_max_scaler: ./models/botnet/scaler.joblib
   ml_scaler: ./models/botnet/scaler.joblib
 dirs:
-  results: ./out/attacks/botnet/moeva/
+  results: ./out/attacks/botnet/united/
 misclassification_threshold: 0.5
 norm: inf
 n_initial_state: -1
 initial_state_offset: 0
 system:
-  n_jobs: 14
+  n_jobs: -1
   verbose: 1
-save_history: true
+save_history: "reduced"
 budget: 100000
