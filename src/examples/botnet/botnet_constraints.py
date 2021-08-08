@@ -34,7 +34,89 @@ class BotnetConstraints(Constraints):
     def _date_feature_to_month(feature):
         return np.floor(feature / 100) * 12 + (feature % 100)
 
-    def evaluate(self, x: np.ndarray, use_tensors:bool=False) -> np.ndarray:
+    def evaluate(self, x: np.ndarray, use_tensors: bool = False) -> np.ndarray:
+        if use_tensors:
+            return self.evaluate_tf2(x)
+        else:
+            return self.evaluate_numpy(x)
+
+    def evaluate_tf2(self, x):
+        tol = 1e-3
+
+        with open("./data/botnet/feat_idx.pickle", "rb") as f:
+            feat_idx = pickle.load(f)
+
+        for key in feat_idx:
+            feat_idx[key] = tf.convert_to_tensor(feat_idx[key], dtype=tf.int64)
+
+        sum_idx = tf.convert_to_tensor([0, 3, 6, 12, 15, 18], dtype=tf.int64)
+        max_idx = tf.convert_to_tensor([1, 4, 7, 13, 16, 19], dtype=tf.int64)
+        min_idx = tf.convert_to_tensor([2, 5, 8, 14, 17, 20], dtype=tf.int64)
+
+        g1 = tf.math.abs(
+            (
+                tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["icmp_sum_s_idx"], axis=1), axis=1
+                )
+                + tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["udp_sum_s_idx"], axis=1), axis=1
+                )
+                + tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["tcp_sum_s_idx"], axis=1), axis=1
+                )
+            )
+            - (
+                tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["bytes_in_sum_s_idx"], axis=1), axis=1
+                )
+                + tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["bytes_out_sum_s_idx"], axis=1), axis=1
+                )
+            )
+        )
+        g2 = tf.math.abs(
+            (
+                tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["icmp_sum_d_idx"], axis=1), axis=1
+                )
+                + tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["udp_sum_d_idx"], axis=1), axis=1
+                )
+                + tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["tcp_sum_d_idx"], axis=1), axis=1
+                )
+            )
+            - (
+                tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["bytes_in_sum_d_idx"], axis=1), axis=1
+                )
+                + tf.math.reduce_sum(
+                    tf.gather(x, feat_idx["bytes_out_sum_d_idx"], axis=1), axis=1
+                )
+            )
+        )
+
+        constraints0 = self.define_individual_constraints_pkts_bytes_tf(x, feat_idx)
+        constraints1 = self.define_individual_constraints_tf(
+            x, feat_idx, sum_idx, max_idx
+        )
+        constraints2 = self.define_individual_constraints_tf(
+            x, feat_idx, sum_idx, min_idx
+        )
+        constraints3 = self.define_individual_constraints_tf(
+            x, feat_idx, max_idx, min_idx
+        )
+
+        # constraints = tf.stack([g1, g2], 1)
+        constraints = tf.stack(
+            [g1, g2] + constraints0 + constraints1 + constraints2 + constraints3, 1
+        )
+
+        constraints = tf.clip_by_value(constraints - tol, 0, tf.constant(np.inf))
+
+        return constraints
+
+    def evaluate_numpy(self, x: np.ndarray) -> np.ndarray:
         # ----- PARAMETERS
 
         tol = 1e-3
@@ -48,13 +130,13 @@ class BotnetConstraints(Constraints):
 
         g1 = np.absolute(
             (
-                    x[:, feat_idx["icmp_sum_s_idx"]].sum(axis=1)
-                    + x[:, feat_idx["udp_sum_s_idx"]].sum(axis=1)
-                    + x[:, feat_idx["tcp_sum_s_idx"]].sum(axis=1)
+                x[:, feat_idx["icmp_sum_s_idx"]].sum(axis=1)
+                + x[:, feat_idx["udp_sum_s_idx"]].sum(axis=1)
+                + x[:, feat_idx["tcp_sum_s_idx"]].sum(axis=1)
             )
             - (
-                    x[:, feat_idx["bytes_in_sum_s_idx"]].sum(axis=1)
-                    + x[:, feat_idx["bytes_out_sum_s_idx"]].sum(axis=1)
+                x[:, feat_idx["bytes_in_sum_s_idx"]].sum(axis=1)
+                + x[:, feat_idx["bytes_out_sum_s_idx"]].sum(axis=1)
             )
         )
         g2 = np.absolute(
@@ -112,8 +194,8 @@ class BotnetConstraints(Constraints):
     def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
 
         # By default min and max are the extreme values
-        feature_min = np.array([0.] * self._feature_min.shape[0])
-        feature_max = np.array([0.] * self._feature_max.shape[0])
+        feature_min = np.array([0.0] * self._feature_min.shape[0])
+        feature_max = np.array([0.0] * self._feature_max.shape[0])
 
         # Creating the mask of value that should be provided by input
         min_dynamic = self._feature_min.astype(str) == "dynamic"
@@ -152,6 +234,43 @@ class BotnetConstraints(Constraints):
         self._constraints_min = df["min"].to_numpy()
         self._constraints_max = df["max"].to_numpy()
         self._fit_scaler()
+
+    @staticmethod
+    def define_individual_constraints_tf(x, feat_idx, upper_idx, lower_idx):
+        constraints = []
+
+        keys = list(feat_idx.keys())
+        for i in range(len(upper_idx)):
+            key = keys[upper_idx[i]]
+            type_lower = keys[lower_idx[i]]
+            type_upper = keys[upper_idx[i]]
+            for j in range(len(feat_idx[key])):
+                port_idx_lower = feat_idx[type_lower][j]
+                port_idx_upper = feat_idx[type_upper][j]
+                constraints.append(x[:, port_idx_lower] - x[:, port_idx_upper])
+        return constraints
+
+    @staticmethod
+    def define_individual_constraints_pkts_bytes_tf(x, feat_idx):
+        constraints = []
+        alpha = 1e-5
+        bytes_out = ["bytes_out_sum_s_idx", "bytes_out_sum_d_idx"]
+        pkts_out = ["pkts_out_sum_s_idx", "pkts_out_sum_d_idx"]
+        for i in range(len(bytes_out)):
+            pkts = feat_idx[pkts_out[i]]
+            bytes_ = feat_idx[bytes_out[i]]
+            for j in range(len(bytes_out[i]) - 2):
+                port_idx_pkts = pkts[j]
+                port_idx_bytes = bytes_[j]
+                a = x[:, port_idx_bytes]
+                b = x[:, port_idx_pkts]
+                broken = a - b
+                ratio = a / (b + alpha)
+                clean_ratio = tf.where(
+                    tf.math.is_nan(broken), tf.zeros_like(ratio), ratio
+                )
+                constraints.append(clean_ratio)
+        return constraints
 
     @staticmethod
     def define_individual_constraints(x, cons_idx, feat_idx, upper_idx, lower_idx):
