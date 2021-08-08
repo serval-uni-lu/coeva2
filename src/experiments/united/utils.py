@@ -1,4 +1,5 @@
 from src.examples.botnet.botnet_constraints import BotnetConstraints
+from src.examples.lcld.lcld_augmented_constraints import LcldAugmentedConstraints
 from src.examples.lcld.lcld_constraints import LcldConstraints
 from src.examples.malware.malware_constraints import MalwareConstraints
 from src.examples.lcld.lcld_constraints_sat import (
@@ -16,6 +17,7 @@ STR_TO_CONSTRAINTS_CLASS = {
     "lcld": LcldConstraints,
     "botnet": BotnetConstraints,
     "malware": MalwareConstraints,
+    "lcld_augmented": LcldAugmentedConstraints
 }
 
 STR_TO_SAT_CONSTRAINTS = {
