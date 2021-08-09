@@ -1,0 +1,19 @@
+---
+project_name: lcld_augmented
+paths:
+  model: ./models/lcld_augmented/nn.model
+  features: ./data/lcld_augmented/features.csv
+  constraints: ./data/lcld_augmented/constraints.csv
+  x_candidates: ./data/lcld_augmented/x_attack_candidates.npy
+  min_max_scaler: ./models/lcld_augmented/scaler.joblib
+  ml_scaler: ./models/lcld_augmented/scaler.joblib
+misclassification_threshold: 0.25
+dirs:
+  results: ./out/attacks/lcld_augmented/united/
+norm: inf
+n_initial_state: 4000
+initial_state_offset: 0
+system:
+  n_jobs: 10
+  verbose: 1
+save_history: "full"
