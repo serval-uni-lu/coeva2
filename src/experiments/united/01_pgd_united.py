@@ -109,7 +109,10 @@ def run():
         )
     )
     mask_int = constraints.get_feature_type() != "real"
-    x_attacks[:, mask_int] = np.rint(x_attacks[:, mask_int])
+    x_plus_minus = (x_attacks[:, mask_int] - x_initial[:, mask_int] >= 0)
+    x_attacks[:, mask_int][x_plus_minus] = np.floor(x_attacks[:, mask_int][x_plus_minus])
+    x_attacks[:, mask_int][~x_plus_minus] = np.ceil(x_attacks[:, mask_int][~x_plus_minus])
+    # x_attacks[:, mask_int] = np.rint(x_attacks[:, mask_int])
 
     # Apply sat if needed
 
