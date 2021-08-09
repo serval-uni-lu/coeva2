@@ -1,5 +1,8 @@
+import json
 import os
 import logging
+import subprocess
+
 from src.config_parser.config_parser import get_config, merge_parameters
 
 TABULATOR = ">>>"
@@ -10,42 +13,50 @@ def launch_script(script):
     global launch_counter
     launch_counter += 1
     logger.info(script)
+    subprocess.run(script)
 
 
 def run():
-    for seed in config["common"]["seeds"]:
+    config_dir = config["config_dir"]
+    for seed in config["seeds"]:
         logger.info(f"{TABULATOR*1} Running seed {seed} ...")
         for project in config["projects"]:
-            logger.info(f"{TABULATOR*2} Running project {project['name']} ...")
+            logger.info(f"{TABULATOR*2} Running project {project} ...")
+            for budget in config["budgets"]:
+                logger.info(f"{TABULATOR * 3} Running budget {budget} ...")
 
-            # Run MoEvA once
-            for f2 in config["common"]["thresholds"]["f2s"]:
-                logger.info(f"{TABULATOR*3} Running distance {f2} ...")
+                if "moeva" in config["attacks"]:
+                    logger.info(f"{TABULATOR * 4} Running MoEvA ...")
+                    eps_list = {"eps_list": config['eps_list']}
+                    eps_list_str = json.dumps(eps_list, separators=(',', ':'))
+                    launch_script([
+                        "python", "-m", "src.experiments.united.04_moeva",
+                        "-c", f"{config_dir}/moeva.yaml",
+                        "-c", f"{config_dir}/{project}.yaml",
+                        "-p", f"seed={seed}",
+                        "-p", f"budget={budget}",
+                        "-j", eps_list_str]
+                    )
 
-                # Run attacks
-                for attack in config["common"]["attacks"]:
-                    logger.info(f"{TABULATOR * 4} Running attack {attack['name']} ...")
-                    attack_param = {"attack": attack}
-                    launch_script(
-                        f"python -m src.united.{attack['name']}"
-                        "-c ./config/00_common"
-                        f"-p seed={seed}"
-                        f"-p project={project['name']}"
-                        f"-p thresholds.f2={f2}"
-                        f"-j {attack_param}"
-                    )
-                    logger.info(
-                        f"{TABULATOR * 4} Running success_rate {attack['name']} ..."
-                    )
-                    if attack["objective_script"] is not None:
-                        launch_script(
-                            f"python -m src.united.{attack['objective_script']}"
-                            "-c ./config/00_common"
-                            f"-p seed={seed}"
-                            f"-p project={project['name']}"
-                            f"-p thresholds.f2={f2}"
-                            f"-j {attack_param}"
-                        )
+                # Run the rest
+                if "pgd" in config["attacks"]:
+                    logger.info(f"{TABULATOR * 4} Running pgd ...")
+                    for eps in config["eps_list"]:
+                        logger.info(f"{TABULATOR * 5} Running eps {eps} ...")
+
+                        for loss_evaluation in config["loss_evaluations"]:
+                            logger.info(
+                                f"{TABULATOR * 6} Running loss_evaluation {loss_evaluation} ..."
+                            )
+                            launch_script([
+                                "python", f"-m", f"src.experiments.united.01_pgd_united",
+                                "-c", f"{config_dir}/pgd.yaml",
+                                "-c", f"{config_dir}/{project}.yaml",
+                                "-p", f"seed={seed}",
+                                "-p", f"budget={budget}",
+                                "-p", f"eps={eps}",
+                                "-p", f"loss_evaluation={loss_evaluation}"]
+                            )
 
 
 if __name__ == "__main__":
@@ -54,4 +65,3 @@ if __name__ == "__main__":
     logger = logging.getLogger()
     run()
     logger.info(f"{launch_counter} run executed.")
-
