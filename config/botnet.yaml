@@ -17,4 +17,3 @@ system:
   n_jobs: -1
   verbose: 1
 save_history: "reduced"
-budget: 100000
