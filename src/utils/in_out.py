@@ -19,7 +19,6 @@ def pickle_from_file(path):
 def pickle_from_dir(input_dir, handler=None, n_jobs=1):
     files_regex = input_dir + "/*.pickle"
     files = glob.glob(files_regex)
-    obj_list = []
 
     if handler == None:
         handler = lambda i, x: id_function(x)
