@@ -23,7 +23,6 @@ class BotnetConstraints(Constraints):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
-        # self._amount_feature_index = amount_feature_index
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
@@ -107,7 +106,6 @@ class BotnetConstraints(Constraints):
             x, feat_idx, max_idx, min_idx
         )
 
-        # constraints = tf.stack([g1, g2], 1)
         constraints = tf.stack(
             [g1, g2] + constraints0 + constraints1 + constraints2 + constraints3, 1
         )
