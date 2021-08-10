@@ -23,6 +23,8 @@ class BotnetConstraints(Constraints):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
+        with open("./data/botnet/feat_idx.pickle", "rb") as f:
+            self.feat_idx = pickle.load(f)
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
@@ -119,8 +121,7 @@ class BotnetConstraints(Constraints):
 
         tol = 1e-3
         # should write a function in utils for this part
-        with open("./data/botnet/feat_idx.pickle", "rb") as f:
-            feat_idx = pickle.load(f)
+
 
         sum_idx = [0, 3, 6, 12, 15, 18]
         max_idx = [1, 4, 7, 13, 16, 19]
@@ -128,24 +129,24 @@ class BotnetConstraints(Constraints):
 
         g1 = np.absolute(
             (
-                x[:, feat_idx["icmp_sum_s_idx"]].sum(axis=1)
-                + x[:, feat_idx["udp_sum_s_idx"]].sum(axis=1)
-                + x[:, feat_idx["tcp_sum_s_idx"]].sum(axis=1)
+                x[:, self.feat_idx["icmp_sum_s_idx"]].sum(axis=1)
+                + x[:, self.feat_idx["udp_sum_s_idx"]].sum(axis=1)
+                + x[:, self.feat_idx["tcp_sum_s_idx"]].sum(axis=1)
             )
             - (
-                x[:, feat_idx["bytes_in_sum_s_idx"]].sum(axis=1)
-                + x[:, feat_idx["bytes_out_sum_s_idx"]].sum(axis=1)
+                x[:, self.feat_idx["bytes_in_sum_s_idx"]].sum(axis=1)
+                + x[:, self.feat_idx["bytes_out_sum_s_idx"]].sum(axis=1)
             )
         )
         g2 = np.absolute(
             (
-                x[:, feat_idx["icmp_sum_d_idx"]].sum(axis=1)
-                + x[:, feat_idx["udp_sum_d_idx"]].sum(axis=1)
-                + x[:, feat_idx["tcp_sum_d_idx"]].sum(axis=1)
+                x[:, self.feat_idx["icmp_sum_d_idx"]].sum(axis=1)
+                + x[:, self.feat_idx["udp_sum_d_idx"]].sum(axis=1)
+                + x[:, self.feat_idx["tcp_sum_d_idx"]].sum(axis=1)
             )
             - (
-                x[:, feat_idx["bytes_in_sum_d_idx"]].sum(axis=1)
-                + x[:, feat_idx["bytes_out_sum_d_idx"]].sum(axis=1)
+                x[:, self.feat_idx["bytes_in_sum_d_idx"]].sum(axis=1)
+                + x[:, self.feat_idx["bytes_out_sum_d_idx"]].sum(axis=1)
             )
         )
 
@@ -153,19 +154,19 @@ class BotnetConstraints(Constraints):
 
         cons_idx = 3
         cons_idx, constraints0 = self.define_individual_constraints_pkts_bytes(
-            x, cons_idx, feat_idx
+            x, cons_idx, self.feat_idx
         )
         constraints.extend(constraints0)
         cons_idx, constraints1 = self.define_individual_constraints(
-            x, cons_idx, feat_idx, sum_idx, max_idx
+            x, cons_idx, self.feat_idx, sum_idx, max_idx
         )
         constraints.extend(constraints1)
         cons_idx, constraints2 = self.define_individual_constraints(
-            x, cons_idx, feat_idx, sum_idx, min_idx
+            x, cons_idx, self.feat_idx, sum_idx, min_idx
         )
         constraints.extend(constraints2)
         cons_idx, constraints3 = self.define_individual_constraints(
-            x, cons_idx, feat_idx, max_idx, min_idx
+            x, cons_idx, self.feat_idx, max_idx, min_idx
         )
         constraints.extend(constraints3)
 
