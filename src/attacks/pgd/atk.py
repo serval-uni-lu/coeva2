@@ -144,7 +144,8 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         x_adv = tf.add(perturbation, x_init)
 
         # Update the features of x according to the constraints
-        # x_adv = self.fix_features_type(x_adv)
+        if "repair" in self.loss_evaluation:
+            x_adv = self.fix_features_type(x_adv)
 
         # evaluate success rate with constraints
 
