@@ -9,8 +9,10 @@ import pandas as pd
 import pickle
 import logging
 
+from src.examples.utils import constraints_augmented_np, constraints_augmented_tf
 
-class BotnetConstraints(Constraints):
+
+class BotnetAugmentedConstraints(Constraints):
     def fix_features_types(self, x) -> Union[np.ndarray, tf.Tensor]:
         raise NotImplementedError
 
@@ -25,6 +27,7 @@ class BotnetConstraints(Constraints):
         self._fit_scaler()
         with open("./data/botnet/feat_idx.pickle", "rb") as f:
             self.feat_idx = pickle.load(f)
+        self.important_features = np.load("./data/botnet/important_features.npy")
         self.feat_idx_tf = self.feat_idx.copy()
         for key in self.feat_idx:
             self.feat_idx_tf[key] = tf.convert_to_tensor(self.feat_idx[key], dtype=tf.int64)
@@ -46,6 +49,7 @@ class BotnetConstraints(Constraints):
 
     def evaluate_tf2(self, x):
         tol = 1e-3
+
 
         sum_idx = tf.convert_to_tensor([0, 3, 6, 12, 15, 18], dtype=tf.int64)
         max_idx = tf.convert_to_tensor([1, 4, 7, 13, 16, 19], dtype=tf.int64)
@@ -106,7 +110,15 @@ class BotnetConstraints(Constraints):
         )
 
         constraints = tf.stack(
-            [g1, g2] + constraints0 + constraints1 + constraints2 + constraints3, 1
+            [g1, g2]
+            + constraints0
+            + constraints1
+            + constraints2
+            + constraints3
+            + constraints_augmented_tf(
+                x, self.important_features[:, 0], self.important_features[:, 1]
+            ),
+            1,
         )
 
         constraints = tf.clip_by_value(constraints - tol, 0, tf.constant(np.inf))
@@ -118,7 +130,6 @@ class BotnetConstraints(Constraints):
 
         tol = 1e-3
         # should write a function in utils for this part
-
 
         sum_idx = [0, 3, 6, 12, 15, 18]
         max_idx = [1, 4, 7, 13, 16, 19]
@@ -167,7 +178,12 @@ class BotnetConstraints(Constraints):
         )
         constraints.extend(constraints3)
 
-        constraints = anp.column_stack(constraints)
+        constraints = anp.column_stack(
+            constraints
+            + constraints_augmented_np(
+                x, self.important_features[:, 0], self.important_features[:, 1]
+            )
+        )
         constraints[constraints <= tol] = 0.0
 
         return constraints
@@ -176,7 +192,7 @@ class BotnetConstraints(Constraints):
     # PLEASE UPDATE THE NUMBER HERE
     # -------
     def get_nb_constraints(self) -> int:
-        return 360
+        return 360 + 10
 
     def normalise(self, x: np.ndarray) -> np.ndarray:
         return self._scaler.transform(x)
