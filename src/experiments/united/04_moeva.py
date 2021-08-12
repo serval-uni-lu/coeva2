@@ -24,7 +24,7 @@ warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 @timing
 def run():
-
+    os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
     out_dir = config["dirs"]["results"]
     config_hash = get_config_hash()
     mid_fix = f"{config['attack_name']}"
