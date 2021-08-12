@@ -4,9 +4,10 @@ from typing import Tuple, Union
 import numpy as np
 import tensorflow as tf
 
+
 class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def evaluate(self, x: np.ndarray, use_tensors:bool=False) -> np.ndarray:
+    def evaluate(self, x: np.ndarray, use_tensors: bool = False) -> np.ndarray:
         """
         Evaluate the distance to constraints satisfaction of x. This method should be overridden by the attacker.
 
