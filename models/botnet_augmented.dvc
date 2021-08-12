@@ -1,0 +1,5 @@
+outs:
+- md5: 109337e4ba28a1d1c87cbe4af41d00a4.dir
+  size: 858579
+  nfiles: 5
+  path: botnet_augmented
