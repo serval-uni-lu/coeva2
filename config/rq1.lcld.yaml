@@ -1,0 +1,19 @@
+---
+config_dir: ./config/
+attacks:
+  - moeva
+  - pgd
+seeds:
+  - 42
+projects:
+  - lcld
+eps_list:
+  - 0.031
+budgets:
+  - 10000
+loss_evaluations:
+  - flip
+  - flip+sat
+  - constraints+flip
+  - constraints+flip+adaptive_eps_step
+  - constraints+flip+adaptive_eps_step+repair
