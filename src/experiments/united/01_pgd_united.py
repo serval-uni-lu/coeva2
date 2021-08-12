@@ -144,6 +144,7 @@ def run():
         thresholds=threholds,
         min_max_scaler=scaler,
         ml_scaler=scaler,
+        norm=config["norm"]
     )
 
     success_rate_df = objective_calc.success_rate_3d_df(x_initial, x_attacks)
@@ -189,4 +190,4 @@ if __name__ == "__main__":
     config = get_config()
     run()
     # To allow the metrics to be uploaded
-    time.sleep(30)
+    # time.sleep(30)

@@ -103,6 +103,7 @@ def run():
             thresholds=threholds,
             min_max_scaler=scaler,
             ml_scaler=scaler,
+            norm=config["norm"]
         )
         success_rate_df = objective_calc.success_rate_3d_df(X_initial_states, x_attacks)
         objective_lists.append(success_rate_df.to_dict(orient="records")[0])
