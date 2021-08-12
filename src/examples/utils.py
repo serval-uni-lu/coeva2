@@ -18,8 +18,8 @@ def constraints_augmented_np(
             x_augmented[:, x_index]
             - (
                 np.logical_xor(
-                    (x[:, important_features[i1]] >= features_mean[i1]),
-                    (x[:, important_features[i2]] >= features_mean[i2]),
+                    (x[:, int(important_features[i1])] >= features_mean[i1]),
+                    (x[:, int(important_features[i2])] >= features_mean[i2]),
                 ).astype(np.float64)
             )
         )

@@ -8,6 +8,8 @@ import pandas as pd
 import tensorflow as tf
 import logging
 
+from src.attacks.moeva2.utils import get_ohe_masks
+
 
 class LcldConstraints(Constraints):
     def __init__(
@@ -34,7 +36,6 @@ class LcldConstraints(Constraints):
 
     def fix_features_types(self, x):
 
-        #
         new_tensor_v = tf.Variable(x)
 
         # enforcing 2 possibles values
@@ -47,6 +48,19 @@ class LcldConstraints(Constraints):
         # enforcing the power formula
         x3 = x0 * x2 * tf.math.pow(1 + x2, x1) / (tf.math.pow(1 + x2, x1) - 1)
         new_tensor_v = new_tensor_v[:, 3].assign(x3)
+
+        # enforcing ohe
+
+        ohe_masks = get_ohe_masks(self._feature_type)
+
+        new_tensor_v = new_tensor_v.numpy()
+        for mask in ohe_masks:
+            ohe = new_tensor_v[:, mask]
+            max_feature = np.argmax(ohe, axis=1)
+            new_ohe = np.zeros_like(ohe)
+            new_ohe[np.arange(len(ohe)), max_feature] = 1
+
+            new_tensor_v[:, mask] = new_ohe
 
         return tf.convert_to_tensor(new_tensor_v)
 
