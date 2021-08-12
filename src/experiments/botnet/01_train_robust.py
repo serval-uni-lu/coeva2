@@ -10,8 +10,7 @@ from tqdm import tqdm
 
 from src.config_parser.config_parser import get_config
 from src.experiments.botnet.features import augment_data
-from src.experiments.lcld.model import train_model, print_score
-from src.experiments.united.utils import get_constraints_from_str
+from src.experiments.botnet.model import train_model, print_score
 from src.utils.in_out import load_model
 
 np.random.seed(205)
@@ -20,12 +19,12 @@ import tensorflow as tf
 tf.random.set_seed(206)
 
 from sklearn.preprocessing import MinMaxScaler
-os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+
 # ----- CONFIG
 config = get_config()
-project_name = "lcld"
+project_name = "botnet"
 nb_important_features = 5
-threshold = 0.25
+threshold = 0.5
 
 # ----- LOAD
 
@@ -195,7 +194,7 @@ y_proba = model_augmented.predict_proba(
     scaler_augmented.transform(x_test_augmented)
 ).reshape(-1)
 y_pred_augmented = (y_proba >= threshold).astype(int)
-print_score(y_test, y_pred_augmented)
+print_score(y_test, y_pred)
 
 
 # ----- Common x_attacks
@@ -209,15 +208,5 @@ else:
     candidates_index = (y_test == 1) * (y_test == y_pred) * (y_test == y_pred_augmented)
     x_candidates = x_test[candidates_index, :]
     x_candidates_augmented = x_test_augmented[candidates_index, :]
-
-    constraints_calc = get_constraints_from_str(project_name)(
-        f"./data/{project_name}/features.csv",
-        f"./data/{project_name}/constraints.csv",
-    )
-    constraints_violation = constraints_calc.evaluate(x_candidates)
-    constraints_respected = np.max(constraints_violation, axis=1) <= 0
-    x_candidates = x_candidates[constraints_respected]
-    x_candidates_augmented = x_candidates_augmented[constraints_respected]
-
     np.save(x_candidates_path, x_candidates)
     np.save(x_candidates_augmented_path, x_candidates_augmented)

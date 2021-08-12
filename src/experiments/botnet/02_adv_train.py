@@ -8,10 +8,13 @@ import shap
 from imblearn.under_sampling import RandomUnderSampler
 from tqdm import tqdm
 
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 from src.config_parser.config_parser import get_config
 from src.experiments.botnet.features import augment_data
-from src.experiments.lcld.model import train_model, print_score
+from src.experiments.botnet.model import train_model, print_score
 from src.experiments.united.utils import get_constraints_from_str
+from src.utils import filter_initial_states
 from src.utils.in_out import load_model
 
 np.random.seed(205)
@@ -20,12 +23,16 @@ import tensorflow as tf
 tf.random.set_seed(206)
 
 from sklearn.preprocessing import MinMaxScaler
-os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+
 # ----- CONFIG
 config = get_config()
-project_name = "lcld"
+project_name = "botnet"
 nb_important_features = 5
-threshold = 0.25
+threshold = 0.5
+moeva_path = ""
+gradient_path = ""
+norm = 2
+candidates_used = [0, 100]
 
 # ----- LOAD
 
@@ -36,76 +43,77 @@ y_test = np.load(f"./data/{project_name}/y_test.npy")
 features = pd.read_csv(f"./data/{project_name}/features.csv")
 constraints = pd.read_csv(f"./data/{project_name}/constraints.csv")
 
-# ----- SCALER
+
+# ----- LOAD SCALER
 
 scaler_path = f"./models/{project_name}/scaler.joblib"
-if os.path.exists(scaler_path):
-    print(f"{scaler_path} exists loading...")
-    scaler = joblib.load(scaler_path)
-else:
-    scaler = MinMaxScaler()
-    x_all = np.concatenate((x_train, x_test))
-    x_min = features["min"]
-    x_max = features["max"]
-    x_min[x_min == "dynamic"] = np.min(x_all, axis=0)[x_min == "dynamic"]
-    x_max[x_max == "dynamic"] = np.max(x_all, axis=0)[x_max == "dynamic"]
-    x_min = x_min.astype(np.float).to_numpy().reshape(1, -1)
-    x_max = x_max.astype(np.float).to_numpy().reshape(1, -1)
-    x_min = np.min(np.concatenate((x_min, x_all)), axis=0).reshape(1, -1)
-    x_max = np.max(np.concatenate((x_max, x_all)), axis=0).reshape(1, -1)
-    scaler.fit(np.concatenate((np.floor(x_min), np.ceil(x_max))))
-    joblib.dump(scaler, scaler_path)
+scaler = joblib.load(scaler_path)
 
-# ----- TRAIN MODEL
-
+# ----- LOAD MODEL
 model_path = f"./models/{project_name}/nn.model"
+model = load_model(model_path)
 
-if os.path.exists(model_path):
-    print(f"{model_path} exists loading...")
-    model = load_model(model_path)
-else:
-    model = train_model(scaler.transform(x_train), y_train)
-    tf.keras.models.save_model(
-        model,
-        model_path,
-        overwrite=True,
-        include_optimizer=True,
-        save_format=None,
-        signatures=None,
-        options=None,
-    )
 # ----- MODEL SCORE
 
 y_proba = model.predict_proba(scaler.transform(x_test)).reshape(-1)
 y_pred = (y_proba >= threshold).astype(int)
 print_score(y_test, y_pred)
 
-# ----- FIND IMPORTANT FEATURES
+# ----- LOAD CANDIDATES
+x_candidates_path = f"./data/{project_name}/x_candidates_common.npy"
+x_candidates = np.load(x_candidates_path)
 
-important_features_path = f"./data/{project_name}/important_features.npy"
-if os.path.exists(important_features_path):
-    print(f"{important_features_path} exists loading...")
-    important_features = np.load(important_features_path)
-else:
-    sampler = RandomUnderSampler(sampling_strategy={0: 300, 1: 300}, random_state=42)
-    x_train_small, y_train_small = sampler.fit_resample(x_train, y_train)
-    explainer = shap.DeepExplainer(model, scaler.transform(x_train_small))
-    shap_values = explainer.shap_values(scaler.transform(x_train_small))
-    shap_values_per_feature = np.mean(np.abs(np.array(shap_values)[0]), axis=0)
-    shap_values_per_mutable_feature = shap_values_per_feature[features["mutable"]]
+# ----- LOAD Adversarials
+x_moeva = np.load(moeva_path)
+gradient = np.load(gradient_path)
 
-    mutable_feature_index = np.where(features["mutable"])[0]
-    order_feature_mutable = np.argsort(shap_values_per_mutable_feature)[::-1]
-    important_features_index = mutable_feature_index[order_feature_mutable][
-        :nb_important_features
-    ]
-    important_features_mean = np.mean(x_train[:, important_features_index], axis=0)
+# ----- CREATE HELPER OBJECT
+classifier = Classifier(model)
+constraints_calculator = get_constraints_from_str(project_name)(
+    f"./data/{project_name}/features.csv",
+    f"./data/{project_name}/constraints.csv",
+)
+objective_calc = ObjectiveCalculator(
+    classifier,
+    constraints_calculator,
+    minimize_class=1,
+    thresholds=config["thresholds"],
+    min_max_scaler=scaler,
+    ml_scaler=scaler,
+    norm=norm,
+)
 
-    important_features = np.column_stack(
-        [important_features_index, important_features_mean]
+# ----- RETRIEVE ADVS
+x_candidates_used = filter_initial_states(
+    x_candidates, candidates_used[0], candidates_used[1]
+)
+
+
+def create_adv_model(x_attacks, attack_name):
+    x_train_adv_path = f"./data/{project_name}/x_train_{attack_name}.npy"
+    y_train_adv_path = f"./data/{project_name}/y_train_{attack_name}.npy"
+
+    if os.path.exists(x_train_adv_path) and os.path.exists(y_train_adv_path):
+        x_train_adv = np.load(x_train_adv_path)
+        y_train_adv = np.load(y_train_adv_path)
+
+    # ---- RETRIEVE ADV
+    x_attacks_adv = objective_calc.get_successful_attacks(
+        x_candidates_used, x_moeva, preferred_metrics="distance", order="asc", max_inputs=-1
     )
-    np.save(important_features_path, important_features)
+    # ---- AUGMENT DATA
+    x_train_adv = np.concatenate((x_train, x_attacks_adv), axis=0)
+    y_train_adv = np.concatenate((y_train, np.zeros(x_attacks_adv.shape[0])), axis=0)
 
+
+
+# ---- MOEVA
+x_moeva_adv = objective_calc.get_successful_attacks(
+    x_candidates_used, x_moeva, preferred_metrics="distance", order="asc", max_inputs=-1
+)
+x_gradient_adv = objective_calc.get_successful_attacks(
+    x_candidates_used, x_gradient_adv, preferred_metrics="distance", order="asc", max_inputs=-1
+)
 
 # ----- AUGMENT DATASET
 x_train_augmented_path = f"./data/{project_name}_augmented/x_train.npy"
@@ -195,7 +203,7 @@ y_proba = model_augmented.predict_proba(
     scaler_augmented.transform(x_test_augmented)
 ).reshape(-1)
 y_pred_augmented = (y_proba >= threshold).astype(int)
-print_score(y_test, y_pred_augmented)
+print_score(y_test, y_pred)
 
 
 # ----- Common x_attacks
@@ -209,15 +217,5 @@ else:
     candidates_index = (y_test == 1) * (y_test == y_pred) * (y_test == y_pred_augmented)
     x_candidates = x_test[candidates_index, :]
     x_candidates_augmented = x_test_augmented[candidates_index, :]
-
-    constraints_calc = get_constraints_from_str(project_name)(
-        f"./data/{project_name}/features.csv",
-        f"./data/{project_name}/constraints.csv",
-    )
-    constraints_violation = constraints_calc.evaluate(x_candidates)
-    constraints_respected = np.max(constraints_violation, axis=1) <= 0
-    x_candidates = x_candidates[constraints_respected]
-    x_candidates_augmented = x_candidates_augmented[constraints_respected]
-
     np.save(x_candidates_path, x_candidates)
     np.save(x_candidates_augmented_path, x_candidates_augmented)
