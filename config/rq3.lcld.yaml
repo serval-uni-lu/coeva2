@@ -1,7 +1,7 @@
 ---
 config_dir: ./config/
 attacks:
-  - moeva
+#  - moeva
   - pgd
 seeds:
   - 42
@@ -14,6 +14,6 @@ budgets:
 loss_evaluations:
   - constraints+flip+adaptive_eps_step+repair
 models:
+  - gradient
   - original
   - moeva
-  - gradient

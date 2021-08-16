@@ -1,20 +1,19 @@
 ---
 config_dir: ./config/
 attacks:
-  - moeva
+#  - moeva
   - pgd
 seeds:
   - 42
 projects:
-  - lcld
+  - botnet
 eps_list:
-  - 0.031
-  - 0.05
+  - 1
 budgets:
-  - 10000
+  - 1000
 loss_evaluations:
-  - flip
-  - flip+sat
-  - constraints+flip
+#  - flip
+#  - flip+sat
+#  - constraints+flip
   - constraints+flip+adaptive_eps_step
-  - constraints+flip+adaptive_eps_step+repair
+#  - constraints+flip+adaptive_eps_step+repair

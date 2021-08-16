@@ -9,7 +9,7 @@ paths:
   ml_scaler: ./models/lcld/scaler.joblib
 misclassification_threshold: 0.25
 dirs:
-  results: ./out/attacks/lcld/l2/
+  results: ./out/attacks/lcld/l2_last/
 norm: 2
 n_initial_state: 4000
 initial_state_offset: 0

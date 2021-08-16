@@ -1,7 +1,4 @@
 ---
 attack_name: pgd
-comet: False
-nb_iter: 1000
-nb_random: 1
-alternate_frequency: 5
+comet: True
 constraints_optim: "sum"
