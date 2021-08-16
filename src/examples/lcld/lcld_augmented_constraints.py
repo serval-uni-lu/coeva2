@@ -20,10 +20,7 @@ class LcldAugmentedConstraints(Constraints):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
-        self.important_features = np.load(
-            "./data/lcld_augmented/important_features.npy"
-        )
-        self.features_mean = np.load("./data/lcld_augmented/features_augment_mean.npy")
+        self.important_features = np.load("./data/lcld/important_features.npy")
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
@@ -135,8 +132,8 @@ class LcldAugmentedConstraints(Constraints):
         g410 = tf.math.abs(x[:, 25] - clean_ratio)
 
         constraints = tf.stack(
-            [g41, g42, g43, g44, g45, g46, g47, g48, g49, g410]
-            + constraints_augmented_tf(x, self.important_features, self.features_mean),
+            [g41, g42, g43, g44, g45, g46, g47, g48, g49, g410],
+            # + constraints_augmented_tf(x, self.important_features[:, 0], self.important_features[:, 1]),
             1,
         )
 
@@ -207,7 +204,7 @@ class LcldAugmentedConstraints(Constraints):
 
         constraints = anp.column_stack(
             [g41, g42, g43, g44, g45, g46, g47, g48, g49, g410]
-            + constraints_augmented_np(x, self.important_features, self.features_mean)
+            + constraints_augmented_np(x, self.important_features[:, 0], self.important_features[:, 1])
         )
         constraints[constraints <= tol] = 0.0
 

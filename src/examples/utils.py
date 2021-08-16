@@ -44,8 +44,8 @@ def constraints_augmented_tf(
             x_augmented[:, x_index]
             - tf.cast(
                 tf.math.logical_xor(
-                    (x[:, important_features[i1]] >= features_mean[i1]),
-                    (x[:, important_features[i2]] >= features_mean[i2]),
+                    (x[:, int(important_features[i1])] >= features_mean[i1]),
+                    (x[:, int(important_features[i2])] >= features_mean[i2]),
                 ),
                 tf.float32,
             )
