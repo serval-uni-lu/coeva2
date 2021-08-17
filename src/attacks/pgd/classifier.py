@@ -206,15 +206,15 @@ class TF2Classifier(TensorFlowV2Classifier):
                         step=iter_i,
                         epoch=batch_id,
                     )
-
-                    for i in range(loss_constraints.shape[1]):
-                        constraint_loss = loss_constraints[:, i].numpy().mean()
-                        self._experiment.log_metric(
-                            "ctr_{}".format(i),
-                            constraint_loss,
-                            step=iter_i,
-                            epoch=batch_id,
-                        )
+                    if "full" in self._parameters.get("save_history"):
+                        for i in range(loss_constraints.shape[1]):
+                            constraint_loss = loss_constraints[:, i].numpy().mean()
+                            self._experiment.log_metric(
+                                "ctr_{}".format(i),
+                                constraint_loss,
+                                step=iter_i,
+                                epoch=batch_id,
+                            )
 
                 loss_class = loss_class * tf.constant(
                     1 - 2 * int(targeted), dtype=ART_NUMPY_DTYPE
