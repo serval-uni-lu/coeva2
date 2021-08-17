@@ -127,11 +127,10 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         perturbation = self._compute_perturbation(x_adv, y, mask)
 
         if "adaptive_eps_step" in self.loss_evaluation:
-            iteration_per_step = self.max_iter // 10
-            current_power = self.iter_counter // iteration_per_step + 1
-            eps_step_dynamic = eps * (1 / np.power(10, current_power))
-            # print(f"step {eps_step_dynamique} at iteration {self.iter_counter}")
-            # Apply perturbation and clip
+            iteration_per_step = self.max_iter // 18
+            current_power = np.float64(self.iter_counter // iteration_per_step + 1)
+            eps_step_dynamic = eps * (1 / np.float_power(10., current_power))
+            print(f"{current_power}: {eps_step_dynamic}")
         else:
             eps_step_dynamic = eps_step
 
