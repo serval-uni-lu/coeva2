@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import shap
 from imblearn.under_sampling import RandomUnderSampler
+from tensorflow.python.keras.utils.np_utils import to_categorical
 from tqdm import tqdm
 
 from src.config_parser.config_parser import get_config
@@ -63,7 +64,7 @@ if os.path.exists(model_path):
     print(f"{model_path} exists loading...")
     model = load_model(model_path)
 else:
-    model = train_model(scaler.transform(x_train), y_train)
+    model = train_model(scaler.transform(x_train), to_categorical(y_train))
     tf.keras.models.save_model(
         model,
         model_path,
@@ -75,8 +76,8 @@ else:
     )
 # ----- MODEL SCORE
 
-y_proba = model.predict_proba(scaler.transform(x_test)).reshape(-1)
-y_pred = (y_proba >= threshold).astype(int)
+y_proba = model.predict_proba(scaler.transform(x_test))
+y_pred = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred)
 
 # ----- FIND IMPORTANT FEATURES
@@ -177,7 +178,7 @@ if os.path.exists(model_augmented_path):
     model_augmented = load_model(model_augmented_path)
 else:
     model_augmented = train_model(
-        scaler_augmented.transform(x_train_augmented), y_train
+        scaler_augmented.transform(x_train_augmented), to_categorical(y_train)
     )
     tf.keras.models.save_model(
         model_augmented,
@@ -192,9 +193,9 @@ else:
 
 y_proba = model_augmented.predict_proba(
     scaler_augmented.transform(x_test_augmented)
-).reshape(-1)
-y_pred_augmented = (y_proba >= threshold).astype(int)
-print_score(y_test, y_pred)
+)
+y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
+print_score(y_test, y_pred_augmented)
 
 
 # ----- Common x_attacks
