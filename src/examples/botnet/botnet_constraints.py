@@ -71,7 +71,7 @@ class BotnetConstraints(Constraints):
                     tf.gather(x, self.feat_idx_tf["bytes_out_sum_s_idx"], axis=1), axis=1
                 )
             )
-        )
+        ) - 0.4999999
         g2 = tf.math.abs(
             (
                 tf.math.reduce_sum(
