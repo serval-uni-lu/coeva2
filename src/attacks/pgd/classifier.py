@@ -258,6 +258,21 @@ class TF2Classifier(TensorFlowV2Classifier):
                 else:
                     loss = loss_class
 
+            if self._experiment and batch_id % self._experiment_batch_skip == 0:
+                self._experiment.log_metric(
+                    "loss_max",
+                    loss.numpy().max(),
+                    step=iter_i,
+                    epoch=batch_id,
+                )
+
+                self._experiment.log_metric(
+                    "loss_mean",
+                    loss.numpy().mean(),
+                    step=iter_i,
+                    epoch=batch_id,
+                )
+
             if "full" in self._parameters.get("save_history"):
                 self.history.append(
                     np.column_stack(
