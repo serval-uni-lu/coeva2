@@ -307,14 +307,26 @@ class TF2Classifier(TensorFlowV2Classifier):
         if not self.all_framework_preprocessing:
             gradients = self._apply_preprocessing_gradient(x, gradients)
 
-        if self._experiment and batch_id % self._experiment_batch_skip == 0:
-            self._experiment.log_metric(
-                "grad_max", gradients.numpy().max(), step=iter_i, epoch=batch_id
-            )
-            self._experiment.log_metric(
-                "grad_mean", gradients.numpy().mean(), step=iter_i, epoch=batch_id
-            )
-            self._experiment.log_metric(
-                "grad_min", gradients.numpy().min(), step=iter_i, epoch=batch_id
-            )
+        if isinstance(gradients, np.ndarray):
+            if self._experiment and batch_id % self._experiment_batch_skip == 0:
+                self._experiment.log_metric(
+                    "grad_max", gradients.max(), step=iter_i, epoch=batch_id
+                )
+                self._experiment.log_metric(
+                    "grad_mean", gradients.mean(), step=iter_i, epoch=batch_id
+                )
+                self._experiment.log_metric(
+                    "grad_min", gradients.min(), step=iter_i, epoch=batch_id
+                )
+        else:
+            if self._experiment and batch_id % self._experiment_batch_skip == 0:
+                self._experiment.log_metric(
+                    "grad_max", gradients.numpy().max(), step=iter_i, epoch=batch_id
+                )
+                self._experiment.log_metric(
+                    "grad_mean", gradients.numpy().mean(), step=iter_i, epoch=batch_id
+                )
+                self._experiment.log_metric(
+                    "grad_min", gradients.numpy().min(), step=iter_i, epoch=batch_id
+                )
         return gradients
