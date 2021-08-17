@@ -144,14 +144,11 @@ def run():
         thresholds=threholds,
         min_max_scaler=scaler,
         ml_scaler=scaler,
-        norm=config["norm"]
+        norm=config["norm"],
     )
 
     success_rate_df = objective_calc.success_rate_3d_df(x_initial, x_attacks)
     print(success_rate_df)
-
-
-
 
     # for c, v in zip(success_rate_df.columns, success_rate_df.values[0]):
     #     experiment.log_metric(c, v)
