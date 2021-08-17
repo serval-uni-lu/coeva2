@@ -88,19 +88,34 @@ def run():
     )
     # Use only half eps if apply sat after
     per_attack_eps = config["eps"] / 2 if apply_sat else config["eps"]
-    pgd = PGD(
-        kc_classifier,
-        eps=per_attack_eps - 0.000001,
-        eps_step=config["eps"] / 3,
-        norm=config.get("norm"),
-        verbose=config["system"]["verbose"] == 1,
-        max_iter=int(config.get("budget") / 2),
-        num_random_init=config.get("nb_random", 0),
-        batch_size=x_initial.shape[0],
-        loss_evaluation=config.get("loss_evaluation"),
-    )
+    if "autopgd" in config.get("loss_evaluation"):
+        attack = AutoProjectedGradientDescent(
+            kc_classifier,
+            constraints=constraints,
+            scaler=scaler,
+            experiment=experiment,
+            parameters=config,
+            eps=per_attack_eps - 0.000001,
+            eps_step=per_attack_eps / 3,
+            loss_type="cross_entropy",
+            nb_random_init=config.get("nb_random", 1),
+            max_iter=int(config.get("budget") / 2),
+            batch_size=x_initial.shape[0],
+        )
+    else:
+        attack = PGD(
+            kc_classifier,
+            eps=per_attack_eps - 0.000001,
+            eps_step=0.1,
+            norm=config.get("norm"),
+            verbose=config["system"]["verbose"] == 1,
+            max_iter=int(config.get("budget") / 2),
+            num_random_init=config.get("nb_random", 0),
+            batch_size=x_initial.shape[0],
+            loss_evaluation=config.get("loss_evaluation"),
+        )
     x_attacks = scaler.inverse_transform(
-        pgd.generate(
+        attack.generate(
             x=scaler.transform(x_initial),
             mask=constraints.get_mutable_mask(),
         )
