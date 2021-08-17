@@ -25,7 +25,7 @@ from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
 
 
 def run():
-    os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     out_dir = config["dirs"]["results"]
     config_hash = get_config_hash()
     mid_fix = f"{config['attack_name']}_{config['loss_evaluation']}"
