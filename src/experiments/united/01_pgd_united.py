@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime
+from itertools import combinations
 from pathlib import Path
 import comet_ml
 import joblib
@@ -8,9 +8,11 @@ import numpy as np
 import tensorflow as tf
 
 from src.attacks.pgd.atk import PGDTF2 as PGD
+from src.attacks.pgd.auto_pgd import AutoProjectedGradientDescent
 from src.attacks.pgd.classifier import TF2Classifier as kc
 from src.attacks.sat.sat import SatAttack
 from src.config_parser.config_parser import get_config, get_config_hash, save_config
+from src.experiments.botnet.features import augment_data
 from src.experiments.united.utils import (
     get_constraints_from_str,
     get_sat_constraints_from_str,
@@ -34,10 +36,7 @@ def run():
         print(f"Configuration with hash {config_hash} already executed. Skipping")
         exit(0)
 
-
-    tf.random.set_seed(
-        config["seed"]
-    )
+    tf.random.set_seed(config["seed"])
     experiment = None
     enable_comet = config.get("comet", True)
     if enable_comet:
@@ -70,19 +69,17 @@ def run():
 
     constraints.check_constraints_error(x_initial)
 
-
     # ----- Perform the attack
 
     start_time = time.time()
 
     new_input = tf.keras.layers.Input(shape=initial_shape)
     model = tf.keras.models.Model(inputs=[new_input], outputs=[model_base(new_input)])
-
     kc_classifier = kc(
         model,
         clip_values=(0.0, 1.0),
         input_shape=initial_shape,
-        loss_object=tf.keras.losses.binary_crossentropy,
+        loss_object=tf.keras.losses.categorical_crossentropy,
         nb_classes=2,
         constraints=constraints,
         scaler=scaler,
@@ -109,9 +106,13 @@ def run():
         )
     )
     mask_int = constraints.get_feature_type() != "real"
-    x_plus_minus = (x_attacks[:, mask_int] - x_initial[:, mask_int] >= 0)
-    x_attacks[:, mask_int][x_plus_minus] = np.floor(x_attacks[:, mask_int][x_plus_minus])
-    x_attacks[:, mask_int][~x_plus_minus] = np.ceil(x_attacks[:, mask_int][~x_plus_minus])
+    x_plus_minus = x_attacks[:, mask_int] - x_initial[:, mask_int] >= 0
+    x_attacks[:, mask_int][x_plus_minus] = np.floor(
+        x_attacks[:, mask_int][x_plus_minus]
+    )
+    x_attacks[:, mask_int][~x_plus_minus] = np.ceil(
+        x_attacks[:, mask_int][~x_plus_minus]
+    )
     # x_attacks[:, mask_int] = np.rint(x_attacks[:, mask_int])
 
     # Apply sat if needed
