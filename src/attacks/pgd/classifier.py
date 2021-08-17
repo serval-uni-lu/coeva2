@@ -75,9 +75,11 @@ class TF2Classifier(TensorFlowV2Classifier):
         self._scaler = scaler
         self._parameters = parameters
         self._experiment = experiment
+        self.experiment = experiment
         self._randomindex = np.random.randint(constraints.get_nb_constraints())
         self._experiment_batch_skip = experiment_batch_skip
         self.history = []
+        self.last_iter = 0
 
     def unscale_features(self, inputs):
         inputs -= self._scaler.min_
@@ -125,7 +127,7 @@ class TF2Classifier(TensorFlowV2Classifier):
         :return: Array of gradients of the same shape as `x`.
         """
         import tensorflow as tf  # lgtm [py/repeated-import]
-
+        self.last_iter = iter_i
         if self._loss_object is None:
             raise TypeError(
                 "The loss function `loss_object` is required for computing loss gradients, but it has not been "
