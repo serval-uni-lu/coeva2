@@ -135,6 +135,13 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         else:
             eps_step_dynamic = eps_step
 
+        self.estimator.experiment.log_metric(
+            "eta",
+            eps_step_dynamic,
+            step=self.iter_counter,
+            epoch=0,
+        )
+
         x_adv = self._apply_perturbation(x_adv, perturbation, eps_step_dynamic)
 
         # Do projection
