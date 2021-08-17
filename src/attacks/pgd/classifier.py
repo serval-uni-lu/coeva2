@@ -3,9 +3,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, TYPE_CHECK
 
 import numpy as np
 import tensorflow as tf
-from src.examples.botnet.botnet_constraints import BotnetConstraints
-from src.examples.lcld.lcld_constraints import LcldConstraints
-from src.examples.malware.malware_constraints import MalwareConstraints
+
+from src.attacks.moeva2.constraints import Constraints
 from sklearn.preprocessing import MinMaxScaler
 from comet_ml import Experiment
 from art.config import ART_NUMPY_DTYPE
@@ -18,9 +17,7 @@ class TF2Classifier(TensorFlowV2Classifier):
         nb_classes: int,
         input_shape: Tuple[int, ...],
         loss_object: Optional["tf.keras.losses.Loss"] = None,
-        constraints: Union[
-            BotnetConstraints, LcldConstraints, MalwareConstraints
-        ] = None,
+        constraints: Constraints = None,
         scaler: MinMaxScaler = None,
         experiment: Experiment = None,
         experiment_batch_skip: int = 8,
