@@ -232,7 +232,13 @@ class TF2Classifier(TensorFlowV2Classifier):
                 # Only constraints
                 # Only flip
                 loss_evaluation = self._parameters.get("loss_evaluation")
-                if "constraints+flip+constraints" in loss_evaluation:
+                if "constraints+flip+manual" in loss_evaluation:
+                    # total_iterations = self._parameters.get("budget", 100)/2
+                    if iter_i < 100:
+                        loss = loss_class
+                    else:
+                        loss = loss_constraints_reduced
+                elif "constraints+flip+constraints" in loss_evaluation:
                     total_iterations = self._parameters.get("nb_iter", 100)
                     if iter_i < total_iterations / 2:
                         loss = loss_class
