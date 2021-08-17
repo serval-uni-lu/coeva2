@@ -252,7 +252,7 @@ class TF2Classifier(TensorFlowV2Classifier):
                         else loss_constraints_reduced
                     )
                 elif "constraints+flip" in loss_evaluation:
-                    loss = wc * loss_class + loss_constraints_reduced
+                    loss = loss_class + loss_constraints_reduced
                 elif "constraints" in loss_evaluation:
                     loss = loss_constraints_reduced
                 else:
