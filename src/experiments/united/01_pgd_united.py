@@ -131,6 +131,14 @@ def run():
         )
         x_attacks = attack.generate(x_initial, x_attacks)
 
+    if config["reconstruction"]:
+        important_features = np.load("./data/lcld/important_features.npy")
+        combi = -sum(1 for i in combinations(range(len(important_features)), 2))
+        x_attacks_l = x_attacks[:, :combi]
+        print(x_attacks_l.shape)
+        x_attacks = augment_data(x_attacks_l, important_features)
+        print(x_attacks.shape)
+
     consumed_time = time.time() - start_time
     # ----- End attack
 
