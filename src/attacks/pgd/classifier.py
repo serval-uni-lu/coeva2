@@ -330,3 +330,83 @@ class TF2Classifier(TensorFlowV2Classifier):
                     "grad_min", gradients.numpy().min(), step=iter_i, epoch=batch_id
                 )
         return gradients
+
+    def compute_loss(  # pylint: disable=W0221
+        self,
+        x: Union[np.ndarray, "tf.Tensor"],
+        y: Union[np.ndarray, "tf.Tensor"],
+        reduction: str = "none",
+        training_mode: bool = False,
+        **kwargs
+    ) -> np.ndarray:
+        """
+        Compute the loss.
+
+        :param x: Sample input with shape as expected by the model.
+        :param y: Target values (class labels) one-hot-encoded of shape `(nb_samples, nb_classes)` or indices
+                  of shape `(nb_samples,)`.
+        :param reduction: Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'.
+                   'none': no reduction will be applied
+                   'mean': the sum of the output will be divided by the number of elements in the output,
+                   'sum': the output will be summed.
+        :param training_mode: `True` for model set to training mode and `'False` for model set to evaluation mode.
+        :return: Array of losses of the same shape as `x`.
+        """
+        import tensorflow as tf  # lgtm [py/repeated-import]
+
+        if self._loss_object is None:
+            raise TypeError("The loss function `loss_object` is required for computing losses, but it is not defined.")
+        prev_reduction = self._loss_object.reduction
+        if reduction == "none":
+            self._loss_object.reduction = tf.keras.losses.Reduction.NONE
+        elif reduction == "mean":
+            self._loss_object.reduction = tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE
+        elif reduction == "sum":
+            self._loss_object.reduction = tf.keras.losses.Reduction.SUM
+
+        # Apply preprocessing
+        x_preprocessed, _ = self._apply_preprocessing(x, y, fit=False)
+
+        if tf.executing_eagerly():
+            x_preprocessed_tf = tf.convert_to_tensor(x_preprocessed)
+            predictions = self.model(x_preprocessed_tf, training=training_mode)
+            if self._reduce_labels:
+                loss_class = self._loss_object(np.argmax(y, axis=1), predictions)
+            else:
+                loss_class = self._loss_object(y, predictions)
+
+            wc = 0.1
+            loss_constraints = self.constraint_loss(x_preprocessed)
+            constraints_optim = self._parameters.get("constraints_optim")
+            if "single_constraints" in constraints_optim:
+                ctr_id = self._parameters.get("ctr_id")
+                loss_constraints_reduced = loss_constraints[:, ctr_id]
+            else:
+                loss_constraints_reduced = tf.reduce_sum(loss_constraints, 1)
+
+            loss_constraints_reduced = loss_constraints_reduced * tf.constant(
+                -1, dtype=ART_NUMPY_DTYPE
+            )
+
+            if reduction == "mean":
+                loss_constraints_reduced = tf.reduce_mean(loss_constraints_reduced)
+
+            loss_evaluation = self._parameters.get("loss_evaluation")
+            if "constraints+flip+manual" in loss_evaluation:
+                # total_iterations = self._parameters.get("budget", 100)/2
+                if self.last_iter < 100:
+                    loss = loss_class
+                else:
+                    loss = loss_constraints_reduced
+            elif "constraints+flip" in loss_evaluation:
+                loss = wc * loss_class + loss_constraints_reduced
+            elif "constraints" in loss_evaluation:
+                loss = loss_constraints_reduced
+            else:
+                loss = loss_class
+
+        else:
+            raise NotImplementedError("Expecting eager execution.")
+
+        self._loss_object.reduction = prev_reduction
+        return loss.numpy()
