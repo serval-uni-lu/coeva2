@@ -24,40 +24,21 @@ def run():
             logger.info(f"{TABULATOR*2} Running project {project} ...")
             for budget in config["budgets"]:
                 logger.info(f"{TABULATOR * 3} Running budget {budget} ...")
-
                 for model in config["models"]:
                     logger.info(f"{TABULATOR * 4} Running model {model} ...")
-                    model_suffix = f"_{model}" if model not in "original" else ""
-                    model_json = json.dumps(
-                        {
-                            "paths": {
-                                "model": f"./models/{project[:-4]}/nn{model_suffix}.model"
-                            }
-                        },
-                        separators=(",", ":"),
-                    )
+                    model_conf = json.dumps({"paths": {"model": model}}, separators=(',', ':'))
                     if "moeva" in config["attacks"]:
                         logger.info(f"{TABULATOR * 5} Running MoEvA ...")
-                        eps_list = {"eps_list": config["eps_list"]}
-                        eps_list_str = json.dumps(eps_list, separators=(",", ":"))
-                        launch_script(
-                            [
-                                "python",
-                                "-m",
-                                "src.experiments.united.04_moeva",
-                                "-c",
-                                f"{config_dir}/moeva.yaml",
-                                "-c",
-                                f"{config_dir}/{project}.yaml",
-                                "-p",
-                                f"seed={seed}",
-                                "-p",
-                                f"budget={budget}",
-                                "-j",
-                                model_json,
-                                "-j",
-                                eps_list_str,
-                            ]
+                        eps_list = {"eps_list": config['eps_list']}
+                        eps_list_str = json.dumps(eps_list, separators=(',', ':'))
+                        launch_script([
+                            "python", "-m", "src.experiments.united.04_moeva",
+                            "-c", f"{config_dir}/moeva.yaml",
+                            "-c", f"{config_dir}/{project}.yaml",
+                            "-p", f"seed={seed}",
+                            "-p", f"budget={budget}",
+                            "-j", model_conf,
+                            "-j", eps_list_str]
                         )
 
                     # Run the rest
@@ -70,26 +51,15 @@ def run():
                                 logger.info(
                                     f"{TABULATOR * 7} Running loss_evaluation {loss_evaluation} ..."
                                 )
-                                launch_script(
-                                    [
-                                        "python",
-                                        f"-m",
-                                        f"src.experiments.united.01_pgd_united",
-                                        "-c",
-                                        f"{config_dir}/pgd.yaml",
-                                        "-c",
-                                        f"{config_dir}/{project}.yaml",
-                                        "-p",
-                                        f"seed={seed}",
-                                        "-p",
-                                        f"budget={budget}",
-                                        "-j",
-                                        model_json,
-                                        "-p",
-                                        f"eps={eps}",
-                                        "-p",
-                                        f"loss_evaluation={loss_evaluation}",
-                                    ]
+                                launch_script([
+                                    "python", f"-m", f"src.experiments.united.01_pgd_united",
+                                    "-c", f"{config_dir}/pgd.yaml",
+                                    "-c", f"{config_dir}/{project}.yaml",
+                                    "-p", f"seed={seed}",
+                                    "-p", f"budget={budget}",
+                                    "-j", model_conf,
+                                    "-p", f"eps={eps}",
+                                    "-p", f"loss_evaluation={loss_evaluation}"]
                                 )
 
 
