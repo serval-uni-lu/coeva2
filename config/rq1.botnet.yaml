@@ -2,7 +2,7 @@
 config_dir: ./config/
 attacks:
   - moeva
-  - pgd
+#  - pgd
 seeds:
   - 42
 projects:
@@ -10,7 +10,7 @@ projects:
 eps_list:
   - 1
 budgets:
-  - 1000
+  - 10
 loss_evaluations:
   - flip
   - flip+sat
