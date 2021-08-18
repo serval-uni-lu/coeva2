@@ -64,7 +64,7 @@ def results_to_numpy_results(results: List[EfficientResult], encoder):
     pops_x_f = [
         encoder.genetic_to_ml(pops_x[i], initial_states[i]) for i in range(len(results))
     ]
-    return pops_x_f
+    return np.array(pops_x_f)
 
 
 def results_to_history(results: List[HistoryResult]):
