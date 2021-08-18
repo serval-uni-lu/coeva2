@@ -99,7 +99,7 @@ def run():
             eps_step=per_attack_eps / 3,
             loss_type="cross_entropy",
             nb_random_init=config.get("nb_random", 1),
-            max_iter=int(config.get("budget") / 2),
+            max_iter=int(config.get("budget")),
             batch_size=x_initial.shape[0],
         )
     else:
@@ -109,7 +109,7 @@ def run():
             eps_step=0.1,
             norm=config.get("norm"),
             verbose=config["system"]["verbose"] == 1,
-            max_iter=int(config.get("budget") / 2),
+            max_iter=int(config.get("budget")),
             num_random_init=config.get("nb_random", 0),
             batch_size=x_initial.shape[0],
             loss_evaluation=config.get("loss_evaluation"),
@@ -186,7 +186,7 @@ def run():
     # experiment.log_asset(x_attacks_path)
 
     # History
-    if config.get("save_history"):
+    if config.get("save_history") in ["reduced", "full"]:
         history = np.swapaxes(np.array(kc_classifier.history), 0, 1)
         history = history[:, :, np.newaxis, :]
         np.save(f"{out_dir}/x_history_{config_hash}.npy", history)

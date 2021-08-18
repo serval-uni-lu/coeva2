@@ -56,7 +56,7 @@ def run():
     # ----- Copy the initial states n_repetition times
     # X_initial_states = np.repeat(X_initial_states, config["n_repetition"], axis=0)
 
-    n_gen = int(np.floor(config["budget"] / config["n_offsprings"]))
+    n_gen = config["budget"]
     start_time = time.time()
     moeva = Moeva2(
         config["paths"]["model"],
