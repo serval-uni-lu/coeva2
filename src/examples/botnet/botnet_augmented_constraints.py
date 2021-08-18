@@ -50,7 +50,6 @@ class BotnetAugmentedConstraints(Constraints):
     def evaluate_tf2(self, x):
         tol = 1e-3
 
-
         sum_idx = tf.convert_to_tensor([0, 3, 6, 12, 15, 18], dtype=tf.int64)
         max_idx = tf.convert_to_tensor([1, 4, 7, 13, 16, 19], dtype=tf.int64)
         min_idx = tf.convert_to_tensor([2, 5, 8, 14, 17, 20], dtype=tf.int64)
@@ -75,7 +74,7 @@ class BotnetAugmentedConstraints(Constraints):
                     tf.gather(x, self.feat_idx_tf["bytes_out_sum_s_idx"], axis=1), axis=1
                 )
             )
-        )
+        ) - 0.4999999
         g2 = tf.math.abs(
             (
                 tf.math.reduce_sum(

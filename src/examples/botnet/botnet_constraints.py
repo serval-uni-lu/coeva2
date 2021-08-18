@@ -28,6 +28,7 @@ class BotnetConstraints(Constraints):
         self.feat_idx_tf = self.feat_idx.copy()
         for key in self.feat_idx:
             self.feat_idx_tf[key] = tf.convert_to_tensor(self.feat_idx[key], dtype=tf.int64)
+        self.important_features = np.load("./data/botnet/important_features.npy")
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
@@ -118,7 +119,6 @@ class BotnetConstraints(Constraints):
 
         tol = 1e-3
         # should write a function in utils for this part
-
 
         sum_idx = [0, 3, 6, 12, 15, 18]
         max_idx = [1, 4, 7, 13, 16, 19]
