@@ -11,10 +11,10 @@ def create_model():
     model.add(Dense(64, activation="relu"))
     model.add(Dense(32, activation="relu"))
     model.add(Dense(16, activation="relu"))
-    model.add(Dense(1, activation="sigmoid"))
+    model.add(Dense(2, activation="softmax"))
     model.compile(
         optimizer="adam",
-        loss="binary_crossentropy",
+        loss="categorical_crossentropy",
         metrics=["accuracy", tf.keras.metrics.Recall(), tf.keras.metrics.AUC()],
     )
     return model
