@@ -12,7 +12,7 @@ import logging
 
 class BotnetConstraints(Constraints):
     def fix_features_types(self, x) -> Union[np.ndarray, tf.Tensor]:
-        raise NotImplementedError
+        return x
 
     def __init__(
         self,
