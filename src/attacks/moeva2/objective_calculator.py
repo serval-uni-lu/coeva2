@@ -4,6 +4,7 @@ from typing import List
 import numpy
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from pymoo.model.problem import Problem
 from tqdm import tqdm
 
@@ -27,6 +28,7 @@ class ObjectiveCalculator:
         norm=np.inf,
         ml_scaler=None,
         problem_class=None,
+        n_jobs=1
     ):
         self._classifier = classifier
         self._constraints = constraints
@@ -37,6 +39,7 @@ class ObjectiveCalculator:
         self._encoder = get_encoder_from_constraints(self._constraints)
         self._min_max_scaler = min_max_scaler
         self.norm = norm
+        self.n_jobs = n_jobs
 
     def _calculate_objective(self, x_initial, x_f):
 
@@ -192,12 +195,22 @@ class ObjectiveCalculator:
 
         successful_attacks = []
 
-        for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials)):
-            successful_attacks.extend(
-                self._get_one_successful(
-                    x_initial, x_generated[i], preferred_metrics, order, max_inputs
+        if self.n_jobs == 1:
+            for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials)):
+                successful_attacks.extend(
+                    self._get_one_successful(
+                        x_initial, x_generated[i], preferred_metrics, order, max_inputs
+                    )
                 )
+
+        # Parallel run
+        else:
+            processed_results = Parallel(n_jobs=self.n_jobs, prefer="threads")(
+                delayed(self._get_one_successful)(x_initial, x_generated[i], preferred_metrics, order, max_inputs)
+                for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials))
             )
+            for processed_result in processed_results:
+                successful_attacks.extend(processed_result)
 
         successful_attacks = np.array(successful_attacks)
 
