@@ -277,7 +277,7 @@ if os.path.exists(model_adv_moeva_path):
 else:
     x_train_local = np.concatenate((x_train, x_train_adv_moeva), axis=0)
     y_train_local = np.concatenate(
-        (y_train, np.zeros(x_train_adv_moeva.shape[0])), axis=0
+        (y_train, np.ones(x_train_adv_moeva.shape[0])), axis=0
     )
 
     model_adv_moeva = train_model(
@@ -402,7 +402,7 @@ if os.path.exists(model_adv_gradient_path):
 else:
     x_train_local = np.concatenate((x_train, x_train_adv_gradient), axis=0)
     y_train_local = np.concatenate(
-        (y_train, np.zeros(x_train_adv_gradient.shape[0])), axis=0
+        (y_train, np.ones(x_train_adv_gradient.shape[0])), axis=0
     )
 
     model_adv_gradient = train_model(
