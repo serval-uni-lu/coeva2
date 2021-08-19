@@ -324,6 +324,8 @@ else:
             ).astype(int)
         )
     ]
+    constraints_satisfied = np.max(constraints.evaluate(x_train_candidates), axis=1) <= 0
+    x_train_candidates = x_train_candidates[constraints_satisfied]
     print(f"{x_train_candidates.shape} candidates.")
     constraints.check_constraints_error(x_train_candidates)
 
