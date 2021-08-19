@@ -337,7 +337,6 @@ else:
         min_max_scaler=scaler,
         ml_scaler=scaler,
         norm=config["norm"],
-        n_jobs=config["system"]["n_jobs"]
     )
 
     initial_shape = x_train.shape[1:]
