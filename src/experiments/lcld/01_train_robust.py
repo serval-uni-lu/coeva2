@@ -215,7 +215,7 @@ x_train_candidates = x_train[
                         model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold
                 ).astype(int)
         )
-        ][:100]
+        ]
 
 
 x_train_moeva_path = f"./data/{project_name}/x_train_moeva.npy"
