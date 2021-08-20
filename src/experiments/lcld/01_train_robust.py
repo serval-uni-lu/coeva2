@@ -207,39 +207,33 @@ print_score(y_test, y_pred_augmented)
 
 
 # ----- ADVERSARIAL TRAINING MOEVA
+x_train_candidates = x_train[
+        (y_train == 1)
+        * (
+                y_train
+                == (
+                        model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold
+                ).astype(int)
+        )
+        ][:100]
 
-x_train_adv_moeva_path = f"./data/{project_name}/x_train_adv_moeva.npy"
 
-if os.path.exists(x_train_adv_moeva_path):
-    x_train_adv_moeva = np.load(x_train_adv_moeva_path)
+x_train_moeva_path = f"./data/{project_name}/x_train_moeva.npy"
+
+if os.path.exists(x_train_moeva_path):
+    x_train_moeva = np.load(x_train_moeva_path)
 else:
     constraints = get_constraints_from_str(config["project_name"])(
         config["paths"]["features"],
         config["paths"]["constraints"],
     )
 
-    x_train_candidates = x_train[
-        (y_train == 1)
-        * (
-            y_train
-            == (
-                model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold
-            ).astype(int)
-        )
-    ]
+
     constraints_satisfied = np.max(constraints.evaluate(x_train_candidates), axis=1) <= 0
     x_train_candidates = x_train_candidates[constraints_satisfied]
     print(f"{x_train_candidates.shape} candidates.")
     n_gen = config["budget"]
-    objective_calc = ObjectiveCalculator(
-        Classifier(model),
-        constraints,
-        minimize_class=1,
-        thresholds={"f1": threshold, "f2": config["eps"]},
-        min_max_scaler=scaler,
-        ml_scaler=scaler,
-        norm=config["norm"],
-    )
+
     moeva = Moeva2(
         model_path,
         constraints,
@@ -256,12 +250,29 @@ else:
         ml_scaler=scaler,
         verbose=1,
     )
-    x_train_attacks = results_to_numpy_results(
+    x_train_moeva = results_to_numpy_results(
         moeva.generate(x_train_candidates, 1), get_encoder_from_constraints(constraints)
+    )
+    np.save(x_train_moeva_path, x_train_moeva)
+
+
+x_train_adv_moeva_path = f"./data/{project_name}/x_train_adv_moeva.npy"
+
+if os.path.exists(x_train_adv_moeva_path):
+    x_train_adv_moeva = np.load(x_train_adv_moeva_path)
+else:
+    objective_calc = ObjectiveCalculator(
+        Classifier(model),
+        constraints,
+        minimize_class=1,
+        thresholds={"f1": threshold, "f2": config["eps"]},
+        min_max_scaler=scaler,
+        ml_scaler=scaler,
+        norm=config["norm"],
     )
     x_train_adv_moeva = objective_calc.get_successful_attacks(
         x_train_candidates,
-        x_train_attacks,
+        x_train_moeva,
         preferred_metrics="misclassification",
         order="asc",
         max_inputs=1,
@@ -319,6 +330,7 @@ else:
         (y_train == 1)
         * (
             y_train
+
             == (
                 model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold
             ).astype(int)
@@ -363,11 +375,13 @@ else:
         num_random_init=config.get("nb_random", 0),
         batch_size=x_train_candidates.shape[0],
         loss_evaluation=config.get("loss_evaluation"),
+        targeted=True
     )
 
     x_train_attacks = scaler.inverse_transform(
         attack.generate(
             x=scaler.transform(x_train_candidates),
+            y=np.column_stack([np.ones(x_train_candidates.shape[0]), np.zeros(x_train_candidates.shape[0])]),
             mask=constraints.get_mutable_mask(),
         )
     )
@@ -379,6 +393,11 @@ else:
     x_train_attacks[:, mask_int][~x_plus_minus] = np.ceil(
         x_train_attacks[:, mask_int][~x_plus_minus]
     )
+
+    success = (model.predict_proba(scaler.transform(x_train_attacks))[:, 1] < 0.5).sum() / x_train_candidates.shape[0]
+    print(success)
+    success = (model.predict_proba(scaler.transform(x_train_attacks))[:, 1] < 0.25).sum() / x_train_candidates.shape[0]
+    print(success)
 
     if len(x_train_attacks.shape) == 2:
         x_train_attacks = x_train_attacks[:, np.newaxis, :]
