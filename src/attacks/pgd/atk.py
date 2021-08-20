@@ -100,7 +100,7 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         :return: Adversarial examples.
         """
         import tensorflow as tf  # lgtm [py/repeated-import]
-        self.iter_counter = self.iter_counter + 1
+
         if random_init:
             n = x.shape[0]
             m = np.prod(x.shape[1:]).item()
@@ -127,9 +127,9 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
         perturbation = self._compute_perturbation(x_adv, y, mask)
 
         if "adaptive_eps_step" in self.loss_evaluation:
-            iteration_per_step = self.max_iter // 18
+            iteration_per_step = self.max_iter // 7
             current_power = np.float64(self.iter_counter // iteration_per_step + 1)
-            eps_step_dynamic = eps * (1 / np.float_power(10., current_power))
+            eps_step_dynamic = eps * (1 / np.float_power(10.0, current_power))
             print(f"{current_power}: {eps_step_dynamic}")
         else:
             eps_step_dynamic = eps_step
@@ -140,6 +140,7 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
             step=self.iter_counter,
             epoch=0,
         )
+        self.iter_counter = self.iter_counter + 1
 
         x_adv = self._apply_perturbation(x_adv, perturbation, eps_step_dynamic)
 
@@ -192,7 +193,7 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
 
         # Get gradient wrt loss; invert it if attack is targeted
         grad: tf.Tensor = self.estimator.loss_gradient(
-            x, y, iter_i=self._i_max_iter, batch_id=self._batch_id
+            x, y, iter_i=self._i_max_iter, batch_id=self._batch_id, targeted=self.targeted
         )
 
         # Write summary
