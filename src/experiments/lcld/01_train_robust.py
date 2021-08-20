@@ -277,7 +277,7 @@ else:
         order="asc",
         max_inputs=1,
     )
-    print(f"Success rate: {x_train_adv_moeva.shape[0] / x_train_attacks.shape[0]}")
+    print(f"Success rate: {x_train_adv_moeva.shape[0] / x_train_moeva.shape[0]}")
     print(f"Retraining with: {x_train_adv_moeva.shape[0]}")
 
     np.save(x_train_adv_moeva_path, x_train_adv_moeva)
