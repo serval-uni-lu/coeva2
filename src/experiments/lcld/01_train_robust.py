@@ -216,6 +216,13 @@ x_train_candidates = x_train[
                 ).astype(int)
         )
         ]
+constraints = get_constraints_from_str(config["project_name"])(
+    config["paths"]["features"],
+    config["paths"]["constraints"],
+)
+constraints_satisfied = np.max(constraints.evaluate(x_train_candidates), axis=1) <= 0
+x_train_candidates = x_train_candidates[constraints_satisfied]
+print(x_train_candidates.shape)
 
 
 x_train_moeva_path = f"./data/{project_name}/x_train_moeva.npy"
@@ -228,9 +235,6 @@ else:
         config["paths"]["constraints"],
     )
 
-
-    constraints_satisfied = np.max(constraints.evaluate(x_train_candidates), axis=1) <= 0
-    x_train_candidates = x_train_candidates[constraints_satisfied]
     print(f"{x_train_candidates.shape} candidates.")
     n_gen = config["budget"]
 
@@ -261,6 +265,10 @@ x_train_adv_moeva_path = f"./data/{project_name}/x_train_adv_moeva.npy"
 if os.path.exists(x_train_adv_moeva_path):
     x_train_adv_moeva = np.load(x_train_adv_moeva_path)
 else:
+    constraints = get_constraints_from_str(config["project_name"])(
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
     objective_calc = ObjectiveCalculator(
         Classifier(model),
         constraints,
@@ -270,13 +278,17 @@ else:
         ml_scaler=scaler,
         norm=config["norm"],
     )
-    x_train_adv_moeva = objective_calc.get_successful_attacks(
+    print(x_train_candidates.shape)
+    print(x_train_moeva.shape)
+    x_train_adv_moeva, index_success = objective_calc.get_successful_attacks(
         x_train_candidates,
         x_train_moeva,
         preferred_metrics="misclassification",
         order="asc",
         max_inputs=1,
+        return_index_success=True
     )
+    np.save(f"./data/{project_name}/x_train_adv_moeva_index.npy", index_success)
     print(f"Success rate: {x_train_adv_moeva.shape[0] / x_train_moeva.shape[0]}")
     print(f"Retraining with: {x_train_adv_moeva.shape[0]}")
 
