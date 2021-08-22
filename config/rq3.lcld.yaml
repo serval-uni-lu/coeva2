@@ -1,8 +1,8 @@
 ---
 config_dir: ./config/
 models:
-  - ./models/botnet/nn_moeva.model
-  - ./models/botnet/nn_gradient.model
+  - ./models/lcld/nn_moeva.model
+  - ./models/lcld/nn_gradient.model
 attacks:
   - moeva
   - pgd
