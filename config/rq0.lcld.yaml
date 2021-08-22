@@ -2,7 +2,7 @@ project_name: lcld
 paths:
   features: ./data/lcld/features.csv
   constraints: ./data/lcld/constraints.csv
-budget: 100
+budget: 1000
 n_pop: 200
 n_offsprings: 100
 save_history: "False"
