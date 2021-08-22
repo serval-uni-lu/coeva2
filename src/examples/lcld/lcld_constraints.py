@@ -20,6 +20,7 @@ class LcldConstraints(Constraints):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
+        self.important_features = np.load("./data/lcld/important_features.npy")
 
     def _fit_scaler(self) -> None:
         self._scaler = MinMaxScaler(feature_range=(0, 1))
