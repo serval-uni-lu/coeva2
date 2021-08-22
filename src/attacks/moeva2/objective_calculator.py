@@ -191,13 +191,14 @@ class ObjectiveCalculator:
         preferred_metrics="misclassification",
         order="asc",
         max_inputs=-1,
+        return_index_success=False
     ):
 
         successful_attacks = []
 
         if self.n_jobs == 1:
             for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials)):
-                successful_attacks.extend(
+                successful_attacks.append(
                     self._get_one_successful(
                         x_initial, x_generated[i], preferred_metrics, order, max_inputs
                     )
@@ -210,11 +211,16 @@ class ObjectiveCalculator:
                 for i, x_initial in tqdm(enumerate(x_initials), total=len(x_initials))
             )
             for processed_result in processed_results:
-                successful_attacks.extend(processed_result)
+                successful_attacks.append(processed_result)
 
-        successful_attacks = np.array(successful_attacks)
+        if return_index_success:
+            index_success = np.array([len(e) >= 1 for e in successful_attacks])
+        successful_attacks = np.concatenate(successful_attacks, axis=0)
 
-        return successful_attacks
+        if return_index_success:
+            return successful_attacks, index_success
+        else:
+            return successful_attacks
 
     def get_successful_attacks_results(
         self,
