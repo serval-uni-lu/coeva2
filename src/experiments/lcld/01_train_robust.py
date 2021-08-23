@@ -205,8 +205,7 @@ y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmen
 y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred_augmented)
 
-
-# ----- ADVERSARIAL TRAINING MOEVA
+# ----- ADVERSARIAL CANDIDATES
 x_train_candidates = x_train[
         (y_train == 1)
         * (
@@ -220,9 +219,13 @@ constraints = get_constraints_from_str(config["project_name"])(
     config["paths"]["features"],
     config["paths"]["constraints"],
 )
+
 constraints_satisfied = np.max(constraints.evaluate(x_train_candidates), axis=1) <= 0
 x_train_candidates = x_train_candidates[constraints_satisfied]
 print(x_train_candidates.shape)
+
+
+# ----- ADVERSARIAL GENERATION MOEVA
 
 
 x_train_moeva_path = f"./data/{project_name}/x_train_moeva.npy"
@@ -230,11 +233,6 @@ x_train_moeva_path = f"./data/{project_name}/x_train_moeva.npy"
 if os.path.exists(x_train_moeva_path):
     x_train_moeva = np.load(x_train_moeva_path)
 else:
-    constraints = get_constraints_from_str(config["project_name"])(
-        config["paths"]["features"],
-        config["paths"]["constraints"],
-    )
-
     print(f"{x_train_candidates.shape} candidates.")
     n_gen = config["budget"]
 
@@ -259,11 +257,13 @@ else:
     )
     np.save(x_train_moeva_path, x_train_moeva)
 
-
+# ----- ADVERSARIAL SUCCESS MOEVA
 x_train_adv_moeva_path = f"./data/{project_name}/x_train_adv_moeva.npy"
 
 if os.path.exists(x_train_adv_moeva_path):
     x_train_adv_moeva = np.load(x_train_adv_moeva_path)
+    x_train_adv_moeva_index = np.load(f"./data/{project_name}/x_train_adv_moeva_index.npy")
+
 else:
     constraints = get_constraints_from_str(config["project_name"])(
         config["paths"]["features"],
@@ -280,7 +280,7 @@ else:
     )
     print(x_train_candidates.shape)
     print(x_train_moeva.shape)
-    x_train_adv_moeva, index_success = objective_calc.get_successful_attacks(
+    x_train_adv_moeva, x_train_adv_moeva_index = objective_calc.get_successful_attacks(
         x_train_candidates,
         x_train_moeva,
         preferred_metrics="misclassification",
@@ -288,50 +288,19 @@ else:
         max_inputs=1,
         return_index_success=True
     )
-    np.save(f"./data/{project_name}/x_train_adv_moeva_index.npy", index_success)
     print(f"Success rate: {x_train_adv_moeva.shape[0] / x_train_moeva.shape[0]}")
     print(f"Retraining with: {x_train_adv_moeva.shape[0]}")
-
+    np.save(f"./data/{project_name}/x_train_adv_moeva_index.npy", x_train_adv_moeva_index)
     np.save(x_train_adv_moeva_path, x_train_adv_moeva)
 
-model_adv_moeva_path = f"./models/{project_name}/nn_moeva.model"
-if os.path.exists(model_adv_moeva_path):
-    model_adv_moeva = load_model(model_adv_moeva_path)
-else:
-    x_train_local = np.concatenate((x_train, x_train_adv_moeva), axis=0)
-    y_train_local = np.concatenate(
-        (y_train, np.ones(x_train_adv_moeva.shape[0])), axis=0
-    )
-
-    model_adv_moeva = train_model(
-        scaler.transform(x_train_local), to_categorical(y_train_local)
-    )
-    tf.keras.models.save_model(
-        model_adv_moeva,
-        model_adv_moeva_path,
-        overwrite=True,
-        include_optimizer=True,
-        save_format=None,
-        signatures=None,
-        options=None,
-    )
-
-y_proba = model_adv_moeva.predict_proba(scaler.transform(x_test))
-y_pred_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
-print_score(y_test, y_pred_adv_moeva)
-
-
-# ----- ADVERSARIAL TRAINING GRADIENT
+# ----- ADVERSARIAL GENERATION GRADIENT
 
 x_train_adv_gradient_path = f"./data/{project_name}/x_train_adv_gradient.npy"
 
 if os.path.exists(x_train_adv_gradient_path):
     x_train_adv_gradient = np.load(x_train_adv_gradient_path)
+    x_train_adv_gradient_index = np.load(f"./data/{project_name}/x_train_adv_gradient_index.npy")
 else:
-    constraints = get_constraints_from_str(config["project_name"])(
-        config["paths"]["features"],
-        config["paths"]["constraints"],
-    )
     experiment = None
     enable_comet = config.get("comet", True)
     if enable_comet:
@@ -405,7 +374,7 @@ else:
     x_train_attacks[:, mask_int][~x_plus_minus] = np.ceil(
         x_train_attacks[:, mask_int][~x_plus_minus]
     )
-
+    print(x_train_attacks.shape)
     success = (model.predict_proba(scaler.transform(x_train_attacks))[:, 1] < 0.5).sum() / x_train_candidates.shape[0]
     print(success)
     success = (model.predict_proba(scaler.transform(x_train_attacks))[:, 1] < 0.25).sum() / x_train_candidates.shape[0]
@@ -414,26 +383,70 @@ else:
     if len(x_train_attacks.shape) == 2:
         x_train_attacks = x_train_attacks[:, np.newaxis, :]
     np.save("./tmp.npy", x_train_attacks)
-    x_train_adv_gradient = objective_calc.get_successful_attacks(
+    x_train_adv_gradient, x_train_adv_gradient_index = objective_calc.get_successful_attacks(
         x_train_candidates,
         x_train_attacks,
         preferred_metrics="misclassification",
         order="asc",
         max_inputs=1,
+        return_index_success=True
     )
 
     print(f"Success rate: {x_train_adv_gradient.shape[0] / x_train_attacks.shape[0]}")
     print(f"Retraining with: {x_train_adv_gradient.shape[0]}")
+    np.save(f"./data/{project_name}/x_train_adv_gradient_index.npy", x_train_adv_gradient_index)
     np.save(x_train_adv_gradient_path, x_train_adv_gradient)
 
+# ----- ADVERSARIAL COMMON
+
+moeva_ii = np.argwhere(x_train_adv_moeva_index).reshape(-1)
+gradient_ii = np.argwhere(x_train_adv_gradient_index).reshape(-1)
+both_ii = np.argwhere(x_train_adv_moeva_index*x_train_adv_gradient_index).reshape(-1)
+
+x_train_adv_moeva_mask = np.array([i in both_ii for i in moeva_ii])
+x_train_adv_gradient_mask = np.array([i in both_ii for i in gradient_ii])
+
+print(f"{x_train_adv_moeva_mask.shape}: {x_train_adv_moeva_mask.sum()}")
+print(f"{x_train_adv_gradient_mask.shape}: {x_train_adv_gradient_mask.sum()}")
+
+# ----- ADVERSARIAL TRAINING MOEVA
+
+model_adv_moeva_path = f"./models/{project_name}/nn_moeva.model"
+if os.path.exists(model_adv_moeva_path):
+    model_adv_moeva = load_model(model_adv_moeva_path)
+else:
+    x_train_local = np.concatenate((x_train, x_train_adv_moeva[x_train_adv_moeva_mask]), axis=0)
+    y_train_local = np.concatenate(
+        (y_train, np.ones(x_train_adv_moeva.shape[0])[x_train_adv_moeva_mask]), axis=0
+    )
+
+    model_adv_moeva = train_model(
+        scaler.transform(x_train_local), to_categorical(y_train_local)
+    )
+    tf.keras.models.save_model(
+        model_adv_moeva,
+        model_adv_moeva_path,
+        overwrite=True,
+        include_optimizer=True,
+        save_format=None,
+        signatures=None,
+        options=None,
+    )
+
+y_proba = model_adv_moeva.predict_proba(scaler.transform(x_test))
+y_pred_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
+print_score(y_test, y_pred_adv_moeva)
+
+
+# ADVERSARIAL_TRAINING GRADIENT
 
 model_adv_gradient_path = f"./models/{project_name}/nn_gradient.model"
 if os.path.exists(model_adv_gradient_path):
     model_adv_gradient = load_model(model_adv_gradient_path)
 else:
-    x_train_local = np.concatenate((x_train, x_train_adv_gradient), axis=0)
+    x_train_local = np.concatenate((x_train, x_train_adv_gradient[x_train_adv_gradient_mask]), axis=0)
     y_train_local = np.concatenate(
-        (y_train, np.ones(x_train_adv_gradient.shape[0])), axis=0
+        (y_train, np.ones(x_train_adv_gradient.shape[0])[x_train_adv_gradient_mask]), axis=0
     )
 
     model_adv_gradient = train_model(
@@ -454,20 +467,23 @@ y_pred_adv_gradient = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred_adv_gradient)
 
 # ----- Common x_attacks
-x_candidates_path = f"./data/{project_name}/x_candidates_common_2.npy"
+x_candidates_path = f"./data/{project_name}/x_candidates_common.npy"
 x_candidates_augmented_path = f"./data/{project_name}/x_candidates_common_augmented.npy"
 
 if os.path.exists(x_candidates_path) and os.path.exists(x_candidates_augmented_path):
     x_candidates = np.load(x_candidates_path)
     x_candidates_augmented = np.load(x_candidates_augmented_path)
 else:
+    constraints_satisfied = np.max(constraints.evaluate(x_test), axis=1) <= 0
     candidates_index = (
-        (y_test == 1)
+        constraints_satisfied
+        * (y_test == 1)
         * (y_test == y_pred)
         * (y_test == y_pred_augmented)
         * (y_test == y_pred_adv_moeva)
         * (y_pred == y_pred_adv_gradient)
     )
+
     x_candidates = x_test[candidates_index, :]
     x_candidates_augmented = x_test_augmented[candidates_index, :]
     np.save(x_candidates_path, x_candidates)
