@@ -65,10 +65,10 @@ else:
     raise FileNotFoundError
 # ----- MODEL SCORE
 
-y_proba = model.predict_proba(scaler.transform(x_test))
-y_pred = (y_proba[:, 1] >= threshold).astype(int)
-print_score(y_test, y_pred)
-print_score(y_train, (model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold).astype(int))
+# y_proba = model.predict_proba(scaler.transform(x_test))
+# y_pred = (y_proba[:, 1] >= threshold).astype(int)
+# print_score(y_test, y_pred)
+# print_score(y_train, (model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold).astype(int))
 
 # ----- FIND IMPORTANT FEATURES
 
@@ -115,9 +115,9 @@ else:
 
 # ----- MODEL SCORE
 
-y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmented))
-y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
-print_score(y_test, y_pred_augmented)
+# y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmented))
+# y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
+# print_score(y_test, y_pred_augmented)
 
 # ----- ADVERSARIAL CANDIDATES
 x_train_candidates = x_train[
