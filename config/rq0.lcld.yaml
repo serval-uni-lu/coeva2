@@ -2,6 +2,8 @@ project_name: lcld
 paths:
   features: ./data/lcld/features.csv
   constraints: ./data/lcld/constraints.csv
+  features_augmented: ./data/lcld/features_augmented.csv
+  constraints_augmented: ../data/lcld/constraints_augmented.csv
 budget: 1000
 n_pop: 200
 n_offsprings: 100
