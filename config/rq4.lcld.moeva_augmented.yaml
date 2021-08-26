@@ -1,7 +1,7 @@
 attack_name: moeva
 budget: 100
 dirs:
-  results: ./out/attacks/lcld/rq2/
+  results: ./out/attacks/lcld/rq4/
 eps_list:
 - 0.2
 evaluation:
