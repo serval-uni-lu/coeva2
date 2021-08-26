@@ -10,7 +10,7 @@ projects:
 eps_list:
   - 1
 budgets:
-  - 10
+  - 1000
 loss_evaluations:
   - flip
   - flip+sat
