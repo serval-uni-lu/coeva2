@@ -10,7 +10,7 @@ seeds:
 projects:
   - rq3.botnet.static
 eps_list:
-  - 1
+  - 4
 budgets:
   - 1000
 loss_evaluations:
