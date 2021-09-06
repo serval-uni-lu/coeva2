@@ -18,8 +18,8 @@ paths:
   features: ./data/lcld/features_augmented.csv
   min_max_scaler: ./models/lcld/scaler_augmented.joblib
   ml_scaler: ./models/lcld/scaler_augmented.joblib
-  model: ./models/lcld/nn_augmented_moeva_full.model
-  x_candidates: ./data/lcld/x_candidates_rq4_augmented.npy
+  model: ./models/lcld/nn_augmented_moeva_best.model
+  x_candidates: ./data/lcld/x_candidates_rq4_augmented_best.npy
 project_name: lcld_augmented
 reconstruction: false
 save_history: full

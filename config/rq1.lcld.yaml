@@ -8,7 +8,7 @@ seeds:
 projects:
   - rq1.lcld.static
 eps_list:
-  - 0.05
+  - 0.2
 budgets:
   - 100
   - 1000

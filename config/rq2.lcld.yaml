@@ -8,7 +8,7 @@ seeds:
 projects:
   - rq2.lcld.static
 eps_list:
-  - 0.05
+  - 0.2
 budgets:
   - 100
   - 1000
@@ -23,11 +23,11 @@ scenari:
     evaluation:
       project_name: lcld_augmented
       constraints: ./data/lcld/constraints_augmented.csv
-  - project_name: lcld_augmented
-    paths:
-      features: ./data/lcld/features_augmented.csv
-      constraints: ./data/lcld/constraints_augmented.csv
-    reconstruction: False
-    evaluation:
-      project_name: lcld_augmented
-      constraints: ./data/lcld/constraints_augmented.csv
+  # - project_name: lcld_augmented
+  #   paths:
+  #     features: ./data/lcld/features_augmented.csv
+  #     constraints: ./data/lcld/constraints_augmented.csv
+  #   reconstruction: False
+  #   evaluation:
+  #     project_name: lcld_augmented
+  #     constraints: ./data/lcld/constraints_augmented.csv
