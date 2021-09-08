@@ -1,18 +1,25 @@
 import os
-from itertools import combinations
-
+import comet_ml
 import joblib
 import numpy as np
 import pandas as pd
 import shap
 from imblearn.under_sampling import RandomUnderSampler
 from tensorflow.python.keras.utils.np_utils import to_categorical
-from tqdm import tqdm
-
+from sklearn.metrics import roc_auc_score
+from src.attacks.moeva2.classifier import Classifier
+from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
+from src.attacks.moeva2.moeva2 import Moeva2
+from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
+from src.attacks.moeva2.utils import results_to_numpy_results
 from src.config_parser.config_parser import get_config
 from src.experiments.botnet.features import augment_data
 from src.experiments.botnet.model import train_model, print_score
+from src.experiments.united.utils import get_constraints_from_str
+from src.utils.comet import init_comet
 from src.utils.in_out import load_model
+from src.attacks.pgd.classifier import TF2Classifier as kc
+from src.attacks.pgd.atk import PGDTF2 as PGD
 
 np.random.seed(205)
 import tensorflow as tf
@@ -21,11 +28,13 @@ tf.random.set_seed(206)
 
 from sklearn.preprocessing import MinMaxScaler
 
+os.environ['CUDA_VISIBLE_DEVICES'] = "-1"
+
 # ----- CONFIG
 config = get_config()
-project_name = "botnet"
-nb_important_features = 5
-threshold = 0.5
+project_name = config["project_name"]
+nb_important_features = 19
+threshold = config["misclassification_threshold"]
 
 # ----- LOAD
 
@@ -82,7 +91,7 @@ print_score(y_test, y_pred)
 
 # ----- FIND IMPORTANT FEATURES
 
-important_features_path = f"./data/{project_name}/important_features.npy"
+important_features_path = f"./data/{project_name}/important_features_19.npy"
 if os.path.exists(important_features_path):
     print(f"{important_features_path} exists loading...")
     important_features = np.load(important_features_path)
@@ -108,10 +117,10 @@ else:
 
 
 # ----- AUGMENT DATASET
-x_train_augmented_path = f"./data/{project_name}_augmented/x_train.npy"
-x_test_augmented_path = f"./data/{project_name}_augmented/x_test.npy"
-features_augmented_path = f"./data/{project_name}_augmented/features.csv"
-constraints_augmented_path = f"./data/{project_name}_augmented/constraints.csv"
+x_train_augmented_path = f"./data/{project_name}/x_train_augmented_19.npy"
+x_test_augmented_path = f"./data/{project_name}/x_test_augmented_19.npy"
+features_augmented_path = f"./data/{project_name}/features_augmented_19.csv"
+constraints_augmented_path = f"./data/{project_name}/constraints_augmented_19.csv"
 if os.path.exists(x_train_augmented_path) and os.path.exists(x_test_augmented_path):
     x_train_augmented = np.load(x_train_augmented_path)
     x_test_augmented = np.load(x_test_augmented_path)
@@ -152,7 +161,7 @@ else:
 
 # ----- Augmented scaler
 
-scaler_augmented_path = f"./models/{project_name}_augmented/scaler.joblib"
+scaler_augmented_path = f"./models/{project_name}/scaler_augmented_19.joblib"
 
 if os.path.exists(scaler_augmented_path):
     scaler_augmented = joblib.load(scaler_augmented_path)
@@ -171,7 +180,7 @@ else:
 
 # ----- TRAIN MODEL
 
-model_augmented_path = f"./models/{project_name}_augmented/nn.model"
+model_augmented_path = f"./models/{project_name}/nn_augmented_19.model"
 
 if os.path.exists(model_augmented_path):
     print(f"{model_augmented_path} exists loading...")
@@ -191,23 +200,211 @@ else:
     )
 # ----- MODEL SCORE
 
-y_proba = model_augmented.predict_proba(
-    scaler_augmented.transform(x_test_augmented)
-)
+y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmented))
 y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred_augmented)
+print(f"AUROOOC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
+
+# ----- ADVERSARIAL TRAINING MOEVA
+
+x_train_adv_moeva_path = f"./data/{project_name}/x_train_adv_moeva.npy"
+
+if os.path.exists(x_train_adv_moeva_path):
+    x_train_adv_moeva = np.load(x_train_adv_moeva_path)
+else:
+    constraints = get_constraints_from_str(config["project_name"])(
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+
+    x_train_candidates = x_train[
+        (y_train == 1)
+        * (
+            y_train
+            == (
+                model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold
+            ).astype(int)
+        )
+    ]
+    print(f"{x_train_candidates.shape} candidates.")
+    constraints.check_constraints_error(x_train_candidates)
+    n_gen = config["budget"]
+    objective_calc = ObjectiveCalculator(
+        Classifier(model),
+        constraints,
+        minimize_class=1,
+        thresholds={"f1": threshold, "f2": config["eps"]},
+        min_max_scaler=scaler,
+        ml_scaler=scaler,
+        norm=config["norm"],
+    )
+    moeva = Moeva2(
+        model_path,
+        constraints,
+        problem_class=None,
+        l2_ball_size=0.0,
+        norm=config["norm"],
+        n_gen=n_gen,
+        n_pop=config["n_pop"],
+        n_offsprings=config["n_offsprings"],
+        scale_objectives=False,
+        save_history=config.get("save_history"),
+        seed=config["seed"],
+        n_jobs=config["system"]["n_jobs"],
+        ml_scaler=scaler,
+        verbose=1,
+    )
+    x_train_attacks = results_to_numpy_results(
+        moeva.generate(x_train_candidates, 1), get_encoder_from_constraints(constraints)
+    )
+    x_train_adv_moeva = objective_calc.get_successful_attacks(
+        x_train_candidates,
+        x_train_attacks,
+        preferred_metrics="misclassification",
+        order="asc",
+        max_inputs=1,
+    )
+    print(f"Success rate: {x_train_adv_moeva.shape[0] / x_train_attacks.shape[0]}")
+    print(f"Retraining with: {x_train_adv_moeva.shape[0]}")
+
+    np.save(x_train_adv_moeva_path, x_train_adv_moeva)
+
+model_adv_moeva_path = f"./models/{project_name}/nn_moeva.model"
+if os.path.exists(model_adv_moeva_path):
+    model_adv_moeva = load_model(model_adv_moeva_path)
+else:
+    x_train_local = np.concatenate((x_train, x_train_adv_moeva), axis=0)
+    y_train_local = np.concatenate(
+        (y_train, np.ones(x_train_adv_moeva.shape[0])), axis=0
+    )
+
+    model_adv_moeva = train_model(
+        scaler.transform(x_train_local), to_categorical(y_train_local)
+    )
+    tf.keras.models.save_model(
+        model_adv_moeva,
+        model_adv_moeva_path,
+        overwrite=True,
+        include_optimizer=True,
+        save_format=None,
+        signatures=None,
+        options=None,
+    )
+
+y_proba = model_adv_moeva.predict_proba(scaler.transform(x_test))
+y_pred_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
+print_score(y_test, y_pred_adv_moeva)
+
+
+# ----- ADVERSARIAL TRAINING GRADIENT
+
+x_train_adv_gradient_path = f"./data/{project_name}/x_train_adv_gradient.npy"
+
+if os.path.exists(x_train_adv_gradient_path):
+    x_train_adv_gradient = np.load(x_train_adv_gradient_path)
+else:
+    constraints = get_constraints_from_str(config["project_name"])(
+        config["paths"]["features"],
+        config["paths"]["constraints"],
+    )
+    experiment = None
+    enable_comet = config.get("comet", True)
+    if enable_comet:
+        params = config
+        experiment = init_comet(params)
+
+    x_train_candidates = x_train[
+        (y_train == 1)
+        * (
+                y_train
+                == (
+                        model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold
+                ).astype(int)
+        )
+        ]
+    print(f"{x_train_candidates.shape} candidates.")
+    constraints.check_constraints_error(x_train_candidates)
+
+    objective_calc = ObjectiveCalculator(
+        Classifier(model),
+        constraints,
+        minimize_class=1,
+        thresholds={"f1": threshold, "f2": config["eps"]},
+        min_max_scaler=scaler,
+        ml_scaler=scaler,
+        norm=config["norm"],
+    )
+
+    initial_shape = x_train.shape[1:]
+    new_input = tf.keras.layers.Input(shape=initial_shape)
+    model_att = tf.keras.models.Model(inputs=[new_input], outputs=[model(new_input)])
+    kc_classifier = kc(
+        model_att,
+        clip_values=(0.0, 1.0),
+        input_shape=initial_shape,
+        loss_object=tf.keras.losses.categorical_crossentropy,
+        nb_classes=2,
+        constraints=constraints,
+        scaler=scaler,
+        experiment=experiment,
+        parameters=config,
+    )
+    attack = PGD(
+        kc_classifier,
+        eps=config["eps"] - 0.000001,
+        eps_step=0.1,
+        norm=config.get("norm"),
+        verbose=config["system"]["verbose"] == 1,
+        max_iter=int(config.get("budget")),
+        num_random_init=config.get("nb_random", 0),
+        batch_size=x_train_candidates.shape[0],
+        loss_evaluation=config.get("loss_evaluation"),
+    )
+
+    x_train_attacks = scaler.inverse_transform(
+        attack.generate(
+            x=scaler.transform(x_train_candidates),
+            y=np.zeros(x_train_candidates.shape[0]),
+            mask=constraints.get_mutable_mask(),
+        )
+    )
+    mask_int = constraints.get_feature_type() != "real"
+    x_plus_minus = x_train_attacks[:, mask_int] - x_train_candidates[:, mask_int] >= 0
+    x_train_attacks[:, mask_int][x_plus_minus] = np.floor(
+        x_train_attacks[:, mask_int][x_plus_minus]
+    )
+    x_train_attacks[:, mask_int][~x_plus_minus] = np.ceil(
+        x_train_attacks[:, mask_int][~x_plus_minus]
+    )
+
+    if len(x_train_attacks.shape) == 2:
+        x_train_attacks = x_train_attacks[:, np.newaxis, :]
+    np.save("./tmp.npy", x_train_attacks)
+    x_train_adv_gradient = objective_calc.get_successful_attacks(
+        x_train_candidates,
+        x_train_attacks,
+        preferred_metrics="misclassification",
+        order="asc",
+        max_inputs=1,
+    )
+
+    print(f"Success rate: {x_train_adv_gradient.shape[0] / x_train_attacks.shape[0]}")
+    print(f"Retraining with: {x_train_adv_gradient.shape[0]}")
+    np.save(x_train_adv_gradient_path, x_train_adv_gradient)
 
 # ----- Common x_attacks
 x_candidates_path = f"./data/{project_name}/x_candidates_common.npy"
-x_candidates_augmented_path = f"./data/{project_name}_augmented/x_candidates_common.npy"
+x_candidates_augmented_path = f"./data/{project_name}/x_candidates_common_augmented.npy"
 
 if os.path.exists(x_candidates_path) and os.path.exists(x_candidates_augmented_path):
     x_candidates = np.load(x_candidates_path)
     x_candidates_augmented = np.load(x_candidates_augmented_path)
 else:
-    candidates_index = (y_test == 1) * (y_test == y_pred) * (y_test == y_pred_augmented)
+    candidates_index = (y_test == 1) * (y_test == y_pred) * (y_test == y_pred_augmented) * (y_test == y_pred_adv_moeva)
     x_candidates = x_test[candidates_index, :]
     x_candidates_augmented = x_test_augmented[candidates_index, :]
     np.save(x_candidates_path, x_candidates)
     np.save(x_candidates_augmented_path, x_candidates_augmented)
+
+print(f"Candidates: {x_candidates.shape}.")
