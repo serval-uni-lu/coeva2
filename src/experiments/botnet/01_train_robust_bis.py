@@ -90,121 +90,121 @@ y_pred = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred)
 print(f"AUROC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
-# ----- FIND IMPORTANT FEATURES
-
-important_features_path = f"./data/{project_name}/important_features_19_bis.npy"
-if os.path.exists(important_features_path):
-    print(f"{important_features_path} exists loading...")
-    important_features = np.load(important_features_path)
-else:
-    sampler = RandomUnderSampler(sampling_strategy={0: 300, 1: 300}, random_state=42)
-    x_train_small, y_train_small = sampler.fit_resample(x_train, y_train)
-    explainer = shap.DeepExplainer(model, scaler.transform(x_train_small))
-    shap_values = explainer.shap_values(scaler.transform(x_train_small))
-    shap_values_per_feature = np.mean(np.abs(np.array(shap_values)[0]), axis=0)
-    shap_values_per_mutable_feature = shap_values_per_feature[features["mutable"]]
-
-    mutable_feature_index = np.where(features["mutable"])[0]
-    order_feature_mutable = np.argsort(shap_values_per_mutable_feature)[::-1]
-    important_features_index = mutable_feature_index[order_feature_mutable][
-        :nb_important_features
-    ]
-    important_features_mean = np.mean(x_train[:, important_features_index], axis=0)
-
-    important_features = np.column_stack(
-        [important_features_index, important_features_mean]
-    )
-    np.save(important_features_path, important_features)
-
-
-# ----- AUGMENT DATASET
-x_train_augmented_path = f"./data/{project_name}/x_train_augmented_19_bis.npy"
-x_test_augmented_path = f"./data/{project_name}/x_test_augmented_19_bis.npy"
-features_augmented_path = f"./data/{project_name}/features_augmented_19_bis.csv"
-constraints_augmented_path = f"./data/{project_name}/constraints_augmented_19_bis.csv"
-if os.path.exists(x_train_augmented_path) and os.path.exists(x_test_augmented_path):
-    x_train_augmented = np.load(x_train_augmented_path)
-    x_test_augmented = np.load(x_test_augmented_path)
-    features_augmented = pd.read_csv(features_augmented_path)
-    constraints_augmented = pd.read_csv(constraints_augmented_path)
-    nb_new_features = x_train_augmented.shape[1] - x_train.shape[1]
-else:
-    x_train_augmented = augment_data(x_train, important_features)
-    x_test_augmented = augment_data(x_test, important_features)
-    nb_new_features = x_train_augmented.shape[1] - x_train.shape[1]
-    features_augmented = features.append(
-        [
-            {
-                "feature": f"augmented_{i}",
-                "type": "int",
-                "mutable": True,
-                "min": 0.0,
-                "max": 1.0,
-                "augmentation": True,
-            }
-            for i in range(nb_new_features)
-        ]
-    )
-    constraints_augmented = constraints.append(
-        [
-            {
-                "min": 0.0,
-                "max": 1.0,
-                "augmentation": True,
-            }
-            for i in range(nb_new_features)
-        ]
-    )
-    np.save(x_train_augmented_path, x_train_augmented)
-    np.save(x_test_augmented_path, x_test_augmented)
-    features_augmented.to_csv(features_augmented_path)
-    constraints_augmented.to_csv(constraints_augmented_path)
-
-# ----- Augmented scaler
-
-scaler_augmented_path = f"./models/{project_name}/scaler_augmented_19_bis.joblib"
-
-if os.path.exists(scaler_augmented_path):
-    scaler_augmented = joblib.load(scaler_augmented_path)
-else:
-    scaler_augmented = MinMaxScaler()
-    scaling_data = np.concatenate(
-        (
-            np.concatenate((scaler.data_min_, np.zeros(nb_new_features))),
-            np.concatenate((scaler.data_max_, np.ones(nb_new_features))),
-        ),
-        axis=0,
-    ).reshape(2, -1)
-
-    scaler_augmented.fit(scaling_data)
-    joblib.dump(scaler_augmented, scaler_augmented_path)
-
-# ----- TRAIN MODEL
-
-model_augmented_path = f"./models/{project_name}/nn_augmented_19_bis.model"
-
-if os.path.exists(model_augmented_path):
-    print(f"{model_augmented_path} exists loading...")
-    model_augmented = load_model(model_augmented_path)
-else:
-    model_augmented = train_model(
-        scaler_augmented.transform(x_train_augmented), to_categorical(y_train)
-    )
-    tf.keras.models.save_model(
-        model_augmented,
-        model_augmented_path,
-        overwrite=True,
-        include_optimizer=True,
-        save_format=None,
-        signatures=None,
-        options=None,
-    )
-# ----- MODEL SCORE
-
-y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmented))
-y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
-print_score(y_test, y_pred_augmented)
-print(f"AUROOOC: {roc_auc_score(y_test, y_proba[:, 1])}")
+# # ----- FIND IMPORTANT FEATURES
+#
+# important_features_path = f"./data/{project_name}/important_features_19_bis.npy"
+# if os.path.exists(important_features_path):
+#     print(f"{important_features_path} exists loading...")
+#     important_features = np.load(important_features_path)
+# else:
+#     sampler = RandomUnderSampler(sampling_strategy={0: 300, 1: 300}, random_state=42)
+#     x_train_small, y_train_small = sampler.fit_resample(x_train, y_train)
+#     explainer = shap.DeepExplainer(model, scaler.transform(x_train_small))
+#     shap_values = explainer.shap_values(scaler.transform(x_train_small))
+#     shap_values_per_feature = np.mean(np.abs(np.array(shap_values)[0]), axis=0)
+#     shap_values_per_mutable_feature = shap_values_per_feature[features["mutable"]]
+#
+#     mutable_feature_index = np.where(features["mutable"])[0]
+#     order_feature_mutable = np.argsort(shap_values_per_mutable_feature)[::-1]
+#     important_features_index = mutable_feature_index[order_feature_mutable][
+#         :nb_important_features
+#     ]
+#     important_features_mean = np.mean(x_train[:, important_features_index], axis=0)
+#
+#     important_features = np.column_stack(
+#         [important_features_index, important_features_mean]
+#     )
+#     np.save(important_features_path, important_features)
+#
+#
+# # ----- AUGMENT DATASET
+# x_train_augmented_path = f"./data/{project_name}/x_train_augmented_19_bis.npy"
+# x_test_augmented_path = f"./data/{project_name}/x_test_augmented_19_bis.npy"
+# features_augmented_path = f"./data/{project_name}/features_augmented_19_bis.csv"
+# constraints_augmented_path = f"./data/{project_name}/constraints_augmented_19_bis.csv"
+# if os.path.exists(x_train_augmented_path) and os.path.exists(x_test_augmented_path):
+#     x_train_augmented = np.load(x_train_augmented_path)
+#     x_test_augmented = np.load(x_test_augmented_path)
+#     features_augmented = pd.read_csv(features_augmented_path)
+#     constraints_augmented = pd.read_csv(constraints_augmented_path)
+#     nb_new_features = x_train_augmented.shape[1] - x_train.shape[1]
+# else:
+#     x_train_augmented = augment_data(x_train, important_features)
+#     x_test_augmented = augment_data(x_test, important_features)
+#     nb_new_features = x_train_augmented.shape[1] - x_train.shape[1]
+#     features_augmented = features.append(
+#         [
+#             {
+#                 "feature": f"augmented_{i}",
+#                 "type": "int",
+#                 "mutable": True,
+#                 "min": 0.0,
+#                 "max": 1.0,
+#                 "augmentation": True,
+#             }
+#             for i in range(nb_new_features)
+#         ]
+#     )
+#     constraints_augmented = constraints.append(
+#         [
+#             {
+#                 "min": 0.0,
+#                 "max": 1.0,
+#                 "augmentation": True,
+#             }
+#             for i in range(nb_new_features)
+#         ]
+#     )
+#     np.save(x_train_augmented_path, x_train_augmented)
+#     np.save(x_test_augmented_path, x_test_augmented)
+#     features_augmented.to_csv(features_augmented_path)
+#     constraints_augmented.to_csv(constraints_augmented_path)
+#
+# # ----- Augmented scaler
+#
+# scaler_augmented_path = f"./models/{project_name}/scaler_augmented_19_bis.joblib"
+#
+# if os.path.exists(scaler_augmented_path):
+#     scaler_augmented = joblib.load(scaler_augmented_path)
+# else:
+#     scaler_augmented = MinMaxScaler()
+#     scaling_data = np.concatenate(
+#         (
+#             np.concatenate((scaler.data_min_, np.zeros(nb_new_features))),
+#             np.concatenate((scaler.data_max_, np.ones(nb_new_features))),
+#         ),
+#         axis=0,
+#     ).reshape(2, -1)
+#
+#     scaler_augmented.fit(scaling_data)
+#     joblib.dump(scaler_augmented, scaler_augmented_path)
+#
+# # ----- TRAIN MODEL
+#
+# model_augmented_path = f"./models/{project_name}/nn_augmented_19_bis.model"
+#
+# if os.path.exists(model_augmented_path):
+#     print(f"{model_augmented_path} exists loading...")
+#     model_augmented = load_model(model_augmented_path)
+# else:
+#     model_augmented = train_model(
+#         scaler_augmented.transform(x_train_augmented), to_categorical(y_train)
+#     )
+#     tf.keras.models.save_model(
+#         model_augmented,
+#         model_augmented_path,
+#         overwrite=True,
+#         include_optimizer=True,
+#         save_format=None,
+#         signatures=None,
+#         options=None,
+#     )
+# # ----- MODEL SCORE
+#
+# y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmented))
+# y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
+# print_score(y_test, y_pred_augmented)
+# print(f"AUROOOC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
 
 # ----- ADVERSARIAL GENERATION MOEVA
