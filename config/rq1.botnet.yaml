@@ -6,7 +6,7 @@ attacks:
 seeds:
   - 42
 projects:
-  - rq1.botnet.static
+  - rq1.botnet.static.bis
 eps_list:
   - 4
 budgets:
