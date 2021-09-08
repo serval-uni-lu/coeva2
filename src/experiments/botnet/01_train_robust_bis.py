@@ -218,7 +218,10 @@ x_train_candidates = x_train[
             ).astype(int)
     )
     ]
-
+constraints = get_constraints_from_str(config["project_name"])(
+    config["paths"]["features"],
+    config["paths"]["constraints"],
+)
 batch_i = config.get("batch_i")
 nb_sample_per_batch = 500
 x_train_moeva_path = f"./data/{project_name}/x_train_moeva_bis_{batch_i}.npy"
