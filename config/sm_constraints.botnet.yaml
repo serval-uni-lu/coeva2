@@ -1,0 +1,14 @@
+---
+config_dir: ./config/
+attacks:
+  - moeva
+seeds:
+  - 42
+projects:
+  - sm_constraints.botnet.static
+eps_list:
+  - 4
+budgets:
+  - 1000
+max_augmentation: 19
+path_prefix: botnet

@@ -49,10 +49,17 @@ def run():
 
     # ----- Load and create necessary objects
 
-    constraints = get_constraints_from_str(config["project_name"])(
-        config["paths"]["features"],
-        config["paths"]["constraints"],
-    )
+    if config["paths"].get("important_features", False):
+        constraints = get_constraints_from_str(config["project_name"])(
+            config["paths"]["features"],
+            config["paths"]["constraints"],
+            config["paths"].get("important_features")
+        )
+    else:
+        constraints = get_constraints_from_str(config["project_name"])(
+            config["paths"]["features"],
+            config["paths"]["constraints"],
+        )
 
     x_initial = np.load(config["paths"]["x_candidates"])
 

@@ -1,0 +1,4 @@
+---
+project_name: botnet
+thresholds:
+  misclassification: 0.5

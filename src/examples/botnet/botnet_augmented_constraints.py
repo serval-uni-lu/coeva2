@@ -22,13 +22,16 @@ class BotnetAugmentedConstraints(Constraints):
         # amount_feature_index: int,
         feature_path: str,
         constraints_path: str,
+        import_features_path: None,
     ):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
         self._fit_scaler()
         with open("./data/botnet/feat_idx.pickle", "rb") as f:
             self.feat_idx = pickle.load(f)
-        self.important_features = np.load("./data/botnet/important_features_19.npy")
+        if import_features_path is None:
+            import_features_path = "./data/botnet/important_features_19.npy"
+        self.important_features = np.load(import_features_path)
         self.feat_idx_tf = self.feat_idx.copy()
         for key in self.feat_idx:
             self.feat_idx_tf[key] = tf.convert_to_tensor(self.feat_idx[key], dtype=tf.int64)
