@@ -1,5 +1,5 @@
 outs:
-- md5: 400bf43fa0d79cfa439f8271aa87e33b.dir
-  size: 6108779
-  nfiles: 33
+- md5: 50ea003dea2f9c94258cd51a493d526e.dir
+  size: 92690102
+  nfiles: 343
   path: botnet
