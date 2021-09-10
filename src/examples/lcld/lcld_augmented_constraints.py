@@ -1,3 +1,4 @@
+from itertools import combinations
 from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -8,7 +9,9 @@ import pandas as pd
 import tensorflow as tf
 import logging
 
+from src.attacks.moeva2.utils import get_ohe_masks
 from src.examples.utils import constraints_augmented_np, constraints_augmented_tf
+from src.experiments.botnet.features import augment_data
 
 
 class LcldAugmentedConstraints(Constraints):
@@ -40,7 +43,6 @@ class LcldAugmentedConstraints(Constraints):
 
     def fix_features_types(self, x):
 
-        #
         new_tensor_v = tf.Variable(x)
 
         # enforcing 2 possibles values
@@ -53,6 +55,24 @@ class LcldAugmentedConstraints(Constraints):
         # enforcing the power formula
         x3 = x0 * x2 * tf.math.pow(1 + x2, x1) / (tf.math.pow(1 + x2, x1) - 1)
         new_tensor_v = new_tensor_v[:, 3].assign(x3)
+
+        # enforcing ohe
+
+        ohe_masks = get_ohe_masks(self._feature_type)
+
+        new_tensor_v = new_tensor_v.numpy()
+        for mask in ohe_masks:
+            ohe = new_tensor_v[:, mask]
+            max_feature = np.argmax(ohe, axis=1)
+            new_ohe = np.zeros_like(ohe)
+            new_ohe[np.arange(len(ohe)), max_feature] = 1
+
+            new_tensor_v[:, mask] = new_ohe
+
+        if new_tensor_v.shape[1] > 47:
+            combi = -sum(1 for i in combinations(range(len(self.important_features)), 2))
+            new_tensor_v = new_tensor_v[..., :combi]
+            new_tensor_v = augment_data(new_tensor_v, self.important_features)
 
         return tf.convert_to_tensor(new_tensor_v)
 

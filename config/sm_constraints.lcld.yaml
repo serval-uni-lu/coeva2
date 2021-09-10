@@ -1,0 +1,17 @@
+---
+config_dir: ./config/
+attacks:
+#  - moeva
+  - pgd
+seeds:
+  - 42
+projects:
+  - sm_constraints.lcld.static
+eps_list:
+  - 0.2
+budgets:
+  - 1000
+max_augmentation: 3
+path_prefix: "lcld"
+loss_evaluations:
+  - constraints+flip+adaptive_eps_step+repair
