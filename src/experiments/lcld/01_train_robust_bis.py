@@ -263,7 +263,7 @@ x_train_adv_moeva_path = f"./data/{project_name}/x_train_adv_moeva_bis.npy"
 
 if os.path.exists(x_train_adv_moeva_path):
     x_train_adv_moeva = np.load(x_train_adv_moeva_path)
-    x_train_adv_moeva_index = np.load(f"./data/{project_name}/x_train_adv_moeva_index.npy")
+    x_train_adv_moeva_index = np.load(f"./data/{project_name}/x_train_adv_moeva_index_bis.npy")
 
 else:
     constraints = get_constraints_from_str(config["project_name"])(
@@ -291,7 +291,7 @@ else:
     )
     print(f"Success rate: {x_train_adv_moeva.shape[0] / x_train_moeva.shape[0]}")
     print(f"Retraining with: {x_train_adv_moeva.shape[0]}")
-    np.save(f"./data/{project_name}/x_train_adv_moeva_index.npy", x_train_adv_moeva_index)
+    np.save(f"./data/{project_name}/x_train_adv_moeva_index_bis.npy", x_train_adv_moeva_index)
     np.save(x_train_adv_moeva_path, x_train_adv_moeva)
 
 # ----- ADVERSARIAL GENERATION GRADIENT
@@ -300,7 +300,7 @@ x_train_adv_gradient_path = f"./data/{project_name}/x_train_adv_gradient_bis.npy
 
 if os.path.exists(x_train_adv_gradient_path):
     x_train_adv_gradient = np.load(x_train_adv_gradient_path)
-    x_train_adv_gradient_index = np.load(f"./data/{project_name}/x_train_adv_gradient_index.npy")
+    x_train_adv_gradient_index = np.load(f"./data/{project_name}/x_train_adv_gradient_index_bis.npy")
 else:
     experiment = None
     enable_comet = config.get("comet", True)
@@ -395,7 +395,7 @@ else:
 
     print(f"Success rate: {x_train_adv_gradient.shape[0] / x_train_attacks.shape[0]}")
     print(f"Retraining with: {x_train_adv_gradient.shape[0]}")
-    np.save(f"./data/{project_name}/x_train_adv_gradient_index.npy", x_train_adv_gradient_index)
+    np.save(f"./data/{project_name}/x_train_adv_gradient_index_bis.npy", x_train_adv_gradient_index)
     np.save(x_train_adv_gradient_path, x_train_adv_gradient)
 
 # ----- ADVERSARIAL COMMON

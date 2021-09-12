@@ -161,31 +161,32 @@ else:
 #
 # # ----- ADVERSARIAL TRAINING MOEVA
 #
-# model_adv_moeva_path = f"./models/{project_name}/nn_moeva_full.model"
-# if os.path.exists(model_adv_moeva_path):
-#     model_adv_moeva = load_model(model_adv_moeva_path)
-# else:
-#     x_train_local = np.concatenate((x_train, x_train_adv_moeva), axis=0)
-#     y_train_local = np.concatenate(
-#         (y_train, np.ones(x_train_adv_moeva.shape[0])), axis=0
-#     )
-#
-#     model_adv_moeva = train_model(
-#         scaler.transform(x_train_local), to_categorical(y_train_local)
-#     )
-#     tf.keras.models.save_model(
-#         model_adv_moeva,
-#         model_adv_moeva_path,
-#         overwrite=True,
-#         include_optimizer=True,
-#         save_format=None,
-#         signatures=None,
-#         options=None,
-#     )
-#
-# y_proba = model_adv_moeva.predict_proba(scaler.transform(x_test))
-# y_pred_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
-# print_score(y_test, y_pred_adv_moeva)
+model_adv_moeva_path = f"./models/{project_name}/nn_moeva_full.model"
+if os.path.exists(model_adv_moeva_path):
+    model_adv_moeva = load_model(model_adv_moeva_path)
+else:
+    print(x_train_adv_moeva.shape)
+    x_train_local = np.concatenate((x_train, x_train_adv_moeva), axis=0)
+    y_train_local = np.concatenate(
+        (y_train, np.ones(x_train_adv_moeva.shape[0])), axis=0
+    )
+
+    model_adv_moeva = train_model(
+        scaler.transform(x_train_local), to_categorical(y_train_local)
+    )
+    tf.keras.models.save_model(
+        model_adv_moeva,
+        model_adv_moeva_path,
+        overwrite=True,
+        include_optimizer=True,
+        save_format=None,
+        signatures=None,
+        options=None,
+    )
+
+y_proba = model_adv_moeva.predict_proba(scaler.transform(x_test))
+y_pred_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
+print_score(y_test, y_pred_adv_moeva)
 
 
 
@@ -211,10 +212,7 @@ print(x_train_augmented_candidates.shape)
 
 # ----- ADVERSARIAL GENERATION MOEVA AUGMENTED
 
-batch_i = config.get("iter_i")
-input_per_batch = 2000
-
-x_train_augmented_moeva_path = f"./data/{project_name}/x_train_augmented_moeva_{batch_i}.npy"
+x_train_augmented_moeva_path = f"./data/{project_name}/x_train_augmented_moeva.npy"
 
 if os.path.exists(x_train_augmented_moeva_path):
     x_train_augmented_moeva = np.load(x_train_augmented_moeva_path)
@@ -222,7 +220,6 @@ else:
     print(f"{x_train_augmented_candidates.shape} candidates.")
     n_gen = config["budget"]
 
-    x_train_augmented_candidates = x_train_augmented_candidates[batch_i*input_per_batch: (batch_i+1)*input_per_batch]
     moeva = Moeva2(
         model_augmented_path,
         constraints,
@@ -243,3 +240,106 @@ else:
         moeva.generate(x_train_augmented_candidates, 1), get_encoder_from_constraints(constraints)
     )
     np.save(x_train_augmented_moeva_path, x_train_augmented_moeva)
+
+# ----- ADVERSARIAL SUCCESS MOEVA
+x_train_augmented_adv_moeva_path = f"./data/{project_name}/x_train_augmented_adv_moeva.npy"
+
+if os.path.exists(x_train_augmented_adv_moeva_path):
+    x_train_augmented_adv_moeva = np.load(x_train_augmented_adv_moeva_path)
+    x_train_augmented_adv_moeva_index = np.load(f"./data/{project_name}/x_train_augmented_adv_moeva_index.npy")
+else:
+
+    objective_calc = ObjectiveCalculator(
+        Classifier(model_augmented),
+        constraints,
+        minimize_class=1,
+        thresholds={"f1": threshold, "f2": config["eps"]},
+        min_max_scaler=scaler_augmented,
+        ml_scaler=scaler_augmented,
+        norm=config["norm"],
+    )
+    print(x_train_augmented_candidates.shape)
+    print(x_train_augmented_moeva.shape)
+    x_train_augmented_adv_moeva, x_train_augmented_adv_moeva_index = objective_calc.get_successful_attacks(
+        x_train_augmented_candidates,
+        x_train_augmented_moeva,
+        preferred_metrics="misclassification",
+        order="asc",
+        max_inputs=1,
+        return_index_success=True
+    )
+    print(f"Success rate: {x_train_augmented_adv_moeva.shape[0] / x_train_augmented_moeva.shape[0]}")
+    print(f"Retraining with: {x_train_augmented_adv_moeva.shape[0]}")
+    np.save(f"./data/{project_name}/x_train_augmented_adv_moeva_index.npy", x_train_augmented_adv_moeva_index)
+    np.save(x_train_augmented_adv_moeva_path, x_train_augmented_adv_moeva)
+
+#
+# # ----- ADVERSARIAL TRAINING MOEVA
+#
+model_augmented_adv_moeva_path = f"./models/{project_name}/nn_augmented_moeva_full.model"
+if os.path.exists(model_augmented_adv_moeva_path):
+    model_augmented_adv_moeva = load_model(model_augmented_adv_moeva_path)
+else:
+    print(x_train_augmented_adv_moeva.shape)
+    x_train_local = np.concatenate((x_train_augmented, x_train_augmented_adv_moeva), axis=0)
+    y_train_local = np.concatenate(
+        (y_train, np.ones(x_train_augmented_adv_moeva.shape[0])), axis=0
+    )
+
+    model_augmented_adv_moeva = train_model(
+        scaler_augmented.transform(x_train_local), to_categorical(y_train_local)
+    )
+    tf.keras.models.save_model(
+        model_augmented_adv_moeva,
+        model_augmented_adv_moeva_path,
+        overwrite=True,
+        include_optimizer=True,
+        save_format=None,
+        signatures=None,
+        options=None,
+    )
+
+y_proba = model_augmented_adv_moeva.predict_proba(scaler_augmented.transform(x_test_augmented))
+y_pred_augmented_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
+print_score(y_test, y_pred_augmented_adv_moeva)
+
+
+x_candidates_common = np.load(f"./data/{project_name}/x_candidates_common.npy")
+x_candidates_common_augmented = np.load(f"./data/{project_name}/x_candidates_common_augmented.npy")
+
+y_pred_candidates = (model_adv_moeva.predict_proba(scaler.transform(x_candidates_common))[:, 1] >= threshold).astype(int)
+print(f"Still ok rate: {y_pred_candidates.sum()/ x_candidates_common.shape[0]}")
+
+y_pred_augmented_candidates = (model_augmented_adv_moeva.predict_proba(scaler_augmented.transform(x_candidates_common_augmented))[:, 1] >= threshold).astype(int)
+print(f"Still ok rate: {y_pred_augmented_candidates.sum()/ x_candidates_common_augmented.shape[0]}")
+
+index_final_candidates = y_pred_candidates * y_pred_augmented_candidates
+print(f"{index_final_candidates.sum()}")
+# np.save(f"./data/{project_name}/x_candidates_rq4", x_candidates_common[index_final_candidates == 1])
+# np.save(f"./data/{project_name}/x_candidates_rq4_augmented", x_candidates_common_augmented[index_final_candidates == 1])
+
+
+x_train_augmented_moeva_post = augment_data(x_train_moeva, important_features)
+
+objective_calc = ObjectiveCalculator(
+        Classifier(model_augmented),
+        constraints,
+        minimize_class=1,
+        thresholds={"f1": threshold, "f2": config["eps"]},
+        min_max_scaler=scaler_augmented,
+        ml_scaler=scaler_augmented,
+        norm=config["norm"],
+    )
+
+x_train_augmented_adv_moeva_post, x_train_augmented_adv_moeva_index = objective_calc.get_successful_attacks(
+        augment_data(x_train_candidates, important_features),
+        x_train_augmented_moeva_post,
+        preferred_metrics="misclassification",
+        order="asc",
+        max_inputs=1,
+        return_index_success=True
+    )
+print(f"Success rate: {x_train_augmented_adv_moeva_post.shape[0] / x_train_augmented_moeva_post.shape[0]}")
+print(f"Retraining with: {x_train_augmented_adv_moeva_post.shape[0]}")
+np.save("x_temp", x_train_augmented_adv_moeva_post)
+np.save("y_temp", x_train_augmented_adv_moeva_index)

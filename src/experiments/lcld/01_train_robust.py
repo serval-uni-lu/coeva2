@@ -6,7 +6,7 @@ import pandas as pd
 import shap
 from imblearn.under_sampling import RandomUnderSampler
 from tensorflow.python.keras.utils.np_utils import to_categorical
-
+from sklearn.metrics import roc_auc_score
 from src.attacks.moeva2.classifier import Classifier
 from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
 from src.attacks.moeva2.moeva2 import Moeva2
@@ -89,6 +89,7 @@ y_proba = model.predict_proba(scaler.transform(x_test))
 y_pred = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred)
 print_score(y_train, (model.predict_proba(scaler.transform(x_train))[:, 1] >= threshold).astype(int))
+print(f"AUROC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
 # ----- FIND IMPORTANT FEATURES
 
@@ -204,6 +205,7 @@ else:
 y_proba = model_augmented.predict_proba(scaler_augmented.transform(x_test_augmented))
 y_pred_augmented = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred_augmented)
+print(f"AUROC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
 # ----- ADVERSARIAL CANDIDATES
 x_train_candidates = x_train[
@@ -436,6 +438,7 @@ else:
 y_proba = model_adv_moeva.predict_proba(scaler.transform(x_test))
 y_pred_adv_moeva = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred_adv_moeva)
+print(f"AUROC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
 
 # ADVERSARIAL_TRAINING GRADIENT
@@ -465,6 +468,7 @@ else:
 y_proba = model_adv_gradient.predict_proba(scaler.transform(x_test))
 y_pred_adv_gradient = (y_proba[:, 1] >= threshold).astype(int)
 print_score(y_test, y_pred_adv_gradient)
+print(f"AUROC: {roc_auc_score(y_test, y_proba[:, 1])}")
 
 # ----- Common x_attacks
 x_candidates_path = f"./data/{project_name}/x_candidates_common.npy"
