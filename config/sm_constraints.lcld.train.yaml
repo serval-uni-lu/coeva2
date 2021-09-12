@@ -1,0 +1,4 @@
+---
+project_name: lcld
+thresholds:
+  misclassification: 0.25
