@@ -19,7 +19,7 @@ class LcldAugmentedConstraints(Constraints):
         self,
         feature_path: str,
         constraints_path: str,
-        import_features_path: None,
+        import_features_path = None,
     ):
         self._provision_constraints_min_max(constraints_path)
         self._provision_feature_constraints(feature_path)
