@@ -175,6 +175,8 @@ class Moeva2:
     def _batch_generate(self, x, y, batch_i):
         tf_lof_off()
 
+        if self.verbose > 0:
+            print(f"Starting batch #{batch_i} with {len(x)} inputs.")
         iterable = enumerate(x)
         if (self.verbose > 0) and (batch_i == 0):
             iterable = tqdm(iterable, total=len(x))
