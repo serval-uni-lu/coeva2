@@ -64,7 +64,7 @@ class InitialStateSampling(Sampling):
     def _do(self, problem, n_samples, **kwargs):
 
         # Retrieve original
-        x_initial_f = problem.x_initial_ml
+        x_initial_f = problem.x_clean
 
         # Encode to genetic
         x_initial_gen = problem.encoder.ml_to_genetic(x_initial_f.reshape(1, -1))[0]

@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 from .classifier import Classifier
 from .constraints import Constraints
-from .default_problem import DefaultProblem
+from .adversarial_problem import AdversarialProblem
 from .feature_encoder import get_encoder_from_constraints
 from .sampling import MixedSamplingLp, InitialStateSampling
 from .result_process import HistoryResult, EfficientResult
@@ -32,55 +32,67 @@ from .softmax_mutation import SoftmaxPolynomialMutation
 from ...utils.in_out import load_model
 
 
+def tf_lof_off():
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+    warnings.simplefilter(action="ignore", category=RuntimeWarning)
+    warnings.simplefilter(action="ignore", category=UserWarning)
+
+
 class Moeva2:
     def __init__(
         self,
-        classifier_path: str,
+        classifier_class,
         constraints: Constraints,
-        ml_scaler=None,
-        problem_class=None,
-        l2_ball_size=0.1,
-        norm=np.inf,
-        n_gen=625,
+        norm=None,
+        fun_distance_preprocess=lambda x: x,
+        n_gen=100,
         n_pop=640,
         n_offsprings=320,
-        scale_objectives=True,
-        save_history=False,
+        save_history="none",
         seed=None,
         n_jobs=-1,
         verbose=1,
     ) -> None:
 
-        self._classifier_path = classifier_path
-        self._constraints = constraints
-        self._ml_scaler = ml_scaler
-        self._problem_class = problem_class
-        self._n_gen = n_gen
-        self._n_pop = n_pop
-        self._n_offsprings = n_offsprings
-        self._scale_objectives = scale_objectives
-        self._save_history = save_history
-        self._seed = seed
-        self._n_jobs = n_jobs
-        self._verbose = verbose
-        self._encoder = get_encoder_from_constraints(self._constraints)
-        self._alg_class = RNSGA3
-        self.l2_ball_size = l2_ball_size
+        self.classifier_class = classifier_class
+        self.constraints = constraints
         self.norm = norm
+        self.fun_distance_preprocess = fun_distance_preprocess
+        self.n_gen = n_gen
+        self.n_pop = n_pop
+        self.n_offsprings = n_offsprings
 
-        if problem_class is None:
-            self._problem_class = DefaultProblem
+        self.save_history = save_history
+        self.seed = seed
+        self.n_jobs = n_jobs
+        self.verbose = verbose
 
-    def _check_input_size(self, x: np.ndarray) -> None:
-        if x.shape[1] != self._encoder.mutable_mask.shape[0]:
+        # Defaults
+        self.alg_class = RNSGA3
+        self.problem_class = AdversarialProblem
+
+        # Computed
+        self.encoder = get_encoder_from_constraints(self.constraints)
+
+    def _check_inputs(self, x: np.ndarray, y) -> None:
+        if x.shape[1] != self.encoder.mutable_mask.shape[0]:
             raise ValueError(
-                f"Mutable mask has shape (n_features,): {self._encoder.mutable_mask.shape[0]}, x has shaper (n_sample, "
+                f"Mutable mask has shape (n_features,): {self.encoder.mutable_mask.shape[0]}, x has shaper (n_sample, "
                 f"n_features): {x.shape}. n_features must be equal."
             )
 
+        if x.shape[0] != y.shape[0]:
+            raise ValueError(
+                f"minimize_class argument must be an integer or an array of shaper (x.shape[0])"
+            )
+
+        if len(x.shape) != 2:
+            raise ValueError(f"{x.__name__} ({x.shape}) must have 2 dimensions.")
+
     def _create_algorithm(self, n_obj) -> GeneticAlgorithm:
 
-        type_mask = self._encoder.get_type_mask_genetic()
+        type_mask = self.encoder.get_type_mask_genetic()
 
         sampling = InitialStateSampling(type_mask=type_mask)
 
@@ -96,7 +108,7 @@ class Moeva2:
                 "int": get_crossover(
                     "int_two_point",
                 ),
-                "softmax": SoftmaxPointCrossover(n_points=2)
+                "softmax": SoftmaxPointCrossover(n_points=2),
             },
         )
 
@@ -106,16 +118,16 @@ class Moeva2:
             {
                 "real": get_mutation("real_pm", eta=20),
                 "int": get_mutation("int_pm", eta=20),
-                "softmax": SoftmaxPolynomialMutation(eta=20)
+                "softmax": SoftmaxPolynomialMutation(eta=20),
             },
         )
 
-        ref_points = get_reference_directions("energy", n_obj, self._n_pop, seed=1)
+        ref_points = get_reference_directions("energy", n_obj, self.n_pop, seed=1)
 
-        algorithm = self._alg_class(
+        algorithm = self.alg_class(
             pop_per_ref_point=1,
             ref_points=ref_points,
-            n_offsprings=self._n_offsprings,
+            n_offsprings=self.n_offsprings,
             sampling=sampling,
             crossover=crossover,
             mutation=mutation,
@@ -125,32 +137,22 @@ class Moeva2:
 
         return algorithm
 
-    def _one_generate(self, x, minimize_class: int):
+    def _one_generate(self, x, y: int, classifier):
         # Reduce log
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-        warnings.simplefilter(action="ignore", category=FutureWarning)
-        warnings.simplefilter(action="ignore", category=RuntimeWarning)
-        warnings.simplefilter(action="ignore", category=UserWarning)
+        termination = get_termination("n_gen", self.n_gen)
 
-        termination = get_termination("n_gen", self._n_gen)
-        if self._classifier_path is not None:
-            classifier = Classifier(load_model(self._classifier_path))
-        else:
-            classifier = None
+        constraints = deepcopy(self.constraints)
+        encoder = get_encoder_from_constraints(self.constraints, x)
 
-        constraints = deepcopy(self._constraints)
-        encoder = get_encoder_from_constraints(self._constraints, x)
-
-        problem = self._problem_class(
-            x_initial_state=x,
+        problem = self.problem_class(
+            x_clean=x,
             classifier=classifier,
-            minimize_class=minimize_class,
+            y_clean=y,
             encoder=encoder,
             constraints=constraints,
-            scale_objectives=self._scale_objectives,
-            save_history=self._save_history,
-            ml_scaler=self._ml_scaler,
+            fun_distance_preprocess=self.fun_distance_preprocess,
             norm=self.norm,
+            save_history=self.save_history,
         )
 
         algorithm = self._create_algorithm(n_obj=problem.get_nb_objectives())
@@ -160,48 +162,73 @@ class Moeva2:
             algorithm,
             termination,
             verbose=0,
-            seed=self._seed,
+            seed=self.seed,
             save_history=False,  # Implemented from library should always be False
         )
 
-        if self._save_history:
-            return HistoryResult(result)
-        else:
-            result = EfficientResult(result)
-            return result
+        x_adv = np.array([ind.X.astype(np.float64) for ind in result.pop])
+        x_adv = self.encoder.genetic_to_ml(x_adv, x)
+        history = result.problem.get_history()
 
-    # Loop over inputs to generate adversarials using the _one_generate function above
-    def generate(self, x: np.ndarray, minimize_class):
+        return x_adv, history
 
-        if isinstance(minimize_class, int):
-            minimize_class = np.repeat(minimize_class, x.shape[0])
-
-        if x.shape[0] != minimize_class.shape[0]:
-            raise ValueError(
-                f"minimize_class argument must be an integer or an array of shaper (x.shape[0])"
-            )
-
-        self._check_input_size(x)
-
-        if len(x.shape) != 2:
-            raise ValueError(f"{x.__name__} ({x.shape}) must have 2 dimensions.")
+    def _batch_generate(self, x, y, batch_i):
+        tf_lof_off()
 
         iterable = enumerate(x)
-        if self._verbose > 0:
+        if (self.verbose > 0) and (batch_i == 0):
             iterable = tqdm(iterable, total=len(x))
 
+        classifier = self.classifier_class()
+
+        out = [self._one_generate(x[i], y[i], classifier) for i, _ in iterable]
+
+        out = zip(*out)
+        out = [np.array(out_0) for out_0 in out]
+
+        return out
+
+    # Loop over inputs to generate adversarials using the _one_generate function above
+    def generate(self, x: np.ndarray, y, batch_size=None):
+
+        n_batch = self.n_jobs
+        if batch_size is not None:
+            n_batch = np.ceil(x.shape[0] / batch_size)
+
+        batches_i = np.array_split(np.arange(x.shape[0]), n_batch)
+
+        if isinstance(y, int):
+            y = np.repeat(y, x.shape[0])
+
+        self._check_inputs(x, y)
+
+        iterable = enumerate(batches_i)
+        # if self.verbose > 0:
+        #     iterable = tqdm(iterable, total=len(x), position=1)
+
         # Sequential Run
-        if self._n_jobs == 1:
-            processed_result = [
-                self._one_generate(initial_state, minimize_class[index])
-                for index, initial_state in iterable
+        if self.n_jobs == 1:
+            print("Sequential run.")
+            out = [
+                self._batch_generate(x[batch_indexes], y[batch_indexes], i)
+                for i, batch_indexes in iterable
             ]
 
         # Parallel run
         else:
-            processed_result = Parallel(n_jobs=self._n_jobs)(
-                delayed(self._one_generate)(initial_state, minimize_class[index])
-                for index, initial_state in iterable
+            print("Parallel run.")
+            out = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._batch_generate)(x[batch_indexes], y[batch_indexes], i)
+                for i, batch_indexes in iterable
             )
 
-        return processed_result
+        out = zip(*out)
+        out = [np.concatenate(out_0) for out_0 in out]
+
+        x_adv = out[0]
+        histories = out[1]
+
+        if self.save_history:
+            return x_adv, histories
+        else:
+            return x_adv
