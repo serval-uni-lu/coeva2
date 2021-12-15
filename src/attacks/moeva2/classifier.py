@@ -45,18 +45,29 @@ class Classifier:
             self._classifier.set_params(n_jobs=n_jobs)
 
 
-class DelayedClassifier(Classifier):
+class DelayedClassifier:
     def __init__(self, classifier_path, n_jobs=1, verbose=0):
-        classifier = load_model(classifier_path)
-        super().__init__(classifier, n_jobs, verbose)
+        self.classifier = None
+        self.classifier_path = classifier_path
+
+    def predict_proba(self, x: np.ndarray) -> np.ndarray:
+        self.load()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            proba = self.classifier.predict_proba(x)
+        if proba.shape[1] == 1:
+            proba = np.concatenate((1 - proba, proba), axis=1)
+        return proba
+
+    def load(self):
+        if self.classifier is None:
+            self.classifier = load_model(self.classifier_path)
 
 
-class ScalerClassifier(Classifier):
+class ScalerClassifier(DelayedClassifier):
     def __init__(self, classifier_path, scaler_path, n_jobs=1, verbose=0):
+        super().__init__(classifier_path, n_jobs, verbose)
         self.scaler = joblib.load(scaler_path)
-        classifier = load_model(classifier_path)
-
-        super().__init__(classifier, n_jobs, verbose)
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
         x = self.scaler.transform(x)

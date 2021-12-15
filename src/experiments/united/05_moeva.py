@@ -61,17 +61,14 @@ def run():
     n_gen = config["n_gen"]
     start_time = time.time()
 
-    class LocalClassifier(ScalerClassifier):
-        def __init__(self):
-            scaler_path = config["paths"]["scaler"]
-            classifier_path = config["paths"]["model"]
-            super().__init__(classifier_path, scaler_path)
+    classifier_path = config["paths"]["model"]
+    scaler_path = config["paths"]["scaler"]
 
     moeva = Moeva2(
-        classifier_class=LocalClassifier,
+        classifier_class=ScalerClassifier(classifier_path, scaler_path),
         constraints=constraints,
         norm=config["norm"],
-        fun_distance_preprocess=lambda x: scaler.transform(x),
+        fun_distance_preprocess=scaler.transform,
         n_gen=n_gen,
         n_pop=config["n_pop"],
         n_offsprings=config["n_offsprings"],

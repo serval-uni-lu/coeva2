@@ -11,20 +11,18 @@ from pymoo.factory import (
     get_mutation,
     get_crossover,
     get_reference_directions,
-    get_sampling,
 )
 from pymoo.operators.mixed_variable_operator import (
     MixedVariableCrossover,
     MixedVariableMutation,
-    MixedVariableSampling,
 )
 from pymoo.optimize import minimize
 from tqdm import tqdm
 
-from .constraints import Constraints
 from .adversarial_problem import AdversarialProblem
+from .constraints import Constraints
 from .feature_encoder import get_encoder_from_constraints
-from .sampling import MixedSamplingLp, InitialStateSampling
+from .sampling import InitialStateSampling
 from .softmax_crossover import SoftmaxPointCrossover
 from .softmax_mutation import SoftmaxPolynomialMutation
 
@@ -138,7 +136,7 @@ class Moeva2:
         # Reduce log
         termination = get_termination("n_gen", self.n_gen)
 
-        constraints = deepcopy(self.constraints)
+        constraints = self.constraints
         encoder = get_encoder_from_constraints(self.constraints, x)
 
         problem = self.problem_class(
@@ -172,6 +170,7 @@ class Moeva2:
     def _batch_generate(self, x, y, batch_i):
         tf_lof_off()
         import tensorflow as tf
+
         tf.config.threading.set_intra_op_parallelism_threads(1)
         tf.config.threading.set_inter_op_parallelism_threads(1)
 
@@ -181,7 +180,8 @@ class Moeva2:
         if (self.verbose > 0) and (batch_i == 0):
             iterable = tqdm(iterable, total=len(x))
 
-        classifier = self.classifier_class()
+        classifier = self.classifier_class
+        classifier.load()
 
         out = [self._one_generate(x[i], y[i], classifier) for i, _ in iterable]
 
@@ -216,11 +216,22 @@ class Moeva2:
 
         # Parallel run
         else:
+            import multiprocessing
             print("Parallel run.")
-            out = Parallel(n_jobs=self.n_jobs)(
-                delayed(self._batch_generate)(x[batch_indexes], y[batch_indexes], i)
-                for i, batch_indexes in iterable
-            )
+            with multiprocessing.Pool(self.n_jobs) as pool:
+                out = pool.starmap(
+                    self._batch_generate,
+                    (
+                        [
+                            (x[batch_indexes], y[batch_indexes], i)
+                            for i, batch_indexes in iterable
+                        ]
+                    ),
+                )
+            # out = Parallel(n_jobs=self.n_jobs)(
+            #     delayed(self._batch_generate)(x[batch_indexes], y[batch_indexes], i)
+            #     for i, batch_indexes in iterable
+            # )
 
         out = zip(*out)
         out = [np.concatenate(out_0) for out_0 in out]
