@@ -1,21 +1,19 @@
 import os
-import warnings
 import time
+import warnings
 from itertools import combinations
 from pathlib import Path
 
 import joblib
 import numpy as np
 
-from src.attacks.moeva2.classifier import Classifier
-from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
+from src.attacks.moeva2.classifier import Classifier, ScalerClassifier
 from src.attacks.moeva2.moeva2 import Moeva2
 from src.attacks.moeva2.objective_calculator import ObjectiveCalculator
-from src.attacks.moeva2.utils import results_to_numpy_results, results_to_history
 from src.config_parser.config_parser import get_config, get_config_hash, save_config
 from src.experiments.botnet.features import augment_data
 from src.experiments.united.utils import get_constraints_from_str
-from src.utils import Pickler, filter_initial_states, timing, in_out
+from src.utils import filter_initial_states, timing, in_out
 from src.utils.in_out import load_model
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -40,11 +38,11 @@ def run():
 
     # ----- Load and create necessary objects
 
-    if config["paths"].get("important_features", False):
+    if config["paths"].get("important_features  ", False):
         constraints = get_constraints_from_str(config["project_name"])(
             config["paths"]["features"],
             config["paths"]["constraints"],
-            config["paths"].get("important_features")
+            config["paths"].get("important_features"),
         )
     else:
         constraints = get_constraints_from_str(config["project_name"])(
@@ -68,53 +66,56 @@ def run():
 
     n_gen = config["budget"]
     start_time = time.time()
+
+    class LocalClassifier(ScalerClassifier):
+        def __init__(self):
+            scaler_path = config["paths"]["ml_scaler"]
+            classifier_path = config["paths"]["model"]
+            super().__init__(classifier_path, scaler_path)
+
     moeva = Moeva2(
-        config["paths"]["model"],
-        constraints,
-        problem_class=None,
-        l2_ball_size=0.0,
+        classifier_class=LocalClassifier,
+        constraints=constraints,
         norm=config["norm"],
+        fun_distance_preprocess=lambda x: scaler.transform(x),
         n_gen=n_gen,
         n_pop=config["n_pop"],
         n_offsprings=config["n_offsprings"],
-        scale_objectives=True,
         save_history=config.get("save_history"),
         seed=config["seed"],
         n_jobs=config["system"]["n_jobs"],
-        ml_scaler=scaler,
         verbose=1,
     )
-    attacks = moeva.generate(X_initial_states, 1)
+
+    x_adv, x_histories = moeva.generate(X_initial_states, 1)
     consumed_time = time.time() - start_time
-    # Save
-    # Legacy
-    Pickler.save_to_file(attacks, f"{out_dir}/results_{config_hash}.npy")
+
+    print(f"X_adv shape {x_adv.shape}")
 
     # Attacks crafted
-    x_attacks = results_to_numpy_results(
-        attacks, get_encoder_from_constraints(constraints)
-    )
+
     if config["reconstruction"]:
         important_features = constraints.important_features
         combi = -sum(1 for i in combinations(range(len(important_features)), 2))
-        x_attacks_l = x_attacks[..., :combi]
+        x_attacks_l = x_adv[..., :combi]
         print(x_attacks_l.shape)
         x_attacks = augment_data(x_attacks_l, important_features)
         print(x_attacks.shape)
 
-    np.save(f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy", x_attacks)
+    np.save(f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy", x_adv)
 
     # History
     if config.get("save_history"):
-        x_histories = results_to_history(attacks)
         np.save(f"{out_dir}/x_history_{mid_fix}_{config_hash}.npy", x_histories)
 
     objective_lists = []
     for eps in config["eps_list"]:
-        threholds = {"f1": config["misclassification_threshold"], "f2": eps}
+        thresholds = {"f1": config["misclassification_threshold"], "f2": eps}
         classifier = Classifier(load_model(config["paths"]["model"]))
         if config.get("evaluation", False):
-            constraints = get_constraints_from_str(config["evaluation"]["project_name"])(
+            constraints = get_constraints_from_str(
+                config["evaluation"]["project_name"]
+            )(
                 config["paths"]["features"],
                 config["evaluation"]["constraints"],
             )
@@ -122,12 +123,12 @@ def run():
             classifier,
             constraints,
             minimize_class=1,
-            thresholds=threholds,
+            thresholds=thresholds,
             min_max_scaler=scaler,
             ml_scaler=scaler,
             norm=config["norm"],
         )
-        success_rate_df = objective_calc.success_rate_3d_df(X_initial_states, x_attacks)
+        success_rate_df = objective_calc.success_rate_3d_df(X_initial_states, x_adv)
         objective_lists.append(success_rate_df.to_dict(orient="records")[0])
 
     metrics = {
