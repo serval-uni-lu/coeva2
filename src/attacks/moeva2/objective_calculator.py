@@ -174,7 +174,7 @@ class ObjectiveCalculator:
             sorted_index = sorted_index[::-1]
 
         # Cross the sorting with the successful attacks
-        sorted_index_success = sorted_index[objective_respected[:, -1]]
+        sorted_index_success = sorted_index[objective_respected[sorted_index, -1]]
 
         # Bound the number of input to return
         if max_inputs > -1:
