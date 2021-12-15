@@ -203,8 +203,6 @@ class Moeva2:
         self._check_inputs(x, y)
 
         iterable = enumerate(batches_i)
-        # if self.verbose > 0:
-        #     iterable = tqdm(iterable, total=len(x), position=1)
 
         # Sequential Run
         if self.n_jobs == 1:
