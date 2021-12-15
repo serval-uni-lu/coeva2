@@ -21,15 +21,12 @@ from pymoo.operators.mixed_variable_operator import (
 from pymoo.optimize import minimize
 from tqdm import tqdm
 
-from .classifier import Classifier
 from .constraints import Constraints
 from .adversarial_problem import AdversarialProblem
 from .feature_encoder import get_encoder_from_constraints
 from .sampling import MixedSamplingLp, InitialStateSampling
-from .result_process import HistoryResult, EfficientResult
 from .softmax_crossover import SoftmaxPointCrossover
 from .softmax_mutation import SoftmaxPolynomialMutation
-from ...utils.in_out import load_model
 
 
 def tf_lof_off():
@@ -169,11 +166,14 @@ class Moeva2:
         x_adv = np.array([ind.X.astype(np.float64) for ind in result.pop])
         x_adv = self.encoder.genetic_to_ml(x_adv, x)
         history = result.problem.get_history()
-
+        history.pop(0)
         return x_adv, history
 
     def _batch_generate(self, x, y, batch_i):
         tf_lof_off()
+        import tensorflow as tf
+        tf.config.threading.set_intra_op_parallelism_threads(1)
+        tf.config.threading.set_inter_op_parallelism_threads(1)
 
         if self.verbose > 0:
             print(f"Starting batch #{batch_i} with {len(x)} inputs.")
