@@ -219,20 +219,20 @@ class Moeva2:
         else:
             import multiprocessing
             print("Parallel run.")
-            with multiprocessing.Pool(self.n_jobs) as pool:
-                out = pool.starmap(
-                    self._batch_generate,
-                    (
-                        [
-                            (x[batch_indexes], y[batch_indexes], i)
-                            for i, batch_indexes in iterable
-                        ]
-                    ),
-                )
-            # out = Parallel(n_jobs=self.n_jobs)(
-            #     delayed(self._batch_generate)(x[batch_indexes], y[batch_indexes], i)
-            #     for i, batch_indexes in iterable
-            # )
+            # with multiprocessing.Pool(self.n_jobs) as pool:
+            #     out = pool.starmap(
+            #         self._batch_generate,
+            #         (
+            #             [
+            #                 (x[batch_indexes], y[batch_indexes], i)
+            #                 for i, batch_indexes in iterable
+            #             ]
+            #         ),
+            #     )
+            out = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._batch_generate)(x[batch_indexes], y[batch_indexes], i)
+                for i, batch_indexes in iterable
+            )
 
         out = zip(*out)
         out = [np.concatenate(out_0) for out_0 in out]
