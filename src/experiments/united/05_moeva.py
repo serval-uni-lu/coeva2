@@ -46,8 +46,12 @@ def run():
     constraints = get_constraints_from_str(config["project_name"])()
 
     X_initial_states = np.load(config["paths"]["x_input"])
+    y_initial_states = np.load(config["paths"]["y_input"])
     X_initial_states = filter_initial_states(
         X_initial_states, config["input_offset"], config["n_input"]
+    )
+    y_initial_states = filter_initial_states(
+        y_initial_states, config["input_offset"], config["n_input"]
     )
 
     scaler = joblib.load(config["paths"]["scaler"])
@@ -78,7 +82,7 @@ def run():
         verbose=1,
     )
 
-    x_attacks, x_histories = moeva.generate(X_initial_states, 1)
+    x_attacks, x_histories = moeva.generate(X_initial_states, y_initial_states)
     consumed_time = time.time() - start_time
     print(f"Execution in {consumed_time}s. Saving...")
 
