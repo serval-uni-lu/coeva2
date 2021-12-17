@@ -164,7 +164,8 @@ class Moeva2:
         x_adv = np.array([ind.X.astype(np.float64) for ind in result.pop])
         x_adv = self.encoder.genetic_to_ml(x_adv, x)
         history = result.problem.get_history()
-        history.pop(0)
+        if len(history) > 0:
+            history.pop(0)
         return x_adv, history
 
     def _batch_generate(self, x, y, batch_i):
