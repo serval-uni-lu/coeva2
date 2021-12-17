@@ -9,7 +9,7 @@ from pymoo.model.problem import Problem
 from tqdm import tqdm
 
 from .classifier import Classifier
-from .constraints import Constraints
+from .constraints.constraints import Constraints
 from .feature_encoder import get_encoder_from_constraints
 from .result_process import EfficientResult
 from .utils import get_one_hot_encoding_constraints

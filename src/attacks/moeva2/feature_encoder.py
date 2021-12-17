@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
-from .constraints import Constraints
+from .constraints.constraints import Constraints
 
 ONEHOT_ENCODE_KEY = "ohe"
 

@@ -1,7 +1,7 @@
 from pymoo.model.problem import Problem
 import numpy as np
 
-from .constraints import Constraints
+from .constraints.constraints import Constraints
 from .feature_encoder import FeatureEncoder
 from .classifier import Classifier
 

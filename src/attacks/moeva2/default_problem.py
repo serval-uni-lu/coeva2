@@ -3,7 +3,7 @@ import numpy as np
 from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from sklearn.preprocessing import MinMaxScaler
 
-from .constraints import Constraints
+from .constraints.constraints import Constraints
 from .feature_encoder import FeatureEncoder
 from .classifier import Classifier
 from .utils import get_scaler_from_norm
