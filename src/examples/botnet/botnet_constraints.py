@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 
-from src.attacks.moeva2.constraints import Constraints
+from src.attacks.moeva2.constraints.constraints import Constraints
 import autograd.numpy as anp
 import pandas as pd
 import pickle

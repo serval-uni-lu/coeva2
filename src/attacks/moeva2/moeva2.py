@@ -20,7 +20,7 @@ from pymoo.optimize import minimize
 from tqdm import tqdm
 
 from .adversarial_problem import AdversarialProblem
-from .constraints import Constraints
+from .constraints.constraints import Constraints
 from .feature_encoder import get_encoder_from_constraints
 from .operators.sampling import InitialStateSampling
 from .operators.softmax_crossover import SoftmaxPointCrossover
