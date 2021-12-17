@@ -22,9 +22,9 @@ from tqdm import tqdm
 from .adversarial_problem import AdversarialProblem
 from .constraints import Constraints
 from .feature_encoder import get_encoder_from_constraints
-from .sampling import InitialStateSampling
-from .softmax_crossover import SoftmaxPointCrossover
-from .softmax_mutation import SoftmaxPolynomialMutation
+from .operators.sampling import InitialStateSampling
+from .operators.softmax_crossover import SoftmaxPointCrossover
+from .operators.softmax_mutation import SoftmaxPolynomialMutation
 
 
 def tf_lof_off():

@@ -1,5 +1,4 @@
 import numpy as np
-from art.utils import projection
 from pymoo.model.sampling import Sampling
 from pymoo.util.normalization import denormalize, normalize
 from src.utils import sample_in_norm
