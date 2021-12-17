@@ -70,7 +70,7 @@ class LcldConstraints(Constraints):
             new_tensor_v = new_tensor_v[..., :combi]
             new_tensor_v = augment_data(new_tensor_v, self.important_features)
 
-        return tf.convert_to_tensor(new_tensor_v)
+        return tf.convert_to_tensor(new_tensor_v, dtype=tf.float32)
 
     def evaluate_tf2(self, x):
         # ----- PARAMETERS
