@@ -5,7 +5,6 @@ venv/
 adv/
 __pycache__/
 dask-worker-space/
-
 src/advm/advm.egg-info/
 *.DS_Store
 src/playground.py
@@ -13,7 +12,4 @@ src/playground.py
 .vscode/
 .vs/
 .ipynb_checkpoints/
-.cenv
-
-.vscode/
 data/config.py
