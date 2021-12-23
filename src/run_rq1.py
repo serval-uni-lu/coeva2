@@ -30,7 +30,7 @@ def run():
                     eps_list = {"eps_list": config['eps_list']}
                     eps_list_str = json.dumps(eps_list, separators=(',', ':'))
                     launch_script([
-                        "python", "-m", "src.experiments.united.04_moeva",
+                        "python", "-m", "src.experiments.united.05_moeva",
                         "-c", f"{config_dir}/moeva.yaml",
                         "-c", f"{config_dir}/{project}.yaml",
                         "-p", f"seed={seed}",
@@ -49,7 +49,7 @@ def run():
                                 f"{TABULATOR * 6} Running loss_evaluation {loss_evaluation} ..."
                             )
                             launch_script([
-                                "python", f"-m", f"src.experiments.united.01_pgd_united",
+                                "python", f"-m", f"src.experiments.united.02_pgd_united",
                                 "-c", f"{config_dir}/pgd.yaml",
                                 "-c", f"{config_dir}/{project}.yaml",
                                 "-p", f"seed={seed}",
