@@ -8,9 +8,10 @@ import numpy as np
 
 from src.attacks.moeva2.classifier import ScalerClassifier
 from src.attacks.moeva2.moeva2 import Moeva2
+from src.attacks.objective_calculator import ObjectiveCalculator, objectives_to_dict
 from src.config_parser.config_parser import get_config, get_config_hash, save_config
 from src.experiments.united.utils import get_constraints_from_str, get_dataset
-from src.utils import filter_initial_states, timing
+from src.utils import filter_initial_states, timing, in_out
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
@@ -67,9 +68,9 @@ def run():
 
     classifier_path = config["paths"]["model"]
     scaler_path = config["paths"]["scaler"]
-
+    classifier = ScalerClassifier(classifier_path, scaler_path)
     moeva = Moeva2(
-        classifier_class=ScalerClassifier(classifier_path, scaler_path),
+        classifier_class=classifier,
         constraints=constraints,
         norm=config["norm"],
         fun_distance_preprocess=scaler.transform,
@@ -92,7 +93,33 @@ def run():
     if config.get("save_history"):
         np.save(f"{out_dir}/x_history_{mid_fix}_{config_hash}.npy", x_histories)
 
+    objective_lists = []
+    for eps in config["eps_list"]:
+        thresholds = {"model": config["classification_threshold"], "distance": eps}
+        objective_calc = ObjectiveCalculator(
+            classifier,
+            constraints,
+            thresholds=thresholds,
+            fun_distance_preprocess=scaler.transform,
+            norm=config["norm"],
+        )
+        success_rate = objective_calc.get_success_rates(X_initial_states, y_initial_states, x_attacks)
+        success_rate = objectives_to_dict(success_rate)
+        objective_lists.append(success_rate)
+
+    # metrics
+    metrics = {
+        "objectives": objective_lists,
+        "time": consumed_time,
+        "config": config,
+        "config_hash": config_hash,
+    }
+    metrics_path = f"{out_dir}/metrics_{mid_fix}_{config_hash}.json"
+    in_out.json_to_file(metrics, metrics_path)
+
     # Config
+
+
     save_config(f"{config_pre_path}")
     print("Done.")
 
