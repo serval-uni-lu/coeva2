@@ -4,7 +4,7 @@ from gurobipy import GRB, abs_, max_, LinExpr
 from joblib import Parallel, delayed
 from tqdm import tqdm
 
-from src.attacks.moeva2.constraints import Constraints
+from src.attacks.moeva2.constraints.constraints import Constraints
 from src.attacks.moeva2.feature_encoder import get_encoder_from_constraints
 
 type_mask_transform = {

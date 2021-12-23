@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, TYPE_CHECK
 import numpy as np
 import tensorflow as tf
 
-from src.attacks.moeva2.constraints import Constraints
+from src.attacks.moeva2.constraints.constraints import Constraints
 from sklearn.preprocessing import MinMaxScaler
 from comet_ml import Experiment
 from art.config import ART_NUMPY_DTYPE

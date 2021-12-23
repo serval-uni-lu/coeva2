@@ -33,7 +33,7 @@ from art.estimators.estimator import BaseEstimator, LossGradientsMixin
 from art.estimators.classification.classifier import ClassifierMixin
 from art.utils import check_and_transform_label_format, projection, random_sphere, is_probability, get_labels_np_array
 
-from src.attacks.moeva2.constraints import Constraints
+from src.attacks.moeva2.constraints.constraints import Constraints
 from src.attacks.pgd.classifier import TF2Classifier
 
 if TYPE_CHECKING:
