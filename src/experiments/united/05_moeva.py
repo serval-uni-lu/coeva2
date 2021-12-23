@@ -10,7 +10,7 @@ from src.attacks.moeva2.classifier import ScalerClassifier
 from src.attacks.moeva2.moeva2 import Moeva2
 from src.attacks.objective_calculator import ObjectiveCalculator, objectives_to_dict
 from src.config_parser.config_parser import get_config, get_config_hash, save_config
-from src.experiments.united.utils import get_constraints_from_str, get_dataset
+from src.experiments.united.utils import get_constraints_from_str
 from src.utils import filter_initial_states, timing, in_out
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
