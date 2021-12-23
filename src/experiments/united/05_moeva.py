@@ -63,7 +63,7 @@ def run():
 
     # ----- Copy the initial states n_repetition times
 
-    n_gen = config["n_gen"]
+    n_gen = config["budget"]
     start_time = time.time()
 
     classifier_path = config["paths"]["model"]
