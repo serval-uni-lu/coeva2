@@ -1,3 +1,4 @@
+import gc
 import os
 import time
 import warnings
@@ -84,14 +85,17 @@ def run():
     )
 
     x_attacks, x_histories = moeva.generate(X_initial_states, y_initial_states)
+    moeva = None
+    gc.collect()
     consumed_time = time.time() - start_time
     print(f"Execution in {consumed_time}s. Saving...")
-
-    np.save(f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy", x_attacks)
-
     # History
     if config.get("save_history"):
         np.save(f"{out_dir}/x_history_{mid_fix}_{config_hash}.npy", x_histories)
+    x_histories = None
+    gc.collect()
+
+    np.save(f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy", x_attacks)
 
     objective_lists = []
     for eps in config["eps_list"]:
@@ -103,7 +107,9 @@ def run():
             fun_distance_preprocess=scaler.transform,
             norm=config["norm"],
         )
-        success_rate = objective_calc.get_success_rates(X_initial_states, y_initial_states, x_attacks)
+        success_rate = objective_calc.get_success_rates(
+            X_initial_states, y_initial_states, x_attacks
+        )
         success_rate = objectives_to_dict(success_rate)
         objective_lists.append(success_rate)
 
@@ -118,7 +124,6 @@ def run():
     in_out.json_to_file(metrics, metrics_path)
 
     # Config
-
 
     save_config(f"{config_pre_path}")
     print("Done.")
