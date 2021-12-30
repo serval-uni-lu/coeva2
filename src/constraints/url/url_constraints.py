@@ -15,7 +15,8 @@ class UrlConstraints(FileConstraints):
         super().__init__(features_path)
 
     def fix_features_types(self, x) -> Union[np.ndarray, tf.Tensor]:
-        pass
+        # No implementation yet
+        return x
 
     def evaluate_numpy(self, x) -> np.ndarray:
 
@@ -111,7 +112,9 @@ class UrlConstraints(FileConstraints):
         constraints = tf.stack(
             [g1, g2, g3, g4, g5, g6, g8, g10, g11, g12, g13, g14, g15, g16], 1
         )
-        constraints = tf.clip_by_value(constraints - self.tolerance, 0, tf.constant(np.inf))
+        constraints = tf.clip_by_value(
+            constraints - self.tolerance, 0, tf.constant(np.inf)
+        )
 
         return constraints
 
