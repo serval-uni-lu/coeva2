@@ -1,33 +1,20 @@
 from itertools import combinations
-from typing import Tuple
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 
-from src.attacks.moeva2.constraints.constraints import Constraints
 import autograd.numpy as anp
-import pandas as pd
+import numpy as np
 import tensorflow as tf
-import logging
 
+from src.attacks.moeva2.constraints.file_constraints import FileConstraints
 from src.attacks.moeva2.utils import get_ohe_masks
-from src.experiments.botnet.features import augment_data
+from src.experiments.united.important_utils import augment_data
 
 
-class LcldConstraints(Constraints):
-    def __init__(
-        self,
-        feature_path: str,
-        constraints_path: str,
-    ):
-        self._provision_constraints_min_max(constraints_path)
-        self._provision_feature_constraints(feature_path)
-        self._fit_scaler()
+class LcldConstraints(FileConstraints):
+    def __init__(self):
+        features_path = "./data/lcld/features.csv"
         self.important_features = np.load("./data/lcld/important_features.npy")
 
-    def _fit_scaler(self) -> None:
-        self._scaler = MinMaxScaler(feature_range=(0, 1))
-        min_c, max_c = self.get_constraints_min_max()
-        self._scaler = self._scaler.fit([min_c, max_c])
+        super().__init__(features_path)
 
     @staticmethod
     def _date_feature_to_month(feature):
@@ -66,7 +53,9 @@ class LcldConstraints(Constraints):
             new_tensor_v[:, mask] = new_ohe
 
         if new_tensor_v.shape[1] > 47:
-            combi = -sum(1 for i in combinations(range(len(self.important_features)), 2))
+            combi = -sum(
+                1 for i in combinations(range(len(self.important_features)), 2)
+            )
             new_tensor_v = new_tensor_v[..., :combi]
             new_tensor_v = augment_data(new_tensor_v, self.important_features)
 
@@ -224,56 +213,3 @@ class LcldConstraints(Constraints):
 
     def get_nb_constraints(self) -> int:
         return 10
-
-    def normalise(self, x: np.ndarray) -> np.ndarray:
-        return self._scaler.transform(x)
-
-    def get_constraints_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self._constraints_min, self._constraints_max
-
-    def get_mutable_mask(self) -> np.ndarray:
-        return self._mutable_mask
-
-    def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
-
-        # By default min and max are the extreme values
-        feature_min = np.array([0.0] * self._feature_min.shape[0])
-        feature_max = np.array([0.0] * self._feature_max.shape[0])
-
-        # Creating the mask of value that should be provided by input
-        min_dynamic = self._feature_min.astype(str) == "dynamic"
-        max_dynamic = self._feature_max.astype(str) == "dynamic"
-
-        # Replace de non dynamic value by the value provided in the definition
-        feature_min[~min_dynamic] = self._feature_min[~min_dynamic]
-        feature_max[~max_dynamic] = self._feature_max[~max_dynamic]
-
-        # If the dynamic input was provided, replace value for output, else do nothing (keep the extreme values)
-        if dynamic_input is not None:
-            feature_min[min_dynamic] = dynamic_input[min_dynamic]
-            feature_max[max_dynamic] = dynamic_input[max_dynamic]
-
-        # Raise warning if dynamic input waited but not provided
-        dynamic_number = min_dynamic.sum() + max_dynamic.sum()
-        if dynamic_number > 0 and dynamic_input is None:
-            logging.getLogger().warning(
-                f"{dynamic_number} feature min and max are dynamic but no input were provided."
-            )
-
-        return feature_min, feature_max
-
-    def get_feature_type(self) -> np.ndarray:
-        return self._feature_type
-
-    def _provision_feature_constraints(self, path: str) -> None:
-        df = pd.read_csv(path, low_memory=False)
-        self._feature_min = df["min"].to_numpy()
-        self._feature_max = df["max"].to_numpy()
-        self._mutable_mask = df["mutable"].to_numpy()
-        self._feature_type = df["type"].to_numpy()
-
-    def _provision_constraints_min_max(self, path: str) -> None:
-        df = pd.read_csv(path, low_memory=False)
-        self._constraints_min = df["min"].to_numpy()
-        self._constraints_max = df["max"].to_numpy()
-        self._fit_scaler()

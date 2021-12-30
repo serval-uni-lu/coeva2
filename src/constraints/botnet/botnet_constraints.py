@@ -1,39 +1,28 @@
-from typing import Tuple, Union
+import pickle
+from typing import Union
+
+import autograd.numpy as anp
 import numpy as np
 import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
 
-from src.attacks.moeva2.constraints.constraints import Constraints
-import autograd.numpy as anp
-import pandas as pd
-import pickle
-import logging
+from src.attacks.moeva2.constraints.file_constraints import FileConstraints
 
 
-class BotnetConstraints(Constraints):
+class BotnetConstraints(FileConstraints):
     def fix_features_types(self, x) -> Union[np.ndarray, tf.Tensor]:
         return x
 
-    def __init__(
-        self,
-        # amount_feature_index: int,
-        feature_path: str,
-        constraints_path: str,
-    ):
-        self._provision_constraints_min_max(constraints_path)
-        self._provision_feature_constraints(feature_path)
-        self._fit_scaler()
+    def __init__(self):
+        features_path = "./data/botnet/features.csv"
         with open("./data/botnet/feat_idx.pickle", "rb") as f:
             self.feat_idx = pickle.load(f)
         self.feat_idx_tf = self.feat_idx.copy()
         for key in self.feat_idx:
-            self.feat_idx_tf[key] = tf.convert_to_tensor(self.feat_idx[key], dtype=tf.int64)
+            self.feat_idx_tf[key] = tf.convert_to_tensor(
+                self.feat_idx[key], dtype=tf.int64
+            )
         self.important_features = np.load("./data/botnet/important_features_19.npy")
-
-    def _fit_scaler(self) -> None:
-        self._scaler = MinMaxScaler(feature_range=(0, 1))
-        min_c, max_c = self.get_constraints_min_max()
-        self._scaler = self._scaler.fit([min_c, max_c])
+        super().__init__(features_path)
 
     @staticmethod
     def _date_feature_to_month(feature):
@@ -52,27 +41,32 @@ class BotnetConstraints(Constraints):
         max_idx = tf.convert_to_tensor([1, 4, 7, 13, 16, 19], dtype=tf.int64)
         min_idx = tf.convert_to_tensor([2, 5, 8, 14, 17, 20], dtype=tf.int64)
 
-        g1 = tf.math.abs(
-            (
-                tf.math.reduce_sum(
-                    tf.gather(x, self.feat_idx_tf["icmp_sum_s_idx"], axis=1), axis=1
+        g1 = (
+            tf.math.abs(
+                (
+                    tf.math.reduce_sum(
+                        tf.gather(x, self.feat_idx_tf["icmp_sum_s_idx"], axis=1), axis=1
+                    )
+                    + tf.math.reduce_sum(
+                        tf.gather(x, self.feat_idx_tf["udp_sum_s_idx"], axis=1), axis=1
+                    )
+                    + tf.math.reduce_sum(
+                        tf.gather(x, self.feat_idx_tf["tcp_sum_s_idx"], axis=1), axis=1
+                    )
                 )
-                + tf.math.reduce_sum(
-                    tf.gather(x, self.feat_idx_tf["udp_sum_s_idx"], axis=1), axis=1
-                )
-                + tf.math.reduce_sum(
-                    tf.gather(x, self.feat_idx_tf["tcp_sum_s_idx"], axis=1), axis=1
+                - (
+                    tf.math.reduce_sum(
+                        tf.gather(x, self.feat_idx_tf["bytes_in_sum_s_idx"], axis=1),
+                        axis=1,
+                    )
+                    + tf.math.reduce_sum(
+                        tf.gather(x, self.feat_idx_tf["bytes_out_sum_s_idx"], axis=1),
+                        axis=1,
+                    )
                 )
             )
-            - (
-                tf.math.reduce_sum(
-                    tf.gather(x, self.feat_idx_tf["bytes_in_sum_s_idx"], axis=1), axis=1
-                )
-                + tf.math.reduce_sum(
-                    tf.gather(x, self.feat_idx_tf["bytes_out_sum_s_idx"], axis=1), axis=1
-                )
-            )
-        ) - 0.4999999
+            - 0.4999999
+        )
         g2 = tf.math.abs(
             (
                 tf.math.reduce_sum(
@@ -90,12 +84,15 @@ class BotnetConstraints(Constraints):
                     tf.gather(x, self.feat_idx_tf["bytes_in_sum_d_idx"], axis=1), axis=1
                 )
                 + tf.math.reduce_sum(
-                    tf.gather(x, self.feat_idx_tf["bytes_out_sum_d_idx"], axis=1), axis=1
+                    tf.gather(x, self.feat_idx_tf["bytes_out_sum_d_idx"], axis=1),
+                    axis=1,
                 )
             )
         )
 
-        constraints0 = self.define_individual_constraints_pkts_bytes_tf(x, self.feat_idx_tf)
+        constraints0 = self.define_individual_constraints_pkts_bytes_tf(
+            x, self.feat_idx_tf
+        )
         constraints1 = self.define_individual_constraints_tf(
             x, self.feat_idx_tf, sum_idx, max_idx
         )
@@ -178,58 +175,8 @@ class BotnetConstraints(Constraints):
     def get_nb_constraints(self) -> int:
         return 360
 
-    def normalise(self, x: np.ndarray) -> np.ndarray:
-        return self._scaler.transform(x)
-
-    def get_constraints_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self._constraints_min, self._constraints_max
-
     def get_mutable_mask(self) -> np.ndarray:
         return self._mutable_mask
-
-    def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
-
-        # By default min and max are the extreme values
-        feature_min = np.array([0.0] * self._feature_min.shape[0])
-        feature_max = np.array([0.0] * self._feature_max.shape[0])
-
-        # Creating the mask of value that should be provided by input
-        min_dynamic = self._feature_min.astype(str) == "dynamic"
-        max_dynamic = self._feature_max.astype(str) == "dynamic"
-
-        # Replace de non dynamic value by the value provided in the definition
-        feature_min[~min_dynamic] = self._feature_min[~min_dynamic]
-        feature_max[~max_dynamic] = self._feature_max[~max_dynamic]
-
-        # If the dynamic input was provided, replace value for output, else do nothing (keep the extreme values)
-        if dynamic_input is not None:
-            feature_min[min_dynamic] = dynamic_input[min_dynamic]
-            feature_max[max_dynamic] = dynamic_input[max_dynamic]
-
-        # Raise warning if dynamic input waited but not provided
-        dynamic_number = min_dynamic.sum() + max_dynamic.sum()
-        if dynamic_number > 0 and dynamic_input is None:
-            logging.getLogger().warning(
-                f"{dynamic_number} feature min and max are dynamic but no input were provided."
-            )
-
-        return feature_min, feature_max
-
-    def get_feature_type(self) -> np.ndarray:
-        return self._feature_type
-
-    def _provision_feature_constraints(self, path: str) -> None:
-        df = pd.read_csv(path, low_memory=False)
-        self._feature_min = df["min"].to_numpy()
-        self._feature_max = df["max"].to_numpy()
-        self._mutable_mask = df["mutable"].to_numpy()
-        self._feature_type = df["type"].to_numpy()
-
-    def _provision_constraints_min_max(self, path: str) -> None:
-        df = pd.read_csv(path, low_memory=False)
-        self._constraints_min = df["min"].to_numpy()
-        self._constraints_max = df["max"].to_numpy()
-        self._fit_scaler()
 
     @staticmethod
     def define_individual_constraints_tf(x, feat_idx, upper_idx, lower_idx):

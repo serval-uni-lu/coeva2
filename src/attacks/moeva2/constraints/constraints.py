@@ -6,6 +6,14 @@ import tensorflow as tf
 
 
 class Constraints(abc.ABC, metaclass=abc.ABCMeta):
+    def check_constraints_error(self, x: np.ndarray):
+        constraints = self.evaluate(x)
+        constraints_violated = np.sum(constraints > 0, axis=0)
+        if constraints_violated.sum() > 0:
+            raise ValueError(
+                f"{constraints_violated}\n Constraints not respected {constraints_violated.sum()} times."
+            )
+
     @abc.abstractmethod
     def evaluate(self, x: np.ndarray, use_tensors: bool = False) -> np.ndarray:
         """
@@ -26,35 +34,6 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def normalise(self, x: np.ndarray) -> np.ndarray:
-        """Normalise the constraints
-
-        Parameters
-        ----------
-        x : np.ndarray
-            Constraints value as return by evaluate.
-
-        Returns
-        -------
-        np.ndarray
-            Constraints in normalised format.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_constraints_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Retrieve the minimum and maximum values of each constraint.
-
-        Returns
-        -------
-        min : np.ndarray
-            Minimum values.
-        max : np.ndarray
-            Maximum values.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def get_mutable_mask(self) -> np.ndarray:
         raise NotImplementedError
 
@@ -69,9 +48,3 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_feature_type(self) -> np.ndarray:
         raise NotImplementedError
-
-    def check_constraints_error(self, x: np.ndarray):
-        constraints = self.evaluate(x)
-        constraints_violated = np.sum(constraints > 0, axis=0)
-        if constraints_violated.sum() > 0:
-            raise ValueError(f"{constraints_violated}\n Constraints not respected {constraints_violated.sum()} times.")

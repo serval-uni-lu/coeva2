@@ -25,14 +25,6 @@ class FileConstraints(Constraints, metaclass=abc.ABCMeta):
         self._feature_min = features["min"].to_numpy()
         self._feature_max = features["max"].to_numpy()
 
-    def normalise(self, x: np.ndarray) -> np.ndarray:
-        None
-        raise NotImplementedError
-
-    def get_constraints_min_max(self) -> Tuple[np.ndarray, np.ndarray]:
-        None
-        raise NotImplementedError
-
     def get_mutable_mask(self) -> np.ndarray:
         return self._mutable_mask
 
