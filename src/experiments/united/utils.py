@@ -1,26 +1,27 @@
 from src.datasets.malware_dataset import MalwareDataset
-from src.examples.botnet.botnet_augmented_constraints import BotnetAugmentedConstraints
-from src.examples.botnet.botnet_constraints import BotnetConstraints
-from src.examples.lcld.lcld_augmented_constraints import LcldAugmentedConstraints
-from src.examples.lcld.lcld_constraints import LcldConstraints
-from src.examples.malware.malware_constraints import MalwareConstraintsFast
-from src.examples.lcld.lcld_constraints_sat import (
+from src.constraints.botnet.botnet_augmented_constraints import BotnetAugmentedConstraints
+from src.constraints.botnet.botnet_constraints import BotnetConstraints
+from src.constraints.lcld.lcld_augmented_constraints import LcldAugmentedConstraints
+from src.constraints.lcld.lcld_constraints import LcldConstraints
+from src.constraints.malware.malware_constraints import MalwareConstraintsFast
+from src.constraints.lcld.lcld_constraints_sat import (
     create_constraints as lcld_sat_constraints,
 )
-from src.examples.botnet.botnet_constraints_sat import (
+from src.constraints.botnet.botnet_constraints_sat import (
     create_constraints as botnet_sat_constraints,
 )
-from src.examples.malware.malware_constraints_sat import (
+from src.constraints.malware.malware_constraints_sat import (
     create_constraints as malware_sat_constraints,
 )
-
+from src.constraints.url.url_constraints import UrlConstraints
 
 STR_TO_CONSTRAINTS_CLASS = {
     "lcld": LcldConstraints,
     "botnet": BotnetConstraints,
     "malware": MalwareConstraintsFast,
     "lcld_augmented": LcldAugmentedConstraints,
-    "botnet_augmented": BotnetAugmentedConstraints
+    "botnet_augmented": BotnetAugmentedConstraints,
+    "url": UrlConstraints
 }
 
 STR_TO_SAT_CONSTRAINTS = {
