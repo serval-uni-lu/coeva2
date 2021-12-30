@@ -12,4 +12,4 @@ def load_dataset(name: str):
     if name in datasets:
         return datasets[name]()
     else:
-        Exception("Object '%s' for not found in %s" % (name, datasets))
+        raise Exception("Object '%s' for not found in %s" % (name, datasets))

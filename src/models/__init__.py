@@ -12,4 +12,4 @@ def load_model_architecture(name: str) -> ModelArchitecture:
     if name in model_architectures:
         return model_architectures[name]
     else:
-        Exception("Object '%s' for not found in %s" % (name, model_architectures))
+        raise Exception("Object '%s' for not found in %s" % (name, model_architectures))
