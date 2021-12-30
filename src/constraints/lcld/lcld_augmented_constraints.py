@@ -10,7 +10,7 @@ import tensorflow as tf
 import logging
 
 from src.attacks.moeva2.utils import get_ohe_masks
-from src.examples.utils import constraints_augmented_np, constraints_augmented_tf
+from src.constraints.utils import constraints_augmented_np, constraints_augmented_tf
 from src.experiments.botnet.features import augment_data
 
 
