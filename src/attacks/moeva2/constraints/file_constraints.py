@@ -1,18 +1,12 @@
 import abc
-from itertools import combinations
+import logging
 from typing import Tuple, Union
+
 import numpy as np
+import pandas as pd
 import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler
 
 from src.attacks.moeva2.constraints.constraints import Constraints
-import autograd.numpy as anp
-import pandas as pd
-import pickle
-import logging
-import pandas as pd
-
-from src.examples.utils import constraints_augmented_np, constraints_augmented_tf
 
 
 class FileConstraints(Constraints, metaclass=abc.ABCMeta):
