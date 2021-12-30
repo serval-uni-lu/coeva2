@@ -1,0 +1,6 @@
+---
+projects:
+  - url
+overwrite: False
+attack_classes:
+  - 1

@@ -1,22 +1,22 @@
 ---
 config_dir: ./config/
 attacks:
-  - moeva
-#  - pgd
+#  - moeva
+  - pgd
 seeds:
   - 42
 projects:
-  - malware/rq1.malware.static
+  - url/rq1.url.static
 eps_list:
   - 0.01
   - 0.05
   - 0.1
-  - 0.2vim
+  - 0.2
 budgets:
   - 100
 loss_evaluations:
-#  - flip
+  - flip
 #  - flip+sat
-#  - constraints+flip
-#  - constraints+flip+adaptive_eps_step
+  - constraints+flip
+  - constraints+flip+adaptive_eps_step
 #  - constraints+flip+adaptive_eps_step+repair
