@@ -72,6 +72,6 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
 
     def check_constraints_error(self, x: np.ndarray):
         constraints = self.evaluate(x)
-        constraints_violated = (constraints > 0).sum()
-        if constraints_violated > 0:
-            raise ValueError(f"Constraints not respected {constraints_violated} times.")
+        constraints_violated = np.sum(constraints > 0, axis=0)
+        if constraints_violated.sum() > 0:
+            raise ValueError(f"{constraints_violated}\n Constraints not respected {constraints_violated.sum()} times.")
