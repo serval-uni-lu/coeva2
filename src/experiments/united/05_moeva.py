@@ -17,8 +17,6 @@ from src.utils import filter_initial_states, timing, in_out
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
-# config = in_out.get_parameters()
-
 
 @timing
 def run():
@@ -28,20 +26,25 @@ def run():
     # Get config hash
     config_hash = get_config_hash()
 
-    # Print
-    print(f"Config hash:{config_hash}")
-    print(f"Config {config}")
-
+    # Path
     out_dir = config["dirs"]["results"]
     mid_fix = f"{config['attack_name']}"
     config_pre_path = f"{out_dir}/config_{mid_fix}_"
-    config_path = f"{config_pre_path}{get_config_hash()}.yaml"
+    metrics_path = f"{out_dir}/metrics_{mid_fix}_{config_hash}.json"
+    x_attacks_path = f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy"
+    x_histories_path = f"{out_dir}/x_history_{mid_fix}_{config_hash}.npy"
 
-    if os.path.exists(config_path):
+    # Config
+    print(f"Config hash:{config_hash}")
+    print(f"Config {config}")
+    save_config(f"{config_pre_path}")
+
+    # Create out dir
+    Path(config["dirs"]["results"]).parent.mkdir(parents=True, exist_ok=True)
+
+    if os.path.exists(metrics_path):
         print(f"Configuration with hash {config_hash} already executed. Skipping")
         exit(0)
-
-    Path(config["dirs"]["results"]).parent.mkdir(parents=True, exist_ok=True)
 
     # ----- Load and create necessary objects
 
@@ -65,38 +68,48 @@ def run():
     # ----- Copy the initial states n_repetition times
 
     n_gen = config["budget"]
-    start_time = time.time()
 
     classifier_path = config["paths"]["model"]
     scaler_path = config["paths"]["scaler"]
     classifier = ScalerClassifier(classifier_path, scaler_path)
-    moeva = Moeva2(
-        classifier_class=classifier,
-        constraints=constraints,
-        norm=config["norm"],
-        fun_distance_preprocess=scaler.transform,
-        n_gen=n_gen,
-        n_pop=config["n_pop"],
-        n_offsprings=config["n_offsprings"],
-        save_history=config.get("save_history"),
-        seed=config["seed"],
-        n_jobs=config["system"]["n_jobs"],
-        verbose=1,
-    )
 
-    x_attacks, x_histories = moeva.generate(X_initial_states, y_initial_states)
-    moeva = None
-    gc.collect()
-    consumed_time = time.time() - start_time
-    print(f"Execution in {consumed_time}s. Saving...")
-    # History
-    if config.get("save_history"):
-        np.save(f"{out_dir}/x_history_{mid_fix}_{config_hash}.npy", x_histories)
-    x_histories = None
-    gc.collect()
+    if (not os.path.exists(x_attacks_path)) or (not os.path.exists(x_histories_path)):
+        start_time = time.time()
+        moeva = Moeva2(
+            classifier_class=classifier,
+            constraints=constraints,
+            norm=config["norm"],
+            fun_distance_preprocess=scaler.transform,
+            n_gen=n_gen,
+            n_pop=config["n_pop"],
+            n_offsprings=config["n_offsprings"],
+            save_history=config.get("save_history"),
+            seed=config["seed"],
+            n_jobs=config["system"]["n_jobs"],
+            verbose=1,
+        )
 
-    np.save(f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy", x_attacks)
+        x_attacks, x_histories = moeva.generate(X_initial_states, y_initial_states)
 
+        # Time
+        consumed_time = time.time() - start_time
+        print(f"Execution in {consumed_time}s. Saving...")
+
+        # Save
+        if config.get("save_history"):
+            np.save(x_histories_path, x_histories)
+        np.save(x_attacks_path, x_attacks)
+
+        # Free memory
+        x_histories = None
+        moeva = None
+        gc.collect()
+
+    else:
+        x_attacks = np.load(x_attacks_path)
+        consumed_time = -1
+
+    # metrics
     objective_lists = []
     for eps in config["eps_list"]:
         thresholds = {"model": config["classification_threshold"], "distance": eps}
@@ -113,19 +126,14 @@ def run():
         success_rate = objectives_to_dict(success_rate)
         objective_lists.append(success_rate)
 
-    # metrics
     metrics = {
         "objectives": objective_lists,
         "time": consumed_time,
         "config": config,
         "config_hash": config_hash,
     }
-    metrics_path = f"{out_dir}/metrics_{mid_fix}_{config_hash}.json"
     in_out.json_to_file(metrics, metrics_path)
 
-    # Config
-
-    save_config(f"{config_pre_path}")
     print("Done.")
 
 
