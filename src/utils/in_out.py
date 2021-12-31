@@ -80,7 +80,7 @@ def json_from_file(path):
 
 def json_to_file(obj, path):
     with open(path, "w") as f:
-        json.dump(obj, f)
+        json.dump(obj, f, indent=4)
 
 
 def json_from_dir(input_dir, handler=None):
