@@ -1,0 +1,15 @@
+---
+config_dir: ./config/
+attacks:
+  - moeva
+  - pgd
+seeds:
+  - 42
+projects:
+  - url/rq0.url.static
+eps_list:
+  - 0.05
+budgets:
+  - 100
+loss_evaluations:
+  - constraints+flip+adaptive_eps_step
