@@ -1,3 +1,8 @@
+import joblib
+from sklearn.base import ClassifierMixin
+from tensorflow.keras import Sequential
+from tensorflow.keras.models import save_model as tf_save_model
+
 from src.constraints.botnet.botnet_augmented_constraints import (
     BotnetAugmentedConstraints,
 )
@@ -45,3 +50,12 @@ def get_sat_constraints_from_str(project_name: str):
 
 def get_dataset(name: str):
     return STR_TO_DATASET[name]
+
+
+def save_model(model, model_path):
+    if isinstance(model, Sequential):
+        tf_save_model(model, model_path)
+    elif isinstance(model, ClassifierMixin):
+        joblib.dump(model, model_path)
+    else:
+        raise NotImplementedError
