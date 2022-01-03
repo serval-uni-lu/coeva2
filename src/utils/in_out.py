@@ -1,3 +1,4 @@
+import os.path
 import sys
 
 import joblib
@@ -111,12 +112,12 @@ def get_parameters():
 def load_model(path: str):
 
     model = None
-    if path.endswith(".joblib"):
+    if os.path.isfile(path):
         import joblib
 
         model = joblib.load(path)
 
-    if path.endswith(".model"):
+    if os.path.isdir(path):
         from tensorflow.keras.models import load_model
 
         model = load_model(path)
