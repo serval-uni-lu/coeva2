@@ -12,15 +12,14 @@ from sklearn.metrics import (
     matthews_corrcoef,
     confusion_matrix,
 )
-from tensorflow.keras.models import save_model
-from tensorflow.keras.utils import to_categorical
 
 from src.config_parser.config_parser import get_config
 from src.datasets import load_dataset
 from src.experiments.united.important_utils import augment_dataset
-from src.experiments.united.utils import get_constraints_from_str
+from src.experiments.united.utils import get_constraints_from_str, save_model
 from src.models import load_model_architecture
 from src.utils.in_out import load_model, json_to_file, json_from_file
+from src.utils.ml import convert_2d_score
 
 
 def calc_n_important_features(n_features, ratio):
@@ -70,18 +69,30 @@ def calc_binary_metrics(y_test, y_score, threshold=None):
 
 
 def train_evaluate_model(
-    project, model_name, threshold, scaler, X_train, X_test, y_train, y_test, overwrite
+    project,
+    model_name,
+    threshold,
+    scaler,
+    X_train,
+    X_test,
+    y_train,
+    y_test,
+    overwrite,
+    model_arch_name=None,
 ):
+    if model_arch_name is None:
+        model_arch_name = project
+
     scaler_path = f"./models/{project}/{model_name}_scaler.joblib"
     if not os.path.exists(scaler_path) or overwrite:
         joblib.dump(scaler, scaler_path)
 
-    model_arch = load_model_architecture(project)
+    model_arch = load_model_architecture(model_arch_name)
 
     model_path = f"./models/{project}/{model_name}.model"
     if not os.path.exists(model_path) or overwrite:
         model = model_arch.get_trained_model(
-            scaler.transform(X_train), to_categorical(y_train)
+            scaler.transform(X_train), y_train
         )
         save_model(model, model_path)
     else:
@@ -89,7 +100,7 @@ def train_evaluate_model(
 
     metrics_path = f"./models/{project}/{model_name}_metrics.json"
     if not os.path.exists(metrics_path) or overwrite:
-        y_score = model.predict(scaler.transform(X_test))
+        y_score = convert_2d_score(model.predict(scaler.transform(X_test)))
         metrics = calc_binary_metrics(y_test, y_score, threshold)
         json_to_file(metrics, metrics_path)
     else:
@@ -146,6 +157,23 @@ def run_project(project, overwrite):
     save_candidates(project, model_name, attack_classes, X_train, y_train, "train")
     save_candidates(project, model_name, attack_classes, X_test, y_test, "test")
 
+    # Random forest
+    model_name = "baseline_rf"
+    model, metrics = train_evaluate_model(
+        project,
+        model_name,
+        threshold,
+        scaler,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        overwrite,
+        model_arch_name=f"{project}_rf",
+    )
+    print(f"Threshold: {threshold}")
+    print(metrics)
+
     # Augment
     X_train_augmented_path = f"./data/{project}_augmented/X_train.npy"
     X_test_augmented_path = f"./data/{project}_augmented/X_test.npy"
@@ -165,7 +193,6 @@ def run_project(project, overwrite):
         np.save(X_test_augmented_path, X_test_augmented)
         np.save(f"./data/{project}_augmented/y_train.npy", y_train)
         np.save(f"./data/{project}_augmented/y_test.npy", y_test)
-
 
     dataset = load_dataset(f"{project}_augmented")
     X_train_augmented, X_test_augmented, y_train, y_test = dataset.get_train_test()
@@ -192,8 +219,22 @@ def run_project(project, overwrite):
     print(f"Threshold: {threshold}")
     print(metrics)
 
-    save_candidates(f"{project}_augmented", model_name, attack_classes, X_train_augmented, y_train, "train")
-    save_candidates(f"{project}_augmented", model_name, attack_classes, X_test_augmented, y_test, "test")
+    save_candidates(
+        f"{project}_augmented",
+        model_name,
+        attack_classes,
+        X_train_augmented,
+        y_train,
+        "train",
+    )
+    save_candidates(
+        f"{project}_augmented",
+        model_name,
+        attack_classes,
+        X_test_augmented,
+        y_test,
+        "test",
+    )
 
 
 def run():
