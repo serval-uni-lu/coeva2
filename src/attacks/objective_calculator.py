@@ -36,9 +36,14 @@ class ObjectiveCalculator:
         self.n_jobs = n_jobs
 
     def _calc_fitness(self, x_clean, y_clean, x_adv):
-        x_adv_c_score = self._constraints.evaluate(
-            x_adv.reshape(-1, x_adv.shape[-1])
-        ).reshape((*x_adv.shape[:-1], -1))
+
+        x_adv_c_score = (
+            1
+            - self._constraints.check_constraints(
+                np.repeat(x_clean, x_adv.shape[1], axis=0),
+                x_adv.reshape(-1, x_adv.shape[-1]),
+            ).reshape((*x_adv.shape[:-1], -1))
+        )
 
         y_score_filter = (
             np.arange(x_adv.shape[0] * x_adv.shape[1]),
