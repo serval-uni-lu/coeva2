@@ -127,7 +127,7 @@ def run():
         objective_lists.append(success_rate)
 
     metrics = {
-        "objectives": objective_lists,
+        "objectives_list": objective_lists,
         "time": consumed_time,
         "config": config,
         "config_hash": config_hash,
