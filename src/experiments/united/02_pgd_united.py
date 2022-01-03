@@ -13,7 +13,6 @@ from src.attacks.pgd.auto_pgd import AutoProjectedGradientDescent
 from src.attacks.pgd.classifier import TF2Classifier as kc
 from src.attacks.sat.sat import SatAttack
 from src.config_parser.config_parser import get_config, get_config_hash, save_config
-from src.experiments.botnet.features import augment_data
 from src.experiments.united.utils import (
     get_constraints_from_str,
     get_sat_constraints_from_str,
@@ -67,7 +66,7 @@ def run():
 
     # ----- Check constraints
 
-    constraints.check_constraints_error(X_initial_states)
+    # constraints.check_constraints_error(X_initial_states)
 
     # ----- Perform the attack
 
@@ -122,14 +121,15 @@ def run():
         )
     )
     mask_int = constraints.get_feature_type() != "real"
-    x_plus_minus = x_attacks[:, mask_int] - X_initial_states[:, mask_int] >= 0
-    x_attacks[:, mask_int][x_plus_minus] = np.floor(
-        x_attacks[:, mask_int][x_plus_minus]
+    x_attacks_int = x_attacks[:, mask_int]
+    x_plus_minus = x_attacks_int - X_initial_states[:, mask_int] >= 0
+    x_attacks_int[x_plus_minus] = np.floor(
+        x_attacks_int[x_plus_minus]
     )
-    x_attacks[:, mask_int][~x_plus_minus] = np.ceil(
-        x_attacks[:, mask_int][~x_plus_minus]
+    x_attacks_int[~x_plus_minus] = np.ceil(
+        x_attacks_int[~x_plus_minus]
     )
-    # x_attacks[:, mask_int] = np.rint(x_attacks[:, mask_int])
+    x_attacks[:, mask_int] = x_attacks_int
 
     # Apply sat if needed
 
