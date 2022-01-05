@@ -8,6 +8,8 @@ seeds:
 projects:
   - botnet/rq1.botnet.static
 eps_list:
+  - 0.2
+  - 0.5
   - 1
   - 2
   - 4

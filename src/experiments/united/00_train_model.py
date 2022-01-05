@@ -133,7 +133,7 @@ def run_project(project, overwrite):
 
     constraints = get_constraints_from_str(project)()
 
-    constraints.check_constraints_error(X_test)
+    # constraints.check_constraints_error(X_test)
 
     # constraints.check_constraints_error(X_train)
 
@@ -233,22 +233,22 @@ def run_project(project, overwrite):
             print(f"Threshold: {threshold}")
             print(metrics)
 
-    # Random forest
-    model_name = "baseline_rf"
-    model_rf, metrics, _, _ = train_evaluate_model(
-        project,
-        model_name,
-        threshold,
-        scaler,
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        overwrite,
-        model_arch_name=f"{project}_rf",
-    )
-    print(f"Threshold: {threshold}")
-    print(metrics)
+    # # Random forest
+    # model_name = "baseline_rf"
+    # model_rf, metrics, _, _ = train_evaluate_model(
+    #     project,
+    #     model_name,
+    #     threshold,
+    #     scaler,
+    #     X_train,
+    #     X_test,
+    #     y_train,
+    #     y_test,
+    #     overwrite,
+    #     model_arch_name=f"{project}_rf",
+    # )
+    # print(f"Threshold: {threshold}")
+    # print(metrics)
 
     # Augment
     X_train_augmented_path = f"./data/{project}_augmented/X_train.npy"
