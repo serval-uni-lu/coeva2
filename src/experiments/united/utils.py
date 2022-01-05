@@ -19,7 +19,10 @@ from src.constraints.malware.malware_constraints import MalwareConstraints
 from src.constraints.malware.malware_constraints_sat import (
     create_constraints as malware_sat_constraints,
 )
-from src.constraints.url.url_constraints import UrlConstraints
+from src.constraints.url.url_constraints import UrlConstraints, UrlAugmentedConstraints
+from src.constraints.url.url_constraints_sat import (
+    create_constraints as url_sat_constraints,
+)
 from src.datasets.malware_dataset import MalwareDataset
 
 STR_TO_CONSTRAINTS_CLASS = {
@@ -29,12 +32,14 @@ STR_TO_CONSTRAINTS_CLASS = {
     "lcld_augmented": LcldAugmentedConstraints,
     "botnet_augmented": BotnetAugmentedConstraints,
     "url": UrlConstraints,
+    "url_augmented": UrlAugmentedConstraints
 }
 
 STR_TO_SAT_CONSTRAINTS = {
     "lcld": lcld_sat_constraints,
     "botnet": botnet_sat_constraints,
     "malware": malware_sat_constraints,
+    "url": url_sat_constraints,
 }
 
 STR_TO_DATASET = {"malware": MalwareDataset}
