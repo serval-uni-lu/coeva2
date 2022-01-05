@@ -1,0 +1,18 @@
+---
+project_name: botnet
+paths:
+  model: ./models/botnet/baseline.model
+  scaler: ./models/botnet/baseline_scaler.joblib
+  x_input: ./data/botnet/baseline_X_train_candidates.npy
+  y_input: ./data/botnet/baseline_y_train_candidates.npy
+dirs:
+  results: ./out/attacks/botnet/rq0/
+n_input: -1
+input_offset: 0
+system:
+  n_jobs: 10
+  verbose: 1
+save_history: "reduced"
+reconstruction: False
+classification_threshold: 0.5
+norm: 2

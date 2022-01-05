@@ -1,0 +1,13 @@
+---
+projects:
+  - botnet
+overwrite: False
+attack_classes:
+  - 1
+x_attacks:
+  - name: moeva
+    path: dont
+  - name: cpgd
+    path: dont
+distance: 1
+norm: 2
