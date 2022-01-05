@@ -121,25 +121,29 @@ class ObjectiveCalculator:
         successful_index = []
         for x_i, x in tqdm(enumerate(x_clean)):
 
-            index_success = np.where(x_adv_cmd[x_i])
+            index_success = np.where(x_adv_cmd[x_i])[0]
             if len(index_success) > 0:
                 successful_index.append(x_i)
                 x_success = x_adv[x_i][index_success]
                 if preferred_metrics == "misclassification":
                     x_success_score = x_adv_m_score[x_i][index_success]
                 elif preferred_metrics == "distance":
-                    x_success_score = x_adv_m_score[x_i][index_success]
+                    x_success_score = x_adv_distance_score[x_i][index_success]
                 else:
                     raise NotImplementedError
 
-                sort_i = np.argsort(x_success_score, order=order)
+                sort_i = np.argsort(x_success_score)
+                if order != "asc":
+                    sort_i = sort_i[::-1]
 
                 x_success = x_success[sort_i]
                 if max_inputs >= 0:
                     x_success = x_success[:max_inputs]
                 successful_attacks.append(x_success)
+            else:
+                successful_attacks.append([])
 
         if return_index_success:
-            return successful_attacks, successful_index
+            return successful_attacks, np.array(successful_index)
         else:
             return successful_attacks
