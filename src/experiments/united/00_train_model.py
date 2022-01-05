@@ -13,6 +13,8 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 
+from src.attacks.moeva2.classifier import ScalerClassifier
+from src.attacks.objective_calculator import ObjectiveCalculator
 from src.config_parser.config_parser import get_config
 from src.datasets import load_dataset
 from src.experiments.united.important_utils import augment_dataset
@@ -91,9 +93,7 @@ def train_evaluate_model(
 
     model_path = f"./models/{project}/{model_name}.model"
     if not os.path.exists(model_path) or overwrite:
-        model = model_arch.get_trained_model(
-            scaler.transform(X_train), y_train
-        )
+        model = model_arch.get_trained_model(scaler.transform(X_train), y_train)
         save_model(model, model_path)
     else:
         model = load_model(model_path)
@@ -106,7 +106,7 @@ def train_evaluate_model(
     else:
         metrics = json_from_file(metrics_path)
 
-    return model, metrics
+    return model, metrics, scaler_path, model_path
 
 
 def save_candidates(project, model_name, attack_classes, X, y, name):
@@ -139,7 +139,7 @@ def run_project(project, overwrite):
 
     # Normal model
     model_name = "baseline"
-    model, metrics = train_evaluate_model(
+    model, metrics, scaler_path, model_path = train_evaluate_model(
         project,
         model_name,
         threshold,
@@ -154,12 +154,88 @@ def run_project(project, overwrite):
     print(metrics)
 
     attack_classes = config.get("attack_classes")
-    save_candidates(project, model_name, attack_classes, X_train, y_train, "train")
+    x_train_candidates, y_train_candidates = save_candidates(
+        project, model_name, attack_classes, X_train, y_train, "train"
+    )
     save_candidates(project, model_name, attack_classes, X_test, y_test, "test")
+
+    # Adversarial models
+
+    ## Check if doable
+    do_adv_training = all(
+        [
+            os.path.exists(x_attack["path"])
+            and (not os.path.exists(f"./models/{project}/adv_{x_attack['name']}.model"))
+            for x_attack in config.get("x_attacks", [])
+        ]
+    )
+    if do_adv_training:
+        # Get the adversarials:
+        classifier = ScalerClassifier(model_path, scaler_path)
+        objective_calculator = ObjectiveCalculator(
+            classifier,
+            constraints,
+            thresholds={
+                "model": threshold if threshold is not None else 0.5,
+                "distance": config.get("distance"),
+            },
+            fun_distance_preprocess=scaler.transform,
+            norm=config.get("norm"),
+        )
+        x_attacks_and_i = []
+        x_adv_all_i = np.arange(x_train_candidates.shape[0])
+        for x_attack in config.get("x_attacks", []):
+            x_attacks = np.load(x_attack["path"])
+            x_adv, x_adv_i = objective_calculator.get_successful_attacks(
+                x_train_candidates,
+                y_train_candidates,
+                x_attacks,
+                preferred_metrics="misclassification",
+                order="asc",
+                max_inputs=1,
+                return_index_success=True,
+            )
+            # x_adv = np.concatenate(x_adv)
+            x_attacks_and_i.append((x_adv, x_adv_i))
+            x_adv_all_i = np.intersect1d(x_adv_all_i, x_adv_i, return_indices=False)
+            print(f"Intersection number {x_adv_all_i.shape}")
+
+        shuffle_i = np.arange(X_train.shape[0] + x_adv_all_i.shape[0])
+        rng = np.random.default_rng(42)
+        rng.shuffle(shuffle_i)
+        for x_attack_i, x_attack in enumerate(config.get("x_attacks", [])):
+            X_train_adv = np.concatenate(
+                [
+                    X_train,
+                    np.concatenate(
+                        np.array(x_attacks_and_i[x_attack_i][0])[x_adv_all_i]
+                    ),
+                ]
+            )
+            y_train_adv = np.concatenate(
+                [y_train, y_train_candidates[x_adv_all_i]]
+            )
+
+            X_train_adv = X_train_adv[shuffle_i]
+            y_train_adv = y_train_adv[shuffle_i]
+
+            model, metrics, scaler_path, model_path = train_evaluate_model(
+                project,
+                f"adv_{x_attack['name']}",
+                threshold,
+                scaler,
+                X_train_adv,
+                X_test,
+                y_train_adv,
+                y_test,
+                overwrite,
+            )
+            print(f"Threshold: {threshold}")
+            print(metrics)
 
     # Random forest
     model_name = "baseline_rf"
-    model, metrics = train_evaluate_model(
+    model_rf, metrics, _, _ = train_evaluate_model(
         project,
         model_name,
         threshold,
@@ -179,7 +255,7 @@ def run_project(project, overwrite):
     X_test_augmented_path = f"./data/{project}_augmented/X_test.npy"
     augmented_features_path = f"./data/{project}_augmented/features.csv"
     if not os.path.exists(X_train_augmented_path) or overwrite:
-        X_train_augmented, X_test_augmented, features_augmented = augment_dataset(
+        X_train_augmented, X_test_augmented, features_augmented, important_features = augment_dataset(
             model,
             scaler,
             pd.read_csv(f"./data/{project}/features.csv"),
@@ -193,6 +269,7 @@ def run_project(project, overwrite):
         np.save(X_test_augmented_path, X_test_augmented)
         np.save(f"./data/{project}_augmented/y_train.npy", y_train)
         np.save(f"./data/{project}_augmented/y_test.npy", y_test)
+        np.save(f"./data/{project}_augmented/important_features.npy", important_features)
 
     dataset = load_dataset(f"{project}_augmented")
     X_train_augmented, X_test_augmented, y_train, y_test = dataset.get_train_test()
@@ -205,7 +282,7 @@ def run_project(project, overwrite):
     # Augmented model
 
     model_name = "augmented"
-    model, metrics = train_evaluate_model(
+    model, metrics, _, _ = train_evaluate_model(
         project,
         model_name,
         threshold,
