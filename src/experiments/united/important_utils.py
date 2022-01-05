@@ -71,6 +71,7 @@ def augment_dataset(model, scaler, features, X_train, y_train, X_test, ratio):
     )
     X_train_augmented = augment_data(X_train, important_features)
     X_test_augmented = augment_data(X_test, important_features)
+    nb_new_features = X_train_augmented.shape[1] - X_train.shape[1]
     features_augmented = features.append(
         [
             {
@@ -81,7 +82,7 @@ def augment_dataset(model, scaler, features, X_train, y_train, X_test, ratio):
                 "max": 1.0,
                 "augmentation": True,
             }
-            for i in range(n_important_features)
+            for i in range(nb_new_features)
         ]
     )
-    return X_train_augmented, X_test_augmented, features_augmented
+    return X_train_augmented, X_test_augmented, features_augmented, important_features
