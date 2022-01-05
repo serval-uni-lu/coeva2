@@ -3,10 +3,7 @@ from sklearn.base import ClassifierMixin
 from tensorflow.keras import Sequential
 from tensorflow.keras.models import save_model as tf_save_model
 
-from src.constraints.botnet.botnet_augmented_constraints import (
-    BotnetAugmentedConstraints,
-)
-from src.constraints.botnet.botnet_constraints import BotnetConstraints
+from src.constraints.botnet.botnet_constraints import BotnetConstraints, BotnetAugmentedConstraints
 from src.constraints.botnet.botnet_constraints_sat import (
     create_constraints as botnet_sat_constraints,
 )
