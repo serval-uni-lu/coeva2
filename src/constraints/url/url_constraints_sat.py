@@ -1,4 +1,4 @@
-from gurobipy import LinExpr
+from gurobipy import LinExpr, any_, or_, GRB
 
 
 def sum_linear(feats, index_a):
@@ -10,7 +10,10 @@ def sum_linear(feats, index_a):
 
 def create_constraints(m, feats):
     def apply_if_a_supp_zero_than_b_supp_zero(a, b):
-        m.addConstr(feats[a] >= 1 >> feats[b] >= 1)
+        y = m.addVars(2, vtype=GRB.BINARY)
+        m.addConstr((y[0] == 1) >> (feats[a] <= 0))
+        m.addConstr((y[1] == 1) >> (feats[b] >= 1))
+        m.addConstr(y[0] + y[1] >= 1)
 
     # g1
     m.addConstr(feats[1] <= feats[0])
