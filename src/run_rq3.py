@@ -24,9 +24,9 @@ def run():
             logger.info(f"{TABULATOR*2} Running project {project} ...")
             for budget in config["budgets"]:
                 logger.info(f"{TABULATOR * 3} Running budget {budget} ...")
-                for model in config["models"]:
-                    logger.info(f"{TABULATOR * 4} Running model {model} ...")
-                    model_conf = json.dumps({"paths": {"model": model}}, separators=(',', ':'))
+
+                for scenario_i, scenario in enumerate(config["scenari"]):
+                    logger.info(f"{TABULATOR * 4} Running scenario {scenario_i}")
                     if "moeva" in config["attacks"]:
                         logger.info(f"{TABULATOR * 5} Running MoEvA ...")
                         eps_list = {"eps_list": config['eps_list']}
@@ -37,7 +37,7 @@ def run():
                             "-c", f"{config_dir}/{project}.yaml",
                             "-p", f"seed={seed}",
                             "-p", f"budget={budget}",
-                            "-j", model_conf,
+                            "-j", json.dumps(scenario, separators=(',', ':')),
                             "-j", eps_list_str]
                         )
 
@@ -57,7 +57,7 @@ def run():
                                     "-c", f"{config_dir}/{project}.yaml",
                                     "-p", f"seed={seed}",
                                     "-p", f"budget={budget}",
-                                    "-j", model_conf,
+                                    "-j", json.dumps(scenario, separators=(',', ':')),
                                     "-p", f"eps={eps}",
                                     "-p", f"loss_evaluation={loss_evaluation}"]
                                 )

@@ -24,20 +24,20 @@ def run():
             logger.info(f"{TABULATOR*2} Running project {project} ...")
             for budget in config["budgets"]:
                 logger.info(f"{TABULATOR * 3} Running budget {budget} ...")
-
-                for scenario_i, scenario in enumerate(config["scenari"]):
-                    logger.info(f"{TABULATOR * 4} Running scenario {scenario_i}")
+                for model in config["models"]:
+                    logger.info(f"{TABULATOR * 4} Running model {model} ...")
+                    model_conf = json.dumps({"paths": {"model": model}}, separators=(',', ':'))
                     if "moeva" in config["attacks"]:
                         logger.info(f"{TABULATOR * 5} Running MoEvA ...")
                         eps_list = {"eps_list": config['eps_list']}
                         eps_list_str = json.dumps(eps_list, separators=(',', ':'))
                         launch_script([
-                            "python", "-m", "src.experiments.united.04_moeva",
+                            "python", "-m", "src.experiments.united.05_moeva",
                             "-c", f"{config_dir}/moeva.yaml",
                             "-c", f"{config_dir}/{project}.yaml",
                             "-p", f"seed={seed}",
                             "-p", f"budget={budget}",
-                            "-j", json.dumps(scenario, separators=(',', ':')),
+                            "-j", model_conf,
                             "-j", eps_list_str]
                         )
 
@@ -52,12 +52,12 @@ def run():
                                     f"{TABULATOR * 7} Running loss_evaluation {loss_evaluation} ..."
                                 )
                                 launch_script([
-                                    "python", f"-m", f"src.experiments.united.01_pgd_united",
+                                    "python", f"-m", f"src.experiments.united.02_pgd_united",
                                     "-c", f"{config_dir}/pgd.yaml",
                                     "-c", f"{config_dir}/{project}.yaml",
                                     "-p", f"seed={seed}",
                                     "-p", f"budget={budget}",
-                                    "-j", json.dumps(scenario, separators=(',', ':')),
+                                    "-j", model_conf,
                                     "-p", f"eps={eps}",
                                     "-p", f"loss_evaluation={loss_evaluation}"]
                                 )
