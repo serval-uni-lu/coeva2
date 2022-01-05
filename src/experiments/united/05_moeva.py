@@ -63,7 +63,7 @@ def run():
 
     # ----- Check constraints
 
-    constraints.check_constraints_error(X_initial_states)
+    # constraints.check_constraints_error(X_initial_states)
 
     # ----- Copy the initial states n_repetition times
 
