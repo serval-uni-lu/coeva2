@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from src.attacks.moeva2.constraints.file_constraints import FileConstraints
+from src.constraints.augmented_constraints import AugmentedConstraints
 
 
 class BotnetConstraints(FileConstraints):
@@ -14,6 +15,7 @@ class BotnetConstraints(FileConstraints):
 
     def __init__(self):
         features_path = "./data/botnet/features.csv"
+        self.tolerance = 1e-3
         with open("./data/botnet/feat_idx.pickle", "rb") as f:
             self.feat_idx = pickle.load(f)
         self.feat_idx_tf = self.feat_idx.copy()
@@ -21,7 +23,6 @@ class BotnetConstraints(FileConstraints):
             self.feat_idx_tf[key] = tf.convert_to_tensor(
                 self.feat_idx[key], dtype=tf.int64
             )
-        self.important_features = np.load("./data/botnet/important_features_19.npy")
         super().__init__(features_path)
 
     @staticmethod
@@ -254,3 +255,9 @@ class BotnetConstraints(FileConstraints):
                 constraints_part.append(globals()["g%s" % cons_idx])
                 cons_idx += 1
         return cons_idx, constraints_part
+
+
+class BotnetAugmentedConstraints(AugmentedConstraints):
+    def __init__(self):
+        important_features = np.load("./data/url_augmented/important_features.npy")
+        super().__init__(BotnetConstraints(), important_features)

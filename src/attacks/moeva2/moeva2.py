@@ -172,8 +172,8 @@ class Moeva2:
         tf_lof_off()
         import tensorflow as tf
 
-        tf.config.threading.set_intra_op_parallelism_threads(1)
-        tf.config.threading.set_inter_op_parallelism_threads(1)
+        # tf.config.threading.set_intra_op_parallelism_threads(1)
+        # tf.config.threading.set_inter_op_parallelism_threads(1)
 
         if self.verbose > 0:
             print(f"Starting batch #{batch_i} with {len(x)} inputs.")
