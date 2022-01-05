@@ -5,6 +5,7 @@ import tensorflow as tf
 
 from src.attacks.moeva2.constraints.constraints_operator import apply_or
 from src.attacks.moeva2.constraints.file_constraints import FileConstraints
+from src.constraints.augmented_constraints import AugmentedConstraints
 
 
 class UrlConstraints(FileConstraints):
@@ -125,3 +126,9 @@ class UrlConstraints(FileConstraints):
 
     def get_nb_constraints(self) -> int:
         return 14
+
+
+class UrlAugmentedConstraints(AugmentedConstraints):
+    def __init__(self):
+        important_features = np.load("./data/url_augmented/important_features.npy")
+        super().__init__(UrlConstraints(), important_features)
