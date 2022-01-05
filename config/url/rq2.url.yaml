@@ -1,5 +1,8 @@
 ---
 config_dir: ./config/
+models:
+  - ./models/url/adv_moeva.model
+  - ./models/url/adv_cpgd.model
 attacks:
   - moeva
   - pgd
@@ -15,8 +18,4 @@ eps_list:
 budgets:
   - 100
 loss_evaluations:
-  - flip
-  - flip+sat
-  - constraints+flip
-  - constraints+flip+adaptive_eps_step
   - constraints+flip+adaptive_eps_step+repair

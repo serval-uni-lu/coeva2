@@ -6,7 +6,7 @@ attacks:
 seeds:
   - 42
 projects:
-  - url/rq1.url.static
+  - url/rq3.url.static
 eps_list:
   - 0.01
   - 0.05
@@ -15,8 +15,4 @@ eps_list:
 budgets:
   - 100
 loss_evaluations:
-  - flip
-  - flip+sat
-  - constraints+flip
-  - constraints+flip+adaptive_eps_step
   - constraints+flip+adaptive_eps_step+repair
