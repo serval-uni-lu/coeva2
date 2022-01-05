@@ -6,6 +6,9 @@ import tensorflow as tf
 
 
 class Constraints(abc.ABC, metaclass=abc.ABCMeta):
+    def __init__(self):
+        self.tolerance = 0.0
+
     def check_constraints_error(self, x: np.ndarray):
         constraints = self.evaluate(x)
         constraints_violated = np.sum(constraints > 0, axis=0)
@@ -67,7 +70,9 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
     def _calc_mutable_constraints(self, x, x_adv):
         immutable_mask = ~self.get_mutable_mask()
         if immutable_mask.sum() > 0:
-            mutable_ok = np.min((x[:, immutable_mask] == x_adv[:, immutable_mask]), axis=1)
+            mutable_ok = np.min(
+                (x[:, immutable_mask] == x_adv[:, immutable_mask]), axis=1
+            )
         else:
             mutable_ok = np.ones(shape=x.shape[:-1], dtype=np.bool)
         return mutable_ok
