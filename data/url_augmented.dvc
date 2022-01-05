@@ -1,0 +1,5 @@
+outs:
+- md5: 119a6b4d14d6ecaef417c2c5fd2b4de9.dir
+  size: 10839861
+  nfiles: 10
+  path: url_augmented
