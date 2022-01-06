@@ -1,22 +1,34 @@
 import logging
 import random
+from copy import deepcopy
 
 import numpy as np
 from art.attacks.evasion import DecisionTreeAttack
 from art.classifiers import SklearnClassifier
 from art.utils import projection, check_and_transform_label_format
+from joblib import Parallel, delayed
 from sklearn import metrics
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
+def cut_in_batch(arr, n_desired_batch=1, batch_size=None):
+
+    if batch_size is None:
+        n_batch = max(n_desired_batch, len(arr))
+    else:
+        n_batch = np.ceil(len(arr / batch_size))
+
+    batches_i = np.array_split(np.arange(arr.shape[0]), n_batch)
+
+    return [arr[batch_i] for batch_i in batches_i]
+
+
 class IterativeDecisionTreeAttack(DecisionTreeAttack):
     random_search = False
 
-    def __init__(
-        self, classifier, eps_step, eps, norm_p=2, random_search=False
-    ):
+    def __init__(self, classifier, eps_step, eps, norm_p=2, random_search=False):
         """
         :param classifier: A trained model of type scikit decision tree.
         :type classifier: :class:`.Classifier.ScikitlearnDecisionTreeClassifier`
@@ -202,6 +214,7 @@ class RFAttack(object):
         threshold=0.5,
         nb_estimators=10,
         nb_iterations=10,
+        n_jobs=1,
         **kwargs
     ):
         super().__init__()
@@ -211,6 +224,7 @@ class RFAttack(object):
         self.attack_args = kwargs
         self.nb_estimators = nb_estimators
         self.nb_iterations = nb_iterations
+        self.n_jobs = n_jobs
 
     def l_metrics(self, X, X_adv):
         l_2 = np.linalg.norm(X_adv - X, axis=1).mean()
@@ -229,16 +243,19 @@ class RFAttack(object):
 
         return 1 - accuracy
 
-    def generate(self, x, y, **kwargs):
+    def generate(self, x, y, index=0, **kwargs):
 
+        self.classifier = deepcopy(self.classifier)
         x0 = x
         y0 = y
 
         rf_success_rate = 0
         x = np.copy(x0)
         rf_success_x = x
-
-        for e in tqdm(range(self.nb_estimators), total=self.nb_estimators):
+        iterate = range(self.nb_estimators)
+        if index == 0:
+            iterate = tqdm(iterate, total=self.nb_estimators)
+        for e in iterate:
             logging.info(
                 "Attacking tree {}. Prev success rate {}".format(e, rf_success_rate)
             )
@@ -272,3 +289,16 @@ class RFAttack(object):
             l_2, l_inf = self.l_metrics(rf_success_x, x0)
 
         return rf_success_x
+
+    def generate_parallel(self, x, y):
+        if self.n_jobs == 1:
+            self.generate(x, y)
+        else:
+            out = Parallel(n_jobs=self.n_jobs)(
+                delayed(self.generate)(x[batch_indexes], y[batch_indexes], i)
+                for i, batch_indexes in enumerate(
+                    cut_in_batch(np.arange(len(x)), n_desired_batch=self.n_jobs)
+                )
+            )
+
+            return np.concatenate(out)

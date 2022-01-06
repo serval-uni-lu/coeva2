@@ -68,13 +68,15 @@ def run():
 
     # ----- Check constraints
 
-    constraints.check_constraints_error(X_initial_states)
+    # constraints.check_constraints_error(X_initial_states)
 
     # ----- Perform the attack
 
     start_time = time.time()
     apply_sat = "sat" in config.get("loss_evaluation", [])
     per_attack_eps = config["eps"] / 2 if apply_sat else config["eps"]
+
+    model.set_params(**{"n_jobs": 1})
 
     attack = RFAttack(
         model,
@@ -83,10 +85,11 @@ def run():
         threshold=config["classification_threshold"],
         eps=per_attack_eps-0.000001,
         eps_step=per_attack_eps/3,
+        n_jobs=config.get("system").get("n_jobs")
     )
 
     x_attacks = scaler.inverse_transform(
-        attack.generate(
+        attack.generate_parallel(
             x=scaler.transform(X_initial_states),
             y=y_initial_states,
             # mask=constraints.get_mutable_mask(),
