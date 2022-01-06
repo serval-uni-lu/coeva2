@@ -29,14 +29,29 @@ def run():
                     logger.info(f"{TABULATOR * 4} Running MoEvA ...")
                     eps_list = {"eps_list": config['eps_list']}
                     eps_list_str = json.dumps(eps_list, separators=(',', ':'))
-                    launch_script([
-                        "python", "-m", "src.experiments.united.05_moeva",
-                        "-c", f"{config_dir}/moeva.yaml",
-                        "-c", f"{config_dir}/{project}.yaml",
-                        "-p", f"seed={seed}",
-                        "-p", f"budget={budget}",
-                        "-j", eps_list_str]
-                    )
+                    if "malware" in project:
+                        for i in range(4):
+                            launch_script([
+                                "python", "-m", "src.experiments.united.05_moeva",
+                                "-c", f"{config_dir}/moeva.yaml",
+                                "-c", f"{config_dir}/{project}.yaml",
+                                "-p", f"seed={seed}",
+                                "-p", f"budget={budget}",
+                                "-j", eps_list_str,
+                                "-p", f"input_offset={i*128}",
+                                "-p", f"n_input=128"]
+                            )
+
+
+                    else:
+                        launch_script([
+                            "python", "-m", "src.experiments.united.05_moeva",
+                            "-c", f"{config_dir}/moeva.yaml",
+                            "-c", f"{config_dir}/{project}.yaml",
+                            "-p", f"seed={seed}",
+                            "-p", f"budget={budget}",
+                            "-j", eps_list_str]
+                        )
 
                 # Run the rest
                 if "pgd" in config["attacks"]:
