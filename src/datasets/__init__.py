@@ -1,9 +1,12 @@
+from src.datasets.botnet_dataset import BotnetDataset, BotnetAugmentedDataset
 from src.datasets.malware_dataset import MalwareDataset
 from src.datasets.url_dataset import UrlDataset, UrlAugmentedDataset
 
 datasets = {
     "url": UrlDataset,
     "url_augmented": UrlAugmentedDataset,
+    "botnet": BotnetDataset,
+    "botnet_augmented": BotnetAugmentedDataset,
     "malware": MalwareDataset
 }
 

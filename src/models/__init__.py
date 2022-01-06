@@ -1,3 +1,4 @@
+from src.models.botnet_model import BotnetModel, BotnetRf
 from src.models.malware_model import MalwareModel
 from src.models.model_architecture import ModelArchitecture
 from src.models.url_model import UrlModel, UrlRf
@@ -5,7 +6,9 @@ from src.models.url_model import UrlModel, UrlRf
 model_architectures = {
     "url": UrlModel(),
     "url_rf": UrlRf(),
-    "malware": MalwareModel()
+    "botnet": BotnetModel(),
+    "botnet_rf": BotnetRf(),
+    "malware": MalwareModel(),
 }
 
 
