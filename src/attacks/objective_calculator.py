@@ -2,6 +2,7 @@ import sys
 
 import numpy
 import numpy as np
+from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from .moeva2.constraints.constraints import Constraints
@@ -15,6 +16,18 @@ def objectives_to_dict(objectives):
     for objectives_i, objective in enumerate(objectives):
         objectives_dict[f"o{objectives_i+1}"] = objective
     return objectives_dict
+
+
+def cut_in_batch(arr, n_desired_batch=1, batch_size=None):
+
+    if batch_size is None:
+        n_batch = max(n_desired_batch, len(arr))
+    else:
+        n_batch = np.ceil(len(arr / batch_size))
+
+    batches_i = np.array_split(np.arange(arr.shape[0]), n_batch)
+
+    return [arr[batch_i] for batch_i in batches_i]
 
 
 class ObjectiveCalculator:
@@ -35,33 +48,50 @@ class ObjectiveCalculator:
         self.norm = norm
         self.n_jobs = n_jobs
 
-    def _calc_fitness(self, x_clean, y_clean, x_adv):
+    def _calc_fitness(self, x_clean, y_clean, x_adv, single_thread=False):
 
-        x_adv_c_score = (
-            1
-            - self._constraints.check_constraints(
-                np.repeat(x_clean, x_adv.shape[1], axis=0),
-                x_adv.reshape(-1, x_adv.shape[-1]),
-            ).reshape((*x_adv.shape[:-1], -1))
-        )
+        if single_thread or self.n_jobs == 1:
+            x_adv_c_score = (
+                1
+                - self._constraints.check_constraints(
+                    np.repeat(x_clean, x_adv.shape[1], axis=0),
+                    x_adv.reshape(-1, x_adv.shape[-1]),
+                ).reshape((*x_adv.shape[:-1], -1))
+            )
 
-        y_score_filter = (
-            np.arange(x_adv.shape[0] * x_adv.shape[1]),
-            np.repeat(y_clean, x_adv.shape[1]),
-        )
+            y_score_filter = (
+                np.arange(x_adv.shape[0] * x_adv.shape[1]),
+                np.repeat(y_clean, x_adv.shape[1]),
+            )
 
-        x_adv_m_score = (
-            self._classifier.predict_proba(x_adv.reshape(-1, x_adv.shape[-1]))
-        )[y_score_filter].reshape((x_adv.shape[:-1]))
+            x_adv_m_score = (
+                self._classifier.predict_proba(x_adv.reshape(-1, x_adv.shape[-1]))
+            )[y_score_filter].reshape((x_adv.shape[:-1]))
 
-        delta = self.fun_distance_preprocess(
-            x_adv.reshape(-1, x_adv.shape[-1])
-        ) - self.fun_distance_preprocess(np.repeat(x_clean, x_adv.shape[1], axis=0))
+            delta = self.fun_distance_preprocess(
+                x_adv.reshape(-1, x_adv.shape[-1])
+            ) - self.fun_distance_preprocess(np.repeat(x_clean, x_adv.shape[1], axis=0))
 
-        x_adv_distance_score = np.linalg.norm(delta, ord=self.norm, axis=1).reshape(
-            (x_adv.shape[:-1])
-        )
-        return x_adv_c_score, x_adv_m_score, x_adv_distance_score
+            x_adv_distance_score = np.linalg.norm(delta, ord=self.norm, axis=1).reshape(
+                (x_adv.shape[:-1])
+            )
+            return x_adv_c_score, x_adv_m_score, x_adv_distance_score
+
+        else:
+            out = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._calc_fitness)(
+                    x_clean[batch_indexes],
+                    y_clean[batch_indexes],
+                    x_adv[batch_indexes],
+                    single_thread=True,
+                )
+                for i, batch_indexes in cut_in_batch(
+                    np.arange(len(x_clean)), n_desired_batch=self.n_jobs
+                )
+            )
+            out = zip(*out)
+            out = (np.concatenate(out_0) for out_0 in out)
+            return out
 
     def _calc_obj_from_fitness(
         self, x_adv_c_score, x_adv_m_score, x_adv_distance_score
