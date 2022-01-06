@@ -85,7 +85,7 @@ class ObjectiveCalculator:
                     x_adv[batch_indexes],
                     single_thread=True,
                 )
-                for i, batch_indexes in cut_in_batch(
+                for batch_indexes in cut_in_batch(
                     np.arange(len(x_clean)), n_desired_batch=self.n_jobs
                 )
             )
