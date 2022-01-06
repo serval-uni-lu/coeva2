@@ -21,7 +21,7 @@ def objectives_to_dict(objectives):
 def cut_in_batch(arr, n_desired_batch=1, batch_size=None):
 
     if batch_size is None:
-        n_batch = max(n_desired_batch, len(arr))
+        n_batch = min(n_desired_batch, len(arr))
     else:
         n_batch = np.ceil(len(arr / batch_size))
 
