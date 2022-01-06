@@ -1,20 +1,19 @@
 ---
 config_dir: ./config/
-models:
-  - ./models/botnet/nn_moeva.model
 attacks:
   - moeva
-#  - pgd
+  - pgd
 seeds:
   - 42
 projects:
-  - rq3.botnet.static
+  - botnet/rq3.botnet.static
 eps_list:
+  - 0.2
+  - 0.5
+  - 1
+  - 2
   - 4
 budgets:
-  - 1000
+  - 100
 loss_evaluations:
-#  - flip
-#  - flip+sat
-#  - constraints+flip
-#  - constraints+flip+adaptive_eps_step
+  - constraints+flip+adaptive_eps_step+repair

@@ -1,19 +1,18 @@
 ---
-project_name: botnet
+project_name: botnet_augmented
 paths:
-  features: ./data/botnet/features.csv
-  constraints: ./data/botnet/constraints.csv
-  x_candidates: ./data/botnet/x_candidates_common.npy.bk
-  min_max_scaler: ./models/botnet/scaler.joblib
-  ml_scaler: ./models/botnet/scaler.joblib
+  model: ./models/botnet/augmented.model
+  scaler: ./models/botnet/augmented_scaler.joblib
+  x_input: ./data/botnet_augmented/augmented_X_test_candidates.npy
+  y_input: ./data/botnet_augmented/augmented_y_test_candidates.npy
 dirs:
   results: ./out/attacks/botnet/rq3/
-misclassification_threshold: 0.5
-norm: 2
-n_initial_state: -1
-initial_state_offset: 0
+n_input: -1
+input_offset: 0
 system:
-  n_jobs: -1
+  n_jobs: 100
   verbose: 1
 save_history: "reduced"
 reconstruction: False
+classification_threshold: 0.5
+norm: 2
