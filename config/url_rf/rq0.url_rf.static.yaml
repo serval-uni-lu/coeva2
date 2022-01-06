@@ -1,0 +1,18 @@
+---
+project_name: url_rf
+paths:
+  model: ./models/url_rf/baseline.model
+  scaler: ./models/url_rf/baseline_scaler.joblib
+  x_input: ./data/url_rf/baseline_X_train_candidates.npy
+  y_input: ./data/url_rf/baseline_y_train_candidates.npy
+dirs:
+  results: ./out/attacks/url_rf/rq0/
+n_input: -1
+input_offset: 0
+system:
+  n_jobs: 10
+  verbose: 1
+save_history: "reduced"
+reconstruction: False
+classification_threshold: 0.5
+norm: 2
