@@ -6,7 +6,7 @@ paths:
   x_input: ./data/botnet/baseline_X_test_candidates.npy
   y_input: ./data/botnet/baseline_y_test_candidates.npy
 dirs:
-  results: ./out/attacks/botnet/rq1/
+  results: ./out/attacks/botnet/rq2/
 n_input: -1
 input_offset: 0
 system:

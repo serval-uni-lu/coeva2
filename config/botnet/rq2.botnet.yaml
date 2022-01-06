@@ -1,29 +1,24 @@
 ---
 config_dir: ./config/
+models:
+  - ./models/botnet/adv_moeva.model
+  - ./models/botnet/adv_moeva_1000.model
+  - ./models/botnet/adv_moeva_1000_full.model
 attacks:
   - moeva
+  - pgd
 seeds:
   - 42
 projects:
-  - rq2.botnet.static
+  - url/rq1.url.static
 eps_list:
+  - 0.2
+  - 0.5
+  - 1
+  - 2
   - 4
 budgets:
+  - 100
   - 1000
-scenari:
-#  - project_name: botnet
-#    paths:
-#      features: ./data/botnet/features_augmented_19_not_mutable.csv
-#      constraints: ./data/botnet/constraints.csv
-#    reconstruction: True
-#    evaluation:
-#      project_name: botnet_augmented
-#      constraints: ./data/botnet/constraints_augmented_19.csv
-  - project_name: botnet_augmented
-    paths:
-      features: ./data/botnet/features_augmented_19.csv
-      constraints: ./data/botnet/constraints_augmented_19.csv
-    reconstruction: False
-    evaluation:
-      project_name: botnet_augmented
-      constraints: ./data/botnet/constraints_augmented_19.csv
+loss_evaluations:
+  - constraints+flip+adaptive_eps_step+repair
