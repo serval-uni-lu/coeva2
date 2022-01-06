@@ -3,6 +3,7 @@ from itertools import combinations
 import numpy as np
 import shap
 from imblearn.under_sampling import RandomUnderSampler
+from sklearn.ensemble import RandomForestClassifier
 
 
 def calc_n_important_features(n_features, ratio):
@@ -13,13 +14,16 @@ def calc_n_important_features(n_features, ratio):
 
 def find_important_features(model, scaler, mutable_mask, X, y, n_important_features):
 
-    sampler = RandomUnderSampler(sampling_strategy={0: 500, 1: 500}, random_state=42)
-    x_small, y_small = sampler.fit_resample(X, y)
+    if isinstance(model, RandomForestClassifier):
+        shap_values_per_mutable_feature = np.array(model.feature_importances_)[mutable_mask]
+    else:
+        sampler = RandomUnderSampler(sampling_strategy={0: 500, 1: 500}, random_state=42)
+        x_small, y_small = sampler.fit_resample(X, y)
 
-    explainer = shap.DeepExplainer(model, scaler.transform(x_small))
-    shap_values = explainer.shap_values(scaler.transform(x_small))
-    shap_values_per_feature = np.mean(np.abs(np.array(shap_values)[0]), axis=0)
-    shap_values_per_mutable_feature = shap_values_per_feature[mutable_mask]
+        explainer = shap.DeepExplainer(model, scaler.transform(x_small))
+        shap_values = explainer.shap_values(scaler.transform(x_small))
+        shap_values_per_feature = np.mean(np.abs(np.array(shap_values)[0]), axis=0)
+        shap_values_per_mutable_feature = shap_values_per_feature[mutable_mask]
 
     mutable_feature_index = np.where(mutable_mask)[0]
     order_feature_mutable = np.argsort(shap_values_per_mutable_feature)[::-1]

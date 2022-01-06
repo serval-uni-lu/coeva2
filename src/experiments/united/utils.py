@@ -3,7 +3,10 @@ from sklearn.base import ClassifierMixin
 from tensorflow.keras import Sequential
 from tensorflow.keras.models import save_model as tf_save_model
 
-from src.constraints.botnet.botnet_constraints import BotnetConstraints, BotnetAugmentedConstraints
+from src.constraints.botnet.botnet_constraints import (
+    BotnetConstraints,
+    BotnetAugmentedConstraints,
+)
 from src.constraints.botnet.botnet_constraints_sat import (
     create_constraints as botnet_sat_constraints,
 )
@@ -29,7 +32,9 @@ STR_TO_CONSTRAINTS_CLASS = {
     "lcld_augmented": LcldAugmentedConstraints,
     "botnet_augmented": BotnetAugmentedConstraints,
     "url": UrlConstraints,
-    "url_augmented": UrlAugmentedConstraints
+    "url_rf": UrlConstraints,
+    "url_augmented": UrlAugmentedConstraints,
+    "url_rf_augmented": UrlAugmentedConstraints,
 }
 
 STR_TO_SAT_CONSTRAINTS = {
@@ -37,6 +42,7 @@ STR_TO_SAT_CONSTRAINTS = {
     "botnet": botnet_sat_constraints,
     "malware": malware_sat_constraints,
     "url": url_sat_constraints,
+    "url_rf": url_sat_constraints,
 }
 
 STR_TO_DATASET = {"malware": MalwareDataset}

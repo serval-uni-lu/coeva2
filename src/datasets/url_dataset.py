@@ -11,3 +11,9 @@ class UrlAugmentedDataset(DirectoryDataset):
     def __init__(self):
         dir_path = "./data/url_augmented"
         super().__init__(dir_path)
+
+
+class UrlRfAugmentedDataset(DirectoryDataset):
+    def __init__(self):
+        dir_path = "./data/url_rf_augmented"
+        super().__init__(dir_path)
