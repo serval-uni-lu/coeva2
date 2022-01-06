@@ -123,6 +123,7 @@ def run():
         thresholds=thresholds,
         fun_distance_preprocess=scaler.transform,
         norm=config["norm"],
+        n_jobs=config["system"]["n_jobs"],
     )
 
     success_rate = objective_calc.get_success_rates(X_initial_states, y_initial_states, x_attacks)
