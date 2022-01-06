@@ -1,0 +1,16 @@
+---
+config_dir: ./config/
+attacks:
+  - moeva
+  - papernot
+seeds:
+  - 42
+projects:
+  - url_rf/rq1.url_rf.static
+eps_list:
+  - 0.01
+  - 0.05
+  - 0.1
+  - 0.2
+budgets:
+  - 100
