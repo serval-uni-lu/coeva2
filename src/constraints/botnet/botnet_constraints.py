@@ -259,5 +259,5 @@ class BotnetConstraints(FileConstraints):
 
 class BotnetAugmentedConstraints(AugmentedConstraints):
     def __init__(self):
-        important_features = np.load("./data/url_augmented/important_features.npy")
+        important_features = np.load("./data/botnet_augmented/important_features.npy")
         super().__init__(BotnetConstraints(), important_features)
