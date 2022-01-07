@@ -1,6 +1,29 @@
+from sklearn.preprocessing import StandardScaler
+
 from src.datasets.botnet_dataset import BotnetDataset, BotnetAugmentedDataset
-from src.datasets.malware_dataset import MalwareDataset, MalwareAugmentedDataset, MalwareRfAugmentedDataset
-from src.datasets.url_dataset import UrlDataset, UrlAugmentedDataset, UrlRfAugmentedDataset
+from src.datasets.malware_dataset import (
+    MalwareDataset,
+    MalwareAugmentedDataset,
+    MalwareRfAugmentedDataset, MalwareRfDataset,
+)
+from src.datasets.url_dataset import (
+    UrlDataset,
+    UrlAugmentedDataset,
+    UrlRfAugmentedDataset,
+)
+
+
+class IdScaler:
+    @staticmethod
+    def transform(x):
+        return x
+
+    @staticmethod
+    def inverse_transform(x):
+        return x
+
+    def fit(self):
+        pass
 
 
 datasets = {
@@ -12,8 +35,8 @@ datasets = {
     "botnet_augmented": BotnetAugmentedDataset,
     "malware": MalwareDataset,
     "malware_augmented": MalwareAugmentedDataset,
-    "malware_rf": MalwareDataset,
-    "malware_rf_augmented": MalwareRfAugmentedDataset
+    "malware_rf": MalwareRfDataset,
+    "malware_rf_augmented": MalwareRfAugmentedDataset,
 }
 
 
