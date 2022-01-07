@@ -1,9 +1,9 @@
 from sklearn.ensemble import RandomForestClassifier
 
-from src.models.botnet_model import BotnetModel, BotnetRf
+from src.models.botnet_model import BotnetModel
 from src.models.malware_model import MalwareModel
 from src.models.model_architecture import ModelArchitecture
-from src.models.url_model import UrlModel, UrlRf
+from src.models.url_model import UrlModel
 
 
 class DefaultRf(ModelArchitecture):
