@@ -132,3 +132,9 @@ class UrlAugmentedConstraints(AugmentedConstraints):
     def __init__(self):
         important_features = np.load("./data/url_augmented/important_features.npy")
         super().__init__(UrlConstraints(), important_features)
+
+
+class UrlRfAugmentedConstraints(AugmentedConstraints):
+    def __init__(self):
+        important_features = np.load("./data/url_rf_augmented/important_features.npy")
+        super().__init__(UrlConstraints(), important_features)

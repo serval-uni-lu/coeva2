@@ -19,7 +19,7 @@ from src.constraints.malware.malware_constraints import MalwareConstraints
 from src.constraints.malware.malware_constraints_sat import (
     create_constraints as malware_sat_constraints,
 )
-from src.constraints.url.url_constraints import UrlConstraints, UrlAugmentedConstraints
+from src.constraints.url.url_constraints import UrlConstraints, UrlAugmentedConstraints, UrlRfAugmentedConstraints
 from src.constraints.url.url_constraints_sat import (
     create_constraints as url_sat_constraints,
 )
@@ -34,7 +34,7 @@ STR_TO_CONSTRAINTS_CLASS = {
     "url": UrlConstraints,
     "url_rf": UrlConstraints,
     "url_augmented": UrlAugmentedConstraints,
-    "url_rf_augmented": UrlAugmentedConstraints,
+    "url_rf_augmented": UrlRfAugmentedConstraints,
 }
 
 STR_TO_SAT_CONSTRAINTS = {
