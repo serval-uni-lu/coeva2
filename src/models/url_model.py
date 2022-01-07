@@ -1,4 +1,3 @@
-from sklearn.ensemble import RandomForestClassifier
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.metrics import AUC, Recall
@@ -33,17 +32,4 @@ class UrlModel(ModelArchitecture):
             validation_data=validation_data,
         )
 
-        return model
-
-
-class UrlRf(ModelArchitecture):
-    def get_model(self):
-        model = RandomForestClassifier(n_estimators=100)
-        return model
-
-    def get_trained_model(self, X, y):
-        model = self.get_model()
-        model.set_params(**{"verbose": 1})
-        model.fit(X, y)
-        model.set_params(**{"verbose": 0})
         return model

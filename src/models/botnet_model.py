@@ -1,4 +1,3 @@
-from sklearn.ensemble import RandomForestClassifier
 from tensorflow.keras import Sequential
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Dense
@@ -43,17 +42,4 @@ class BotnetModel(ModelArchitecture):
             callbacks=[early_stop],
         )
 
-        return model
-
-
-class BotnetRf(ModelArchitecture):
-    def get_model(self):
-        model = RandomForestClassifier(n_estimators=100)
-        return model
-
-    def get_trained_model(self, X, y):
-        model = self.get_model()
-        model.set_params(**{"verbose": 1})
-        model.fit(X, y)
-        model.set_params(**{"verbose": 0})
         return model
