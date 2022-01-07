@@ -15,7 +15,8 @@ from src.constraints.lcld.lcld_constraints import LcldConstraints
 from src.constraints.lcld.lcld_constraints_sat import (
     create_constraints as lcld_sat_constraints,
 )
-from src.constraints.malware.malware_constraints import MalwareConstraints
+from src.constraints.malware.malware_constraints import MalwareConstraints, MalwareAugmentedConstraints, \
+    MalwareRfAugmentedConstraints
 from src.constraints.malware.malware_constraints_sat import (
     create_constraints as malware_sat_constraints,
 )
@@ -29,6 +30,9 @@ STR_TO_CONSTRAINTS_CLASS = {
     "lcld": LcldConstraints,
     "botnet": BotnetConstraints,
     "malware": MalwareConstraints,
+    "malware_rf": MalwareConstraints,
+    "malware_augmented": MalwareAugmentedConstraints,
+    "malware_rf_augmented": MalwareRfAugmentedConstraints,
     "lcld_augmented": LcldAugmentedConstraints,
     "botnet_augmented": BotnetAugmentedConstraints,
     "url": UrlConstraints,
