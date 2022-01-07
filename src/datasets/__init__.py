@@ -1,29 +1,15 @@
-from sklearn.preprocessing import StandardScaler
-
 from src.datasets.botnet_dataset import BotnetDataset, BotnetAugmentedDataset
 from src.datasets.malware_dataset import (
     MalwareDataset,
     MalwareAugmentedDataset,
-    MalwareRfAugmentedDataset, MalwareRfDataset,
+    MalwareRfAugmentedDataset,
+    MalwareRfDataset,
 )
 from src.datasets.url_dataset import (
     UrlDataset,
     UrlAugmentedDataset,
     UrlRfAugmentedDataset,
 )
-
-
-class IdScaler:
-    @staticmethod
-    def transform(x):
-        return x
-
-    @staticmethod
-    def inverse_transform(x):
-        return x
-
-    def fit(self):
-        pass
 
 
 datasets = {
