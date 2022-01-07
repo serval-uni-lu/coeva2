@@ -25,7 +25,7 @@ model_architectures = {
     "botnet": BotnetModel(),
     "botnet_rf": DefaultRf(),
     "malware": MalwareModel(),
-    "malware_rf": MalwareRf(),
+    "malware_rf": DefaultRf(),
 }
 
 
