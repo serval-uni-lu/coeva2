@@ -11,7 +11,7 @@ def run():
     project = config.get("project")
     model_name = config.get("model_name")
     model_path = f"./models/{project}/{model_name}.model"
-    scaler_path = f"./models/{project}/{model_name}.model"
+    scaler_path = f"./models/{project}/{model_name}_scaler.joblib"
     classifier = ScalerClassifier(model_path, scaler_path)
     constraints = get_constraints_from_str(project)()
     threshold = config.get("classification_threshold")
