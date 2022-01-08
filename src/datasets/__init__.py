@@ -1,4 +1,5 @@
 from src.datasets.botnet_dataset import BotnetDataset, BotnetAugmentedDataset
+from src.datasets.lcld_dataset import LcldDataset, LcldAugmentedDataset, LcldRfAugmentedDataset
 from src.datasets.malware_dataset import (
     MalwareDataset,
     MalwareAugmentedDataset,
@@ -23,6 +24,10 @@ datasets = {
     "malware_augmented": MalwareAugmentedDataset,
     "malware_rf": MalwareRfDataset,
     "malware_rf_augmented": MalwareRfAugmentedDataset,
+    "lcld": LcldDataset,
+    "lcld_augmented": LcldAugmentedDataset,
+    "lcld_rf": LcldDataset,
+    "lcld_rf_augmented": LcldRfAugmentedDataset
 }
 
 

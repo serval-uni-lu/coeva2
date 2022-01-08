@@ -1,6 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 
 from src.models.botnet_model import BotnetModel
+from src.models.lcld_model import LcldModel, LcldRf
 from src.models.malware_model import MalwareModel, MalwareRf
 from src.models.model_architecture import ModelArchitecture
 from src.models.url_model import UrlModel
@@ -26,6 +27,8 @@ model_architectures = {
     "botnet_rf": DefaultRf(),
     "malware": MalwareModel(),
     "malware_rf": DefaultRf(),
+    "lcld": LcldModel(),
+    "lcld_rf": LcldRf()
 }
 
 

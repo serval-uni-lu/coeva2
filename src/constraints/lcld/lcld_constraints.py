@@ -1,12 +1,10 @@
-from itertools import combinations
-
 import autograd.numpy as anp
 import numpy as np
 import tensorflow as tf
 
 from src.attacks.moeva2.constraints.file_constraints import FileConstraints
 from src.attacks.moeva2.utils import get_ohe_masks
-from src.experiments.united.important_utils import augment_data
+from src.constraints.augmented_constraints import AugmentedConstraints
 
 
 class LcldConstraints(FileConstraints):
@@ -51,13 +49,6 @@ class LcldConstraints(FileConstraints):
             new_ohe[np.arange(len(ohe)), max_feature] = 1
 
             new_tensor_v[:, mask] = new_ohe
-
-        if new_tensor_v.shape[1] > 47:
-            combi = -sum(
-                1 for i in combinations(range(len(self.important_features)), 2)
-            )
-            new_tensor_v = new_tensor_v[..., :combi]
-            new_tensor_v = augment_data(new_tensor_v, self.important_features)
 
         return tf.convert_to_tensor(new_tensor_v, dtype=tf.float32)
 
@@ -213,3 +204,15 @@ class LcldConstraints(FileConstraints):
 
     def get_nb_constraints(self) -> int:
         return 10
+
+
+class LcldAugmentedConstraints(AugmentedConstraints):
+    def __init__(self):
+        important_features = np.load("./data/lcld_augmented/important_features.npy")
+        super().__init__(LcldConstraints(), important_features)
+
+
+class LcldRfAugmentedConstraints(AugmentedConstraints):
+    def __init__(self):
+        important_features = np.load("./data/lcld_rf_augmented/important_features.npy")
+        super().__init__(LcldConstraints(), important_features)
