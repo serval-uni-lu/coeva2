@@ -69,7 +69,7 @@ class LcldRf(ModelArchitecture):
     def get_trained_model(self, X, y):
 
         model = self.get_model()
-        model.set_params(**{"verbose": 1})
+        model.set_params(**{"verbose": 1, "n_jobs": -1})
         model.fit(X, y)
-        model.set_params(**{"verbose": 0})
+        model.set_params(**{"verbose": 0, "n_jobs": 1})
         return model
