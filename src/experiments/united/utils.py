@@ -10,17 +10,26 @@ from src.constraints.botnet.botnet_constraints import (
 from src.constraints.botnet.botnet_constraints_sat import (
     create_constraints as botnet_sat_constraints,
 )
-from src.constraints.lcld.lcld_augmented_constraints import LcldAugmentedConstraints
-from src.constraints.lcld.lcld_constraints import LcldConstraints
+from src.constraints.lcld.lcld_constraints import (
+    LcldConstraints,
+    LcldRfAugmentedConstraints, LcldAugmentedConstraints,
+)
 from src.constraints.lcld.lcld_constraints_sat import (
     create_constraints as lcld_sat_constraints,
 )
-from src.constraints.malware.malware_constraints import MalwareConstraints, MalwareAugmentedConstraints, \
-    MalwareRfAugmentedConstraints
+from src.constraints.malware.malware_constraints import (
+    MalwareConstraints,
+    MalwareAugmentedConstraints,
+    MalwareRfAugmentedConstraints,
+)
 from src.constraints.malware.malware_constraints_sat import (
     create_constraints as malware_sat_constraints,
 )
-from src.constraints.url.url_constraints import UrlConstraints, UrlAugmentedConstraints, UrlRfAugmentedConstraints
+from src.constraints.url.url_constraints import (
+    UrlConstraints,
+    UrlAugmentedConstraints,
+    UrlRfAugmentedConstraints,
+)
 from src.constraints.url.url_constraints_sat import (
     create_constraints as url_sat_constraints,
 )
@@ -28,12 +37,14 @@ from src.datasets.malware_dataset import MalwareDataset
 
 STR_TO_CONSTRAINTS_CLASS = {
     "lcld": LcldConstraints,
+    "lcld_rf": LcldConstraints,
+    "lcld_augmented": LcldAugmentedConstraints,
+    "lcld_rf_augmented": LcldRfAugmentedConstraints,
     "botnet": BotnetConstraints,
     "malware": MalwareConstraints,
     "malware_rf": MalwareConstraints,
     "malware_augmented": MalwareAugmentedConstraints,
     "malware_rf_augmented": MalwareRfAugmentedConstraints,
-    "lcld_augmented": LcldAugmentedConstraints,
     "botnet_augmented": BotnetAugmentedConstraints,
     "url": UrlConstraints,
     "url_rf": UrlConstraints,
