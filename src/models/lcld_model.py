@@ -40,7 +40,7 @@ class LcldModel(ModelArchitecture):
             epochs=100,
             batch_size=512,
             verbose=1,
-            validation_data=(X_val, y_val),
+            validation_data=(X_val, to_categorical(y_val)),
             callbacks=[early_stop],
         )
         return model
