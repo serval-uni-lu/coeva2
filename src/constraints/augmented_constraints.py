@@ -47,7 +47,7 @@ class AugmentedConstraints(Constraints):
         )
 
     def get_feature_min_max(self, dynamic_input=None) -> Tuple[np.ndarray, np.ndarray]:
-        xl, xu = self.constraints0.get_feature_min_max(dynamic_input)
+        xl, xu = self.constraints0.get_feature_min_max(dynamic_input[:self.nb_new_features])
         xl = np.concatenate([xl, np.zeros(self.nb_new_features)])
         xu = np.concatenate([xu, np.ones(self.nb_new_features)])
         return xl, xu
