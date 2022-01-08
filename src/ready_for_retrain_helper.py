@@ -31,7 +31,7 @@ def run():
     for x_attack_i, x_attack in enumerate(config.get("x_attacks", [])):
         x_clean_l = x_clean[x_attack_i*1600:(x_attack_i+1)*1600]
         y_clean_l = y_clean[x_attack_i*1600:(x_attack_i+1)*1600]
-        x_attacks = np.load(x_attack["path"])
+        x_attacks = np.load(x_attack)
         x_adv, x_adv_i = objective_calculator.get_successful_attacks(
             x_clean_l,
             y_clean_l,
