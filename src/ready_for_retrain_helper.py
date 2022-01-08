@@ -26,8 +26,8 @@ def run():
         fun_distance_preprocess=scaler.transform,
         norm=config.get("norm"),
     )
-    x_clean = np.load(f"./data/{project}/{model_name}_X_{config.get('candidates')}_candidate")
-    y_clean = np.load(f"./data/{project}/{model_name}_y_{config.get('candidates')}_candidate")
+    x_clean = np.load(f"./data/{project}/{model_name}_X_{config.get('candidates')}_candidates.npy")
+    y_clean = np.load(f"./data/{project}/{model_name}_y_{config.get('candidates')}_candidates.npy")
     for x_attack_i, x_attack in enumerate(config.get("x_attacks", [])):
         x_clean_l = x_clean[x_attack_i*1600:(x_attack_i+1)*1600]
         y_clean_l = y_clean[x_attack_i*1600:(x_attack_i+1)*1600]
