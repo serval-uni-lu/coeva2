@@ -57,11 +57,11 @@ class LcldModel(ModelArchitecture):
 class LcldRf(ModelArchitecture):
     def get_model(self):
         params = {
-            "n_estimators": 125,
-            "min_samples_split": 6,
-            "min_samples_leaf": 2,
-            "max_depth": 10,
-            "bootstrap": True,
+            "n_estimators": 100,
+            # "min_samples_split": 6,
+            # "min_samples_leaf": 2,
+            # "max_depth": 10,
+            # "bootstrap": True,
         }
         model = RandomForestClassifier(**params)
         return model
