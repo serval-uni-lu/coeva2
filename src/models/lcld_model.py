@@ -36,7 +36,7 @@ class LcldModel(ModelArchitecture):
         )
         model.fit(
             x=X_train,
-            y=to_categorical(y),
+            y=to_categorical(y_train),
             epochs=100,
             batch_size=512,
             verbose=1,
