@@ -28,20 +28,24 @@ def run():
     )
     x_clean = np.load(f"./data/{project}/{model_name}_X_{config.get('candidates')}_candidate")
     y_clean = np.load(f"./data/{project}/{model_name}_y_{config.get('candidates')}_candidate")
-    for x_attack in config.get("x_attacks", []):
+    for x_attack_i, x_attack in enumerate(config.get("x_attacks", [])):
+        x_clean_l = x_clean[x_attack_i*1600:(x_attack_i+1)*1600]
+        y_clean_l = y_clean[x_attack_i*1600:(x_attack_i+1)*1600]
         x_attacks = np.load(x_attack["path"])
         x_adv, x_adv_i = objective_calculator.get_successful_attacks(
-            x_clean,
-            y_clean,
+            x_clean_l,
+            y_clean_l,
             x_attacks,
             preferred_metrics="misclassification",
             order="asc",
             max_inputs=1,
             return_index_success=True,
         )
-        x_adv_i_r = [i for i in np.arange(x_clean.shape[0]) if i not in x_adv_i]
+        x_adv_i_r = np.array([i for i in np.arange(x_clean_l.shape[0]) if i not in x_adv_i])
         x_adv = np.array(x_adv)
-        x_adv[x_adv_i_r] = x_clean[x_adv_i_r][np.newaxis, :, :]
+        x_clean_assign = x_clean_l[x_adv_i_r]
+        x_clean_assign = x_clean_assign[x_adv_i_r][np.newaxis, :, :]
+        x_adv[x_adv_i_r] = x_clean_assign
         x_adv = np.concatenate(x_adv)
         print(x_adv.shape)
         np.save(x_attack, x_adv)
