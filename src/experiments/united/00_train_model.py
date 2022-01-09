@@ -22,7 +22,7 @@ from src.experiments.united.utils import get_constraints_from_str, save_model
 from src.models import load_model_architecture
 from src.utils.in_out import load_model, json_to_file, json_from_file
 from src.utils.ml import convert_2d_score
-
+from sklearn.ensemble import RandomForestClassifier
 
 def calc_n_important_features(n_features, ratio):
     a, b, c = 0.5, -0.5, -n_features * ratio
@@ -100,7 +100,11 @@ def train_evaluate_model(
 
     metrics_path = f"./models/{project}/{model_name}_metrics.json"
     if not os.path.exists(metrics_path) or overwrite:
-        y_score = convert_2d_score(model.predict(scaler.transform(X_test)))
+        print(X_test.shape)
+        if isinstance(model, RandomForestClassifier):
+            y_score = convert_2d_score(model.predict_proba(scaler.transform(X_test)))
+        else:
+            y_score = convert_2d_score(model.predict(scaler.transform(X_test)))
         metrics = calc_binary_metrics(y_test, y_score, threshold)
         json_to_file(metrics, metrics_path)
     else:
