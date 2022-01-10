@@ -1,0 +1,11 @@
+---
+project: malware_rf
+model_name: baseline
+classification_threshold: 0.9
+distance: 0.05
+candidates: train
+x_attacks:
+  - /scratch/users/tsimonetto/out_malware/x_attacks_moeva_34f8c53fc22883f24fa460cd405dc989.npy
+  - /scratch/users/tsimonetto/out_malware/x_attacks_moeva_2fecdc09a23f62cd29ba5bf2e0cd67a3.npy
+  - /scratch/users/tsimonetto/out_malware/x_attacks_moeva_97d86713ba5ebe17827a987e87985fa7.npy
+  - /scratch/users/tsimonetto/out_malware/x_attacks_moeva_73a52a8819e446dcf44fe5b68bb25185.npy
