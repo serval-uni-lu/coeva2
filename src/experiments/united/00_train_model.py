@@ -123,8 +123,12 @@ def save_candidates(project, model_name, attack_classes, X, y, name):
     print(f"Attack candidates shape {X_candidates.shape}")
     X_candidates_path = f"./data/{project}/{model_name}_X_{name}_candidates.npy"
     y_candidates_path = f"./data/{project}/{model_name}_y_{name}_candidates.npy"
-    np.save(X_candidates_path, X_candidates)
-    np.save(y_candidates_path, y_candidates)
+    if not (os.path.exists(X_candidates_path) and os.path.exists(y_candidates_path)):
+        np.save(X_candidates_path, X_candidates)
+        np.save(y_candidates_path, y_candidates)
+    else:
+        X_candidates = np.load(X_candidates_path)
+        y_candidates = np.load(y_candidates_path)
     return X_candidates, y_candidates
 
 
@@ -175,16 +179,20 @@ def run_project(project, overwrite):
     )
     if do_adv_training:
         # Get the adversarials:
+        x_train_candidates = np.load(f"./data/{project}/baseline_X_train_candidates.npy")
+        y_train_candidates = np.load(f"./data/{project}/baseline_y_train_candidates.npy")
+        print(f"x_train_candidates.shape{x_train_candidates.shape}")
         classifier = ScalerClassifier(model_path, scaler_path)
         objective_calculator = ObjectiveCalculator(
             classifier,
-            constraints,
+            constraints,    
             thresholds={
                 "model": threshold if threshold is not None else 0.5,
                 "distance": config.get("distance"),
             },
             fun_distance_preprocess=scaler.transform,
             norm=config.get("norm"),
+            n_jobs=32
         )
         x_attacks_and_i = []
         x_adv_all_i = np.arange(x_train_candidates.shape[0])
