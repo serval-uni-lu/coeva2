@@ -1,5 +1,5 @@
 from .directory_dataset import DirectoryDataset
-
+from .id_scaler import IdScaler
 
 class LcldDataset(DirectoryDataset):
     def __init__(self):
