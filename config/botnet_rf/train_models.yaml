@@ -6,8 +6,8 @@ attack_classes:
   - 1
 x_attacks:
   - name: moeva
-    path: dont
-  - name: cpgd
-    path: dont
+    path: out/attacks/botnet_rf/rq0/x_attacks_moeva_8452d8d2bff4df59ec96f6b6088dac3f.npy
+  - name: moeva_1000
+    path: out/attacks/botnet_rf/rq0/x_attacks_moeva_9c7166f8707d1e51f4a7aa406aeb1b50.npy
 distance: 1
 norm: 2

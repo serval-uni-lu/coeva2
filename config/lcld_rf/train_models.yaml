@@ -4,11 +4,9 @@ projects:
 overwrite: False
 attack_classes:
   - 1
-x_attacks: []
-#  - name: moeva
-#    path: ./out/attacks/url/rq0/x_attacks_moeva_019af08d4a744978cae6715e9d120431.npy
-#  - name: cpgd
-#    path: ./out/attacks/url/rq0/x_attacks_pgd_constraints+flip+adaptive_eps_step_5c4d872a136dcf0f0c78f4fffac2375e.npy
+x_attacks:
+ - name: moeva
+   path: ./out/attacks/lcld_rf/rq0/x_attacks_moeva_5fc8edb6feb45099f2b31d10b619581f.npy
 distance: 0.05
 norm: 2
 classification_threshold: 0.25

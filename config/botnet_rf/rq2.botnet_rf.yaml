@@ -1,0 +1,21 @@
+---
+config_dir: ./config/
+models:
+  - ./models/botnet_rf/adv_moeva.model
+  - ./models/botnet_rf/adv_moeva_1000.model
+attacks:
+  # - moeva
+  - papernot
+seeds:
+  - 42
+projects:
+  - botnet_rf/rq2.botnet_rf.static
+eps_list:
+  - 0.2
+  - 0.5
+  - 1
+  - 2
+  - 4
+budgets:
+  - 100
+  # - 1000
