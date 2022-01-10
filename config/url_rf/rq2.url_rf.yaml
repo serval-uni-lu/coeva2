@@ -1,8 +1,9 @@
 ---
 config_dir: ./config/
 models:
+  # - ./models/url_rf/adv_moeva_full.model
   - ./models/url_rf/adv_moeva.model
-  - ./models/url_rf/adv_cpgd.model
+  - ./models/url_rf/adv_papernot.model
 attacks:
   - moeva
   - papernot

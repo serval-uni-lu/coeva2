@@ -1,0 +1,18 @@
+---
+project_name: lcld_rf
+paths:
+  model: ./models/lcld_rf/baseline.model
+  scaler: ./models/lcld_rf/baseline_scaler.joblib
+  x_input: ./data/lcld_rf/baseline_X_train_candidates.npy
+  y_input: ./data/lcld_rf/baseline_y_train_candidates.npy
+dirs:
+  results: ./out/attacks/lcld_rf/rq0/
+n_input: -1
+input_offset: 0
+system:
+  n_jobs: 128
+  verbose: 1
+save_history: "none"
+reconstruction: False
+classification_threshold: 0.25
+norm: 2

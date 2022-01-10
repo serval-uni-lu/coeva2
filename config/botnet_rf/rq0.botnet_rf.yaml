@@ -1,0 +1,14 @@
+---
+config_dir: ./config/
+attacks:
+#  - moeva
+ - papernot
+seeds:
+  - 42
+projects:
+  - botnet_rf/rq0.botnet_rf.static
+eps_list:
+  - 1.
+budgets:
+  - 100
+  - 1000

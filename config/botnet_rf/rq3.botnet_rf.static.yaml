@@ -1,0 +1,18 @@
+---
+project_name: botnet_rf_augmented
+paths:
+  model: ./models/botnet_rf/augmented.model
+  scaler: ./models/botnet_rf/augmented_scaler.joblib
+  x_input: ./data/botnet_rf_augmented/augmented_X_test_candidates.npy
+  y_input: ./data/botnet_rf_augmented/augmented_y_test_candidates.npy
+dirs:
+  results: ./out/attacks/botnet_rf/rq3/
+n_input: -1
+input_offset: 0
+system:
+  n_jobs: 128
+  verbose: 1
+save_history: "reduced"
+reconstruction: False
+classification_threshold: 0.5
+norm: 2

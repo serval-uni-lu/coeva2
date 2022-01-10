@@ -10,7 +10,7 @@ dirs:
 n_input: -1
 input_offset: 0
 system:
-  n_jobs: 10
+  n_jobs: 100
   verbose: 1
 save_history: "reduced"
 reconstruction: False

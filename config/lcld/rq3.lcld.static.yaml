@@ -1,19 +1,18 @@
 ---
-project_name: lcld
+project_name: lcld_augmented
 paths:
-  features: ./data/lcld/features.csv
-  constraints: ./data/lcld/constraints.csv
-  x_candidates: ./data/lcld/x_candidates_common.npy
-  min_max_scaler: ./models/lcld/scaler.joblib
-  ml_scaler: ./models/lcld/scaler.joblib
+  model: ./models/lcld/augmented.model
+  scaler: ./models/lcld/augmented_scaler.joblib
+  x_input: ./data/lcld_augmented/augmented_X_test_candidates.npy
+  y_input: ./data/lcld_augmented/augmented_y_test_candidates.npy
 dirs:
   results: ./out/attacks/lcld/rq3/
-misclassification_threshold: 0.25
-norm: 2
-n_initial_state: 4000
-initial_state_offset: 0
+n_input: -1
+input_offset: 0
 system:
-  n_jobs: -1
+  n_jobs: 128
   verbose: 1
-save_history: "full"
+save_history: "reduced"
 reconstruction: False
+classification_threshold: 0.25
+norm: 2

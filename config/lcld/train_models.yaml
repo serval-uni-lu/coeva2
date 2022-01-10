@@ -1,0 +1,14 @@
+---
+projects:
+  - lcld
+overwrite: False
+attack_classes:
+  - 1
+x_attacks: 
+ - name: moeva_full
+   path: ./out/attacks/lcld/rq0/x_attacks_moeva_8a818a5e3d47e87705515ec2a056094b.npy
+#  - name: cpgd
+#    path: ./out/attacks/lcld/rq0/x_attacks_pgd_constraints+flip+adaptive_eps_step+repair_29e6cfba9babf46f191fa4b71fd090af.npy
+distance: 0.05
+norm: 2
+classification_threshold: 0.25

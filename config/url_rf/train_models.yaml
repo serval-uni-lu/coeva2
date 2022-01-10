@@ -4,10 +4,10 @@ projects:
 overwrite: False
 attack_classes:
   - 1
-x_attacks: []
-#  - name: moeva
-#    path: ./out/attacks/url/rq0/x_attacks_moeva_019af08d4a744978cae6715e9d120431.npy
-#  - name: cpgd
-#    path: ./out/attacks/url/rq0/x_attacks_pgd_constraints+flip+adaptive_eps_step_5c4d872a136dcf0f0c78f4fffac2375e.npy
+x_attacks: 
+  - name: moeva_full
+    path: ./out/attacks/url_rf/rq0/x_attacks_moeva_93a7431565eaf197b0f5f1611e6d95ab.npy
+  - name: papernot
+    path: ./out/attacks/url_rf/rq0/x_attacks_papernot_733e3c50111d6938fc998ef7d5cc6fc7.npy
 distance: 0.05
 norm: 2

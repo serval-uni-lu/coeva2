@@ -1,20 +1,19 @@
 ---
 config_dir: ./config/
+models:
+  - ./models/lcld/nn_moeva.model
+  - ./models/lcld/nn_gradient.model
 attacks:
-  # - moeva
+  - moeva
   - pgd
 seeds:
   - 42
 projects:
-  - botnet/rq3.botnet.static
+  - rq3.lcld.static
 eps_list:
   - 0.2
-  - 0.5
-  - 1
-  - 2
-  - 4
 budgets:
   - 100
-  # - 1000
+  - 1000
 loss_evaluations:
   - constraints+flip+adaptive_eps_step+repair

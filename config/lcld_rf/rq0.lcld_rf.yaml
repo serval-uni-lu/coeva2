@@ -1,16 +1,13 @@
 ---
 config_dir: ./config/
 attacks:
-  # - moeva
+  - moeva
   - papernot
 seeds:
   - 42
 projects:
-  - url_rf/rq3.url_rf.static
+  - lcld_rf/rq0.lcld_rf.static
 eps_list:
-  - 0.01
   - 0.05
-  - 0.1
-  - 0.2
 budgets:
   - 100

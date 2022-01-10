@@ -1,0 +1,5 @@
+---
+projects:
+  - lcld
+  - lcld_rf
+threshold: 0.25

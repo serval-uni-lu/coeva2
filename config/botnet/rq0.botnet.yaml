@@ -1,7 +1,7 @@
 ---
 config_dir: ./config/
 attacks:
-  - moeva
+ - moeva
 #  - pgd
 seeds:
   - 42
@@ -10,6 +10,6 @@ projects:
 eps_list:
   - 1.
 budgets:
-  - 100
+  - 1000
 loss_evaluations:
   - constraints+flip+adaptive_eps_step

@@ -1,21 +1,16 @@
-project_name: lcld
-paths:
-  features: ./data/lcld/features.csv
-  constraints: ./data/lcld/constraints.csv
-  features_augmented: ./data/lcld/features_augmented.csv
-  constraints_augmented: ./data/lcld/constraints_augmented.csv
-budget: 100
-n_pop: 200
-n_offsprings: 100
-save_history: "False"
-seed: 42
-system:
-  n_jobs: -1
-  verbose: 1
-norm: 2
-misclassification_threshold: 0.25
-eps: 0.05
-loss_evaluation: constraints+flip+adaptive_eps_step+repair
-constraints_optim: sum
-comet: True
-attack_name: pgd
+---
+config_dir: ./config/
+attacks:
+  # - moeva
+  - pgd
+seeds:
+  - 42
+projects:
+  - lcld/rq0.lcld.static
+eps_list:
+  - 0.05
+budgets:
+  - 100
+loss_evaluations:
+  # - constraints+flip+adaptive_eps_step
+  - constraints+flip+adaptive_eps_step+repair

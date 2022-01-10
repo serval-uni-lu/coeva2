@@ -1,33 +1,26 @@
 ---
 config_dir: ./config/
+models:
+  - ./models/lcld/adv_moeva.model
+  - ./models/lcld/adv_moeva_full.model
+  - ./models/lcld/adv_cpgd.model
 attacks:
-  - moeva
+  # - moeva
   - pgd
 seeds:
   - 42
 projects:
-  - rq2.lcld.static
+  - lcld/rq2.lcld.static
 eps_list:
+  - 0.01
+  - 0.05
+  - 0.1
   - 0.2
 budgets:
   - 100
-  - 1000
 loss_evaluations:
+  - flip
+  - flip+sat
+  - constraints+flip
+  - constraints+flip+adaptive_eps_step
   - constraints+flip+adaptive_eps_step+repair
-scenari:
-  - project_name: lcld
-    paths:
-      features: ./data/lcld/features_augmented_not_mutable.csv
-      constraints: ./data/lcld/constraints.csv
-    reconstruction: True
-    evaluation:
-      project_name: lcld_augmented
-      constraints: ./data/lcld/constraints_augmented.csv
-  # - project_name: lcld_augmented
-  #   paths:
-  #     features: ./data/lcld/features_augmented.csv
-  #     constraints: ./data/lcld/constraints_augmented.csv
-  #   reconstruction: False
-  #   evaluation:
-  #     project_name: lcld_augmented
-  #     constraints: ./data/lcld/constraints_augmented.csv

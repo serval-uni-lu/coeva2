@@ -3,16 +3,16 @@ project_name: lcld
 paths:
   model: ./models/lcld/baseline.model
   scaler: ./models/lcld/baseline_scaler.joblib
-  x_input: ./data/lcld/baseline_X_test_candidates.npy
-  y_input: ./data/lcld/baseline_y_test_candidates.npy
+  x_input: ./data/lcld/baseline_X_train_candidates.npy
+  y_input: ./data/lcld/baseline_y_train_candidates.npy
 dirs:
-  results: ./out/attacks/lcld/rq2/
+  results: ./out/attacks/lcld/rq0/
 n_input: -1
 input_offset: 0
 system:
-  n_jobs: 128
+  n_jobs: 32
   verbose: 1
-save_history: "reduced"
+save_history: "none"
 reconstruction: False
 classification_threshold: 0.25
 norm: 2

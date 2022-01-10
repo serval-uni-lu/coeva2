@@ -1,16 +1,18 @@
 ---
 config_dir: ./config/
 attacks:
-  # - moeva
+  - moeva
   - papernot
 seeds:
   - 42
 projects:
-  - url_rf/rq3.url_rf.static
+  - botnet_rf/rq3.botnet_rf.static
 eps_list:
-  - 0.01
-  - 0.05
-  - 0.1
   - 0.2
+  - 0.5
+  - 1
+  - 2
+  - 4
 budgets:
   - 100
+  - 1000

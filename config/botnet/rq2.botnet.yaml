@@ -19,6 +19,6 @@ eps_list:
   - 4
 budgets:
   - 100
-  - 1000
+  # - 1000
 loss_evaluations:
   - constraints+flip+adaptive_eps_step+repair
