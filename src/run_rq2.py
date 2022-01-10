@@ -12,6 +12,7 @@ launch_counter = 0
 def launch_script(script):
     global launch_counter
     launch_counter += 1
+    # script = ["sbatch", "launch.sh"] + script
     logger.info(script)
     subprocess.run(script)
 
@@ -61,6 +62,22 @@ def run():
                                     "-p", f"eps={eps}",
                                     "-p", f"loss_evaluation={loss_evaluation}"]
                                 )
+                    
+                    if "papernot" in config["attacks"]:
+                        logger.info(f"{TABULATOR * 5} Running pgd ...")
+                        for eps in config["eps_list"]:
+                            logger.info(f"{TABULATOR * 6} Running eps {eps} ...")
+
+                            launch_script([
+                                "python", f"-m", f"src.experiments.united.03_papernot",
+                                "-c", f"{config_dir}/papernot.yaml",
+                                "-c", f"{config_dir}/{project}.yaml",
+                                "-p", f"seed={seed}",
+                                "-p", f"budget={budget}",
+                                "-j", model_conf,
+                                "-p", f"eps={eps}",
+                                ]
+                            )
 
 
 if __name__ == "__main__":
