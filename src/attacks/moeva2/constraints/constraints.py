@@ -57,7 +57,7 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
 
     def _calc_boundary_constraints(self, x, x_adv):
         xl, xu = zip(*[self.get_feature_min_max(x0) for x0 in x])
-        xl_ok, xu_ok = np.min(xl <= x_adv, axis=1), np.min(xu >= x_adv, axis=1)
+        xl_ok, xu_ok = np.min((xl - np.finfo(np.float32).eps) <= x_adv, axis=1), np.min((xu + np.finfo(np.float32).eps) >= x_adv, axis=1)
         return xl_ok * xu_ok
 
     def _calc_type_constraints(self, x_adv):
@@ -86,5 +86,6 @@ class Constraints(abc.ABC, metaclass=abc.ABCMeta):
                 self._calc_mutable_constraints(x, x_adv),
             ]
         )
+        # print(np.sum(constraints, axis=1))
         constraints = np.min(constraints, axis=0)
         return constraints
