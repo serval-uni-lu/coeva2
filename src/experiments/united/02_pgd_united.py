@@ -120,12 +120,14 @@ def run():
                 batch_size=X_initial_states.shape[0],
                 loss_evaluation=config.get("loss_evaluation"),
             )
-        x_attacks = scaler.inverse_transform(
-            attack.generate(
+        x_attacks =  attack.generate(
                 x=scaler.transform(X_initial_states),
                 y=to_categorical(y_initial_states),
                 mask=constraints.get_mutable_mask(),
-            )
+        ).astype(np.float64)
+        x_attacks = np.clip(x_attacks, 0, 1)
+        x_attacks = scaler.inverse_transform(
+            x_attacks
         )
         mask_int = constraints.get_feature_type() != "real"
         x_attacks_int = x_attacks[:, mask_int]
@@ -137,6 +139,9 @@ def run():
             x_attacks_int[~x_plus_minus]
         )
         x_attacks[:, mask_int] = x_attacks_int
+        x_attacks[:, ~constraints.get_mutable_mask()] = X_initial_states[:, ~constraints.get_mutable_mask()]
+        print(x_attacks.dtype)
+        print(X_initial_states.dtype)
 
         # Apply sat if needed
 
