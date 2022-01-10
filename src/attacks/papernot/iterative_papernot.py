@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def cut_in_batch(arr, n_desired_batch=1, batch_size=None):
 
     if batch_size is None:
-        n_batch = max(n_desired_batch, len(arr))
+        n_batch = min(n_desired_batch, len(arr))
     else:
         n_batch = np.ceil(len(arr / batch_size))
 
@@ -253,7 +253,7 @@ class RFAttack(object):
         x = np.copy(x0)
         rf_success_x = x
         iterate = range(self.nb_estimators)
-        if index == 0:
+        if False:
             iterate = tqdm(iterate, total=self.nb_estimators)
         for e in iterate:
             logging.info(
@@ -294,11 +294,10 @@ class RFAttack(object):
         if self.n_jobs == 1:
             self.generate(x, y)
         else:
+            batches = cut_in_batch(np.arange(len(x)), n_desired_batch=self.n_jobs)
             out = Parallel(n_jobs=self.n_jobs)(
                 delayed(self.generate)(x[batch_indexes], y[batch_indexes], i)
-                for i, batch_indexes in enumerate(
-                    cut_in_batch(np.arange(len(x)), n_desired_batch=self.n_jobs)
-                )
+                for i, batch_indexes in tqdm(enumerate(batches), total=len(batches))
             )
 
             return np.concatenate(out)
