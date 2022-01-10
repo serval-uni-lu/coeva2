@@ -6,6 +6,7 @@ from tensorflow.keras.models import save_model as tf_save_model
 from src.constraints.botnet.botnet_constraints import (
     BotnetConstraints,
     BotnetAugmentedConstraints,
+    BotnetRfAugmentedConstraints
 )
 from src.constraints.botnet.botnet_constraints_sat import (
     create_constraints as botnet_sat_constraints,
@@ -41,11 +42,13 @@ STR_TO_CONSTRAINTS_CLASS = {
     "lcld_augmented": LcldAugmentedConstraints,
     "lcld_rf_augmented": LcldRfAugmentedConstraints,
     "botnet": BotnetConstraints,
+    "botnet_rf": BotnetConstraints,
+    "botnet_augmented": BotnetAugmentedConstraints,
+    "botnet_rf_augmented": BotnetRfAugmentedConstraints,
     "malware": MalwareConstraints,
     "malware_rf": MalwareConstraints,
     "malware_augmented": MalwareAugmentedConstraints,
     "malware_rf_augmented": MalwareRfAugmentedConstraints,
-    "botnet_augmented": BotnetAugmentedConstraints,
     "url": UrlConstraints,
     "url_rf": UrlConstraints,
     "url_augmented": UrlAugmentedConstraints,

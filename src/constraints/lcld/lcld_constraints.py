@@ -10,6 +10,7 @@ from src.constraints.augmented_constraints import AugmentedConstraints
 class LcldConstraints(FileConstraints):
     def __init__(self):
         features_path = "./data/lcld/features.csv"
+        self.tolerance = 1e-3
         super().__init__(features_path)
 
     @staticmethod

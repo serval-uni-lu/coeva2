@@ -261,3 +261,9 @@ class BotnetAugmentedConstraints(AugmentedConstraints):
     def __init__(self):
         important_features = np.load("./data/botnet_augmented/important_features.npy")
         super().__init__(BotnetConstraints(), important_features)
+
+
+class BotnetRfAugmentedConstraints(AugmentedConstraints):
+    def __init__(self):
+        important_features = np.load("./data/botnet_rf_augmented/important_features.npy")
+        super().__init__(BotnetConstraints(), important_features)
