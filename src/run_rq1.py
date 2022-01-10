@@ -12,6 +12,7 @@ launch_counter = 0
 def launch_script(script):
     global launch_counter
     launch_counter += 1
+    # script = ["sbatch", "launch.sh"] + script
     logger.info(script)
     subprocess.run(script)
 
@@ -38,8 +39,8 @@ def run():
                                 "-p", f"seed={seed}",
                                 "-p", f"budget={budget}",
                                 "-j", eps_list_str,
-                                "-p", f"input_offset={i*128}",
-                                "-p", f"n_input=128"]
+                                "-p", f"input_offset={(i)*1600}",
+                                "-p", f"n_input=1600"]
                             )
 
 
