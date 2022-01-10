@@ -158,6 +158,9 @@ class PGDTF2(ProjectedGradientDescentTensorFlowV2):
 
         # if self._i_max_iter%10==0 and self._batch_id==0:
         #    self._compute_multi_objectives(x_adv, x_init)
+        x_adv = tf.clip_by_value(
+            x_adv, 0, 1, name=None
+        )
 
         return x_adv
 
