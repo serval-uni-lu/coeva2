@@ -140,7 +140,6 @@ def run_project(project, overwrite):
     scaler = dataset.get_scaler()
     threshold = config.get("classification_threshold")
 
-
     # Normal model
     model_name = "baseline"
     model, metrics, scaler_path, model_path = train_evaluate_model(
@@ -192,7 +191,12 @@ def run_project(project, overwrite):
         )
 
     dataset_augmented = load_dataset(f"{project}_augmented")
-    X_train_augmented, X_test_augmented, y_train, y_test = dataset_augmented.get_train_test()
+    (
+        X_train_augmented,
+        X_test_augmented,
+        y_train,
+        y_test,
+    ) = dataset_augmented.get_train_test()
     print(
         f"X_train.shape: {X_train.shape}, X_train_augmented.shape: {X_train_augmented.shape}"
     )
@@ -201,7 +205,12 @@ def run_project(project, overwrite):
     # Augmented model
 
     model_name_augmented = "augmented"
-    model_augmented, metrics_augmented, scaler_augmented_path, model_augmented_path = train_evaluate_model(
+    (
+        model_augmented,
+        metrics_augmented,
+        scaler_augmented_path,
+        model_augmented_path,
+    ) = train_evaluate_model(
         project,
         model_name_augmented,
         threshold,
@@ -239,7 +248,8 @@ def run_project(project, overwrite):
         [
             os.path.exists(x_attack["path"])
             and (not os.path.exists(f"./models/{project}/adv_{x_attack['name']}.model"))
-            for x_attack in config.get("x_attacks", []) + config.get("x_attacks_augmented", [])
+            for x_attack in config.get("x_attacks", [])
+            + config.get("x_attacks_augmented", [])
         ]
     )
     if do_adv_training:
@@ -277,7 +287,9 @@ def run_project(project, overwrite):
             print(f"Intersection number {x_adv_all_i.shape}")
 
         print(f"x_train_candidates_augmented.shape{x_train_candidates_augmented.shape}")
-        classifier_augmented = ScalerClassifier(model_augmented_path, scaler_augmented_path)
+        classifier_augmented = ScalerClassifier(
+            model_augmented_path, scaler_augmented_path
+        )
         constraints_augmented = get_constraints_from_str(f"{project}_augmented")()
         objective_calculator = ObjectiveCalculator(
             classifier_augmented,
@@ -306,7 +318,6 @@ def run_project(project, overwrite):
             x_attacks_and_i_augmented.append((x_adv, x_adv_i))
             x_adv_all_i = np.intersect1d(x_adv_all_i, x_adv_i, return_indices=False)
             print(f"Intersection number {x_adv_all_i.shape}")
-
 
         shuffle_i = np.arange(X_train.shape[0] + x_adv_all_i.shape[0])
         rng = np.random.default_rng(42)
