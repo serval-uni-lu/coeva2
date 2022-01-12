@@ -24,6 +24,7 @@ from src.utils.in_out import load_model, json_to_file, json_from_file
 from src.utils.ml import convert_2d_score
 from sklearn.ensemble import RandomForestClassifier
 
+
 def calc_n_important_features(n_features, ratio):
     a, b, c = 0.5, -0.5, -n_features * ratio
     n_important_features = np.floor(np.roots([a, b, c])[0])
@@ -139,11 +140,6 @@ def run_project(project, overwrite):
     scaler = dataset.get_scaler()
     threshold = config.get("classification_threshold")
 
-    constraints = get_constraints_from_str(project)()
-
-    # constraints.check_constraints_error(X_test)
-
-    # constraints.check_constraints_error(X_train)
 
     # Normal model
     model_name = "baseline"
@@ -167,6 +163,75 @@ def run_project(project, overwrite):
     )
     save_candidates(project, model_name, attack_classes, X_test, y_test, "test")
 
+    # Augment
+    X_train_augmented_path = f"./data/{project}_augmented/X_train.npy"
+    X_test_augmented_path = f"./data/{project}_augmented/X_test.npy"
+    augmented_features_path = f"./data/{project}_augmented/features.csv"
+    if not os.path.exists(X_train_augmented_path) or overwrite:
+        (
+            X_train_augmented,
+            X_test_augmented,
+            features_augmented,
+            important_features,
+        ) = augment_dataset(
+            model,
+            scaler,
+            pd.read_csv(f"./data/{project}/features.csv"),
+            X_train,
+            y_train,
+            X_test,
+            ratio=0.25,
+        )
+        features_augmented.to_csv(augmented_features_path)
+        np.save(X_train_augmented_path, X_train_augmented)
+        np.save(X_test_augmented_path, X_test_augmented)
+        np.save(f"./data/{project}_augmented/y_train.npy", y_train)
+        np.save(f"./data/{project}_augmented/y_test.npy", y_test)
+        np.save(
+            f"./data/{project}_augmented/important_features.npy", important_features
+        )
+
+    dataset_augmented = load_dataset(f"{project}_augmented")
+    X_train_augmented, X_test_augmented, y_train, y_test = dataset_augmented.get_train_test()
+    print(
+        f"X_train.shape: {X_train.shape}, X_train_augmented.shape: {X_train_augmented.shape}"
+    )
+    scaler_augmented = dataset_augmented.get_scaler()
+
+    # Augmented model
+
+    model_name_augmented = "augmented"
+    model_augmented, metrics_augmented, scaler_augmented_path, model_augmented_path = train_evaluate_model(
+        project,
+        model_name_augmented,
+        threshold,
+        scaler_augmented,
+        X_train_augmented,
+        X_test_augmented,
+        y_train,
+        y_test,
+        overwrite,
+    )
+    print(f"Threshold: {threshold}")
+    print(metrics_augmented)
+
+    x_train_candidates_augmented, y_train_candidates_augmented = save_candidates(
+        f"{project}_augmented",
+        model_name_augmented,
+        attack_classes,
+        X_train_augmented,
+        y_train,
+        "train",
+    )
+    save_candidates(
+        f"{project}_augmented",
+        model_name_augmented,
+        attack_classes,
+        X_test_augmented,
+        y_test,
+        "test",
+    )
+
     # Adversarial models
 
     ## Check if doable
@@ -174,25 +239,24 @@ def run_project(project, overwrite):
         [
             os.path.exists(x_attack["path"])
             and (not os.path.exists(f"./models/{project}/adv_{x_attack['name']}.model"))
-            for x_attack in config.get("x_attacks", [])
+            for x_attack in config.get("x_attacks", []) + config.get("x_attacks_augmented", [])
         ]
     )
     if do_adv_training:
-        # Get the adversarials:
-        x_train_candidates = np.load(f"./data/{project}/baseline_X_train_candidates.npy")
-        y_train_candidates = np.load(f"./data/{project}/baseline_y_train_candidates.npy")
+
         print(f"x_train_candidates.shape{x_train_candidates.shape}")
         classifier = ScalerClassifier(model_path, scaler_path)
+        constraints = get_constraints_from_str(project)()
         objective_calculator = ObjectiveCalculator(
             classifier,
-            constraints,    
+            constraints,
             thresholds={
                 "model": threshold if threshold is not None else 0.5,
                 "distance": config.get("distance"),
             },
             fun_distance_preprocess=scaler.transform,
             norm=config.get("norm"),
-            n_jobs=32
+            n_jobs=32,
         )
         x_attacks_and_i = []
         x_adv_all_i = np.arange(x_train_candidates.shape[0])
@@ -212,6 +276,38 @@ def run_project(project, overwrite):
             x_adv_all_i = np.intersect1d(x_adv_all_i, x_adv_i, return_indices=False)
             print(f"Intersection number {x_adv_all_i.shape}")
 
+        print(f"x_train_candidates_augmented.shape{x_train_candidates_augmented.shape}")
+        classifier_augmented = ScalerClassifier(model_augmented_path, scaler_augmented_path)
+        constraints_augmented = get_constraints_from_str(f"{project}_augmented")()
+        objective_calculator = ObjectiveCalculator(
+            classifier_augmented,
+            constraints_augmented,
+            thresholds={
+                "model": threshold if threshold is not None else 0.5,
+                "distance": config.get("distance"),
+            },
+            fun_distance_preprocess=scaler_augmented.transform,
+            norm=config.get("norm"),
+            n_jobs=32,
+        )
+        x_attacks_and_i_augmented = []
+        for x_attack in config.get("x_attacks_augmented", []):
+            x_attacks = np.load(x_attack["path"])
+            x_adv, x_adv_i = objective_calculator.get_successful_attacks(
+                x_train_candidates,
+                y_train_candidates,
+                x_attacks,
+                preferred_metrics="misclassification",
+                order="asc",
+                max_inputs=1,
+                return_index_success=True,
+            )
+            # x_adv = np.concatenate(x_adv)
+            x_attacks_and_i_augmented.append((x_adv, x_adv_i))
+            x_adv_all_i = np.intersect1d(x_adv_all_i, x_adv_i, return_indices=False)
+            print(f"Intersection number {x_adv_all_i.shape}")
+
+
         shuffle_i = np.arange(X_train.shape[0] + x_adv_all_i.shape[0])
         rng = np.random.default_rng(42)
         rng.shuffle(shuffle_i)
@@ -224,9 +320,7 @@ def run_project(project, overwrite):
                     ),
                 ]
             )
-            y_train_adv = np.concatenate(
-                [y_train, y_train_candidates[x_adv_all_i]]
-            )
+            y_train_adv = np.concatenate([y_train, y_train_candidates[x_adv_all_i]])
 
             X_train_adv = X_train_adv[shuffle_i]
             y_train_adv = y_train_adv[shuffle_i]
@@ -245,85 +339,33 @@ def run_project(project, overwrite):
             print(f"Threshold: {threshold}")
             print(metrics)
 
-    # # Random forest
-    # model_name = "baseline_rf"
-    # model_rf, metrics, _, _ = train_evaluate_model(
-    #     project,
-    #     model_name,
-    #     threshold,
-    #     scaler,
-    #     X_train,
-    #     X_test,
-    #     y_train,
-    #     y_test,
-    #     overwrite,
-    #     model_arch_name=f"{project}_rf",
-    # )
-    # print(f"Threshold: {threshold}")
-    # print(metrics)
+        for x_attack_i, x_attack in enumerate(config.get("x_attacks_augmented", [])):
+            X_train_adv = np.concatenate(
+                [
+                    X_train_augmented,
+                    np.concatenate(
+                        np.array(x_attacks_and_i_augmented[x_attack_i][0])[x_adv_all_i]
+                    ),
+                ]
+            )
+            y_train_adv = np.concatenate([y_train, y_train_candidates[x_adv_all_i]])
 
-    # Augment
-    X_train_augmented_path = f"./data/{project}_augmented/X_train.npy"
-    X_test_augmented_path = f"./data/{project}_augmented/X_test.npy"
-    augmented_features_path = f"./data/{project}_augmented/features.csv"
-    if not os.path.exists(X_train_augmented_path) or overwrite:
-        X_train_augmented, X_test_augmented, features_augmented, important_features = augment_dataset(
-            model,
-            scaler,
-            pd.read_csv(f"./data/{project}/features.csv"),
-            X_train,
-            y_train,
-            X_test,
-            ratio=0.25,
-        )
-        features_augmented.to_csv(augmented_features_path)
-        np.save(X_train_augmented_path, X_train_augmented)
-        np.save(X_test_augmented_path, X_test_augmented)
-        np.save(f"./data/{project}_augmented/y_train.npy", y_train)
-        np.save(f"./data/{project}_augmented/y_test.npy", y_test)
-        np.save(f"./data/{project}_augmented/important_features.npy", important_features)
+            X_train_adv = X_train_adv[shuffle_i]
+            y_train_adv = y_train_adv[shuffle_i]
 
-    dataset = load_dataset(f"{project}_augmented")
-    X_train_augmented, X_test_augmented, y_train, y_test = dataset.get_train_test()
-    print(
-        f"X_train.shape: {X_train.shape}, X_train_augmented.shape: {X_train_augmented.shape}"
-    )
-    scaler = dataset.get_scaler()
-    threshold = config.get("classification_threshold")
-
-    # Augmented model
-
-    model_name = "augmented"
-    model, metrics, _, _ = train_evaluate_model(
-        project,
-        model_name,
-        threshold,
-        scaler,
-        X_train_augmented,
-        X_test_augmented,
-        y_train,
-        y_test,
-        overwrite,
-    )
-    print(f"Threshold: {threshold}")
-    print(metrics)
-
-    save_candidates(
-        f"{project}_augmented",
-        model_name,
-        attack_classes,
-        X_train_augmented,
-        y_train,
-        "train",
-    )
-    save_candidates(
-        f"{project}_augmented",
-        model_name,
-        attack_classes,
-        X_test_augmented,
-        y_test,
-        "test",
-    )
+            model, metrics, scaler_path, model_path = train_evaluate_model(
+                project,
+                f"adv_{x_attack['name']}",
+                threshold,
+                scaler_augmented,
+                X_train_adv,
+                X_test_augmented,
+                y_train_adv,
+                y_test,
+                overwrite,
+            )
+            print(f"Threshold: {threshold}")
+            print(metrics)
 
 
 def run():
