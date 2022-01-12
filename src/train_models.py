@@ -306,7 +306,7 @@ def run_project(project, overwrite):
         for x_attack in config.get("x_attacks_augmented", []):
             x_attacks = np.load(x_attack["path"])
             x_adv, x_adv_i = objective_calculator.get_successful_attacks(
-                x_train_candidates,
+                x_train_candidates_augmented,
                 y_train_candidates,
                 x_attacks,
                 preferred_metrics="misclassification",
