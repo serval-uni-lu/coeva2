@@ -1,0 +1,12 @@
+---
+config_dir: ./config/
+attacks:
+ - moeva
+seeds:
+  - 42
+projects:
+  - botnet_rf/rq0.1.botnet_rf.static
+eps_list:
+  - 1.
+budgets:
+  - 1000

@@ -7,6 +7,7 @@ attack_classes:
 x_attacks: 
   - name: moeva_rq4
     path: ./out/attacks/url_rf/rq0/x_attacks_moeva_93a7431565eaf197b0f5f1611e6d95ab.npy
+x_attacks_augmented: 
   - name: moeva_augmented_rq4
     path: ./out/attacks/url_rf/rq0.1/x_attacks_moeva_39dea26e98d3c33a7cf443e8bcfd9948.npy
 distance: 0.05

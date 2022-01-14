@@ -1,0 +1,14 @@
+---
+projects:
+  - botnet_rf
+overwrite: False
+attack_classes:
+  - 1
+x_attacks: 
+  - name: moeva_rq4
+    path: ./out/attacks/botnet_rf/rq0/x_attacks_moeva_9c7166f8707d1e51f4a7aa406aeb1b50.npy
+x_attacks_augmented: 
+  - name: moeva_augmented_rq4
+    path: ./out/attacks/botnet_rf/rq0.1/x_attacks_moeva_9a1fb751595db6e48141b23d81d4dcc8.npy
+distance: 1
+norm: 2

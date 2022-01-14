@@ -1,0 +1,14 @@
+---
+project: malware_rf_augmented
+model_name: augmented
+model: ./models/malware_rf/augmented.model
+scaler: ./models/malware_rf/augmented_scaler.joblib
+classification_threshold: 0.9
+distance: 0.05
+candidates: train
+x_attacks:
+  - /scratch/users/tsimonetto/moeva_out/malware_rf/rq0.1/x_attacks_moeva_9ce9dcb55a33c36c1cded750bf07fcc7.npy
+  - /scratch/users/tsimonetto/moeva_out/malware_rf/rq0.1/x_attacks_moeva_808c0c5e3b84ac684c491650527a6a01.npy
+  - /scratch/users/tsimonetto/moeva_out/malware_rf/rq0.1/x_attacks_moeva_f034728d92e6092bd7e38f4048e16330.npy
+  - /scratch/users/tsimonetto/moeva_out/malware_rf/rq0.1/x_attacks_moeva_5e3eecd565cbd1b264b07b76edf776f3.npy
+  - /scratch/users/tsimonetto/moeva_out/malware_rf/rq0.1/x_attacks_moeva_70a8255273473a9a072b82e473b74c11.npy

@@ -1,0 +1,18 @@
+---
+project_name: lcld_rf_augmented
+paths:
+  model: ./models/lcld_rf/adv_moeva_augmented_rq4.model
+  scaler: ./models/lcld_rf/adv_moeva_augmented_rq4_scaler.joblib
+  x_input: ./data/lcld_rf_augmented/augmented_X_test_candidates.npy
+  y_input: ./data/lcld_rf_augmented/augmented_y_test_candidates.npy
+dirs:
+  results: ./out/attacks/lcld_rf/rq4/
+n_input: -1
+input_offset: 0
+system:
+  n_jobs: 128
+  verbose: 1
+save_history: "reduced"
+reconstruction: False
+classification_threshold: 0.25
+norm: 2

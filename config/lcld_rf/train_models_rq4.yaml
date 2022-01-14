@@ -1,0 +1,15 @@
+---
+projects:
+  - lcld_rf
+overwrite: False
+attack_classes:
+  - 1
+x_attacks: 
+  - name: moeva_rq4
+    path: ./out/attacks/lcld_rf/rq0/x_attacks_moeva_5fc8edb6feb45099f2b31d10b619581f.npy
+x_attacks_augmented: 
+  - name: moeva_augmented_rq4
+    path: ./out/attacks/lcld_rf/rq0.1/x_attacks_moeva_47f36f490fdcb1855fe14c46cb5b6e04.npy
+distance: 0.05
+norm: 2
+classification_threshold: 0.25

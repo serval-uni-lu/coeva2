@@ -10,7 +10,7 @@ attacks:
 seeds:
   - 42
 projects:
-  - url_rf/rq1.url_rf.static
+  - url_rf/rq2.url_rf.static
 eps_list:
   - 0.01
   - 0.05
