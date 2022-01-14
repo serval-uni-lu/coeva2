@@ -78,42 +78,52 @@ def run():
 
     model.set_params(**{"n_jobs": 1})
 
-    attack = RFAttack(
-        model,
-        nb_estimators=model.n_estimators,
-        nb_iterations=int(config.get("budget")),
-        threshold=config["classification_threshold"],
-        eps=per_attack_eps-0.000001,
-        eps_step=per_attack_eps/3,
-        n_jobs=config.get("system").get("n_jobs")
-    )
+    x_attacks_path = f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy"
+    if os.path.exists(x_attacks_path):
+        x_attacks = np.load(x_attacks_path)
+        consumed_time = -1
+    
+    else:
 
-    x_attacks = scaler.inverse_transform(
-        attack.generate_parallel(
-            x=scaler.transform(X_initial_states),
-            y=y_initial_states,
-            # mask=constraints.get_mutable_mask(),
+        attack = RFAttack(
+            model,
+            nb_estimators=model.n_estimators,
+            nb_iterations=int(config.get("budget")),
+            threshold=config["classification_threshold"],
+            eps=per_attack_eps-0.000001,
+            eps_step=per_attack_eps/3,
+            n_jobs=config.get("system").get("n_jobs")
         )
-    )
-    mask_int = constraints.get_feature_type() != "real"
-    x_attacks_int = x_attacks[:, mask_int]
-    x_plus_minus = x_attacks_int - X_initial_states[:, mask_int] >= 0
-    x_attacks_int[x_plus_minus] = np.floor(
-        x_attacks_int[x_plus_minus]
-    )
-    x_attacks_int[~x_plus_minus] = np.ceil(
-        x_attacks_int[~x_plus_minus]
-    )
-    x_attacks[:, mask_int] = x_attacks_int
-    # x_attacks[:, mask_int] = np.rint(x_attacks[:, mask_int])
 
-    # Apply sat if needed
+        x_attacks = scaler.inverse_transform(
+            attack.generate_parallel(
+                x=scaler.transform(X_initial_states),
+                y=y_initial_states,
+                # mask=constraints.get_mutable_mask(),
+            )
+        )
+        mask_int = constraints.get_feature_type() != "real"
+        x_attacks_int = x_attacks[:, mask_int]
+        x_plus_minus = x_attacks_int - X_initial_states[:, mask_int] >= 0
+        x_attacks_int[x_plus_minus] = np.floor(
+            x_attacks_int[x_plus_minus]
+        )
+        x_attacks_int[~x_plus_minus] = np.ceil(
+            x_attacks_int[~x_plus_minus]
+        )
+        x_attacks[:, mask_int] = x_attacks_int
+        # x_attacks[:, mask_int] = np.rint(x_attacks[:, mask_int])
 
-    consumed_time = time.time() - start_time
-    # ----- End attack
+        # Apply sat if needed
 
-    if len(x_attacks.shape) == 2:
-        x_attacks = x_attacks[:, np.newaxis, :]
+        consumed_time = time.time() - start_time
+        # ----- End attack
+        
+        if len(x_attacks.shape) == 2:
+            x_attacks = x_attacks[:, np.newaxis, :]
+        
+        np.save(x_attacks_path, x_attacks)
+
     classifier = ScalerClassifier(config["paths"]["model"], config["paths"]["scaler"])
     thresholds = {"model": config["classification_threshold"], "distance": config["eps"]}
 
@@ -129,11 +139,10 @@ def run():
     success_rate = objective_calc.get_success_rates(X_initial_states, y_initial_states, x_attacks)
     success_rate = objectives_to_dict(success_rate)
 
-    # Save
-    # X_attacks
+        # Save
+        # X_attacks
 
-    x_attacks_path = f"{out_dir}/x_attacks_{mid_fix}_{config_hash}.npy"
-    np.save(x_attacks_path, x_attacks)
+        
     # experiment.log_asset(x_attacks_path)
 
     # History
