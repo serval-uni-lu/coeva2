@@ -11,3 +11,4 @@ x_attacks:
     path: ./out/attacks/url/rq0/x_attacks_pgd_constraints+flip+adaptive_eps_step_5c4d872a136dcf0f0c78f4fffac2375e.npy
 distance: 0.05
 norm: 2
+classification_threshold: 0.5
