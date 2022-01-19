@@ -1,0 +1,5 @@
+outs:
+- md5: d77e658edf3b5b9bbf8ee7bc7ceeb68e.dir
+  size: 10839861
+  nfiles: 10
+  path: url_rf_augmented
