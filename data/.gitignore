@@ -4,3 +4,7 @@
 /botnet
 /url
 /url_augmented
+/url_rf
+/url_rf_augmented
+/malware_rf
+/botnet_augmented
