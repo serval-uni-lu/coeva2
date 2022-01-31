@@ -8,3 +8,10 @@
 /url_rf_augmented
 /malware_rf
 /botnet_augmented
+/botnet_rf
+/botnet_rf_augmented
+/lcld_rf
+/lcld_augmented
+/lcld_rf_augmented
+/malware_augmented
+/malware_rf_augmented
