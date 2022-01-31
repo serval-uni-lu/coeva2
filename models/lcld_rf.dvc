@@ -1,0 +1,5 @@
+outs:
+- md5: b0a4849ace53ece49f57c316dc6ed10e.dir
+  size: 76194552
+  nfiles: 15
+  path: lcld_rf
