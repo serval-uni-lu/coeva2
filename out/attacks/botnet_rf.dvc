@@ -1,0 +1,5 @@
+outs:
+- md5: 18e2e7fd1bf0d4bd5075fad8899d8cd5.dir
+  size: 42835445636
+  nfiles: 148
+  path: botnet_rf
