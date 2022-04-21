@@ -1,14 +1,14 @@
 ---
 config_dir: ./config/
 models:
-  - ./models/botnet/nn_moeva_bis.model
+  - ./models/botnet/nn_moeva.model
 attacks:
   - moeva
 #  - pgd
 seeds:
   - 42
 projects:
-  - rq3.botnet.static.bis
+  - rq3.botnet.static
 eps_list:
   - 4
 budgets:

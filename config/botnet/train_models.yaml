@@ -5,9 +5,9 @@ overwrite: False
 attack_classes:
   - 1
 x_attacks:
-  - name: moeva
-    path: dont
-  - name: cpgd
-    path: dont
+#  - name: moeva
+#    path: ./out/attacks/botnet/rq0/x_attacks_moeva_1347f8290da0f56781b3dc0cdd368f4b.npy
+  - name: moeva_1000_full
+    path: ./out/attacks/botnet/rq0/x_attacks_moeva_b1aa8af789e75ee1bf5ac83da3148e36.npy
 distance: 1
 norm: 2
