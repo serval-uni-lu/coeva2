@@ -1,9 +1,0 @@
-[core]
-    analytics = false
-    remote = master
-['remote "dev"']
-    url = s3://coeva2.dev
-    endpointurl = https://minio.serval
-['remote "master"']
-    url = ssh://10.186.104.11:/home/public/dvc/coeva2
-    port = 7822

@@ -14,3 +14,6 @@ src/playground.py
 .ipynb_checkpoints/
 data/config.py
 slurm-out/
+out/
+data/
+data.tar.zst
